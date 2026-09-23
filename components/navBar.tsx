@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native"
 import { Feather, Ionicons } from '@expo/vector-icons';
 
-export default function ExploreScreen() {
+export function NavBar() {
   // 1. ADICIONE ESTA FUNÇÃO AQUI:
   const handlePress = (action: string) => {
     console.log(`Ação acionada: ${action}`);
