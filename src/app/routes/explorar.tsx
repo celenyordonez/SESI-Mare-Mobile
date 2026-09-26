@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { NavBar } from './_layout';
+import { NavBar } from '../_layout';
  
 // --- DADOS FICTÍCIOS PARA PREENCHER A TELA ---
 const maisBemAvaliadas = [
