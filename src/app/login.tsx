@@ -64,7 +64,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-10 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
+                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
                             value={usuario}
                             onChangeText={setUsuario}
                             placeholder="E-mail ou usuário"
@@ -79,7 +79,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-10 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
+                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
                             value={senha}
                             onChangeText={setSenha}
                             placeholder="Senha"
@@ -96,20 +96,19 @@ export default function Cadastro() {
                             Esqueceu a senha?{" "}
                         </Text>
 
-                        <Link
-                            href="/login"
-                            className="text-[#72A8DD] text-[13px] font-serif underline"
-                        >
-                            Redefinir senha
+                        <Link href="/login">
+                            <Text className="text-[#72A8DD] text-[13px] font-serif underline">
+                                Redefinir senha
+                            </Text>
                         </Link>
 
                     </View>
 
                     {/* Botão */}
-                    <Pressable className="w-full h-[53px] bg-[#5EA7ED] rounded-xl items-center justify-center mb-6">
+                    <Pressable className="w-full h-[55px] bg-[#5EA7ED] rounded-xl items-center justify-center mb-6">
 
-                        <Text className="text-white text-[19px] font-serif">
-                            Criar conta
+                        <Text className="text-white text-[18px] font-serif">
+                            Entrar
                         </Text>
 
                     </Pressable>
@@ -122,11 +121,10 @@ export default function Cadastro() {
                             Não tem uma conta?{" "}
                         </Text>
 
-                        <Link
-                            href="/cadastro"
-                            className="text-[#72A8DD] text-[13px] font-serif underline"
-                        >
-                            Criar conta
+                        <Link href="/cadastro">
+                            <Text className="text-[#72A8DD] text-[13px] font-serif underline">
+                                Criar conta
+                            </Text>
                         </Link>
 
                     </View>

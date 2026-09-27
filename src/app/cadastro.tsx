@@ -28,10 +28,10 @@ export default function Cadastro() {
                 style={{ "minHeight": "100%" }}
             >
 
-            <ScrollView
-                className="flex-1 p-8"
-                showsVerticalScrollIndicator={false}
-            >
+                <ScrollView
+                    className="flex-1 p-8"
+                    showsVerticalScrollIndicator={false}
+                >
 
                     {/* Logo */}
                     <View className="items-center justify-center mb-2">
@@ -64,7 +64,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-10 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
+                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
                             value={usuario}
                             onChangeText={setUsuario}
                             placeholder="Usuário"
@@ -79,7 +79,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-10 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
+                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
                             value={email}
                             onChangeText={setEmail}
                             placeholder="E-mail"
@@ -95,7 +95,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-10 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
+                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
                             value={senha}
                             onChangeText={setSenha}
                             placeholder="Senha"
@@ -110,7 +110,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-10 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
+                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-[22px]"
                             value={confirmarSenha}
                             onChangeText={setConfirmarSenha}
                             placeholder="Confirmar senha"
@@ -124,7 +124,7 @@ export default function Cadastro() {
                     {/* Termos */}
                     <View className="w-full px-1 -mt-1 mb-[25px]">
 
-                        <Text className="text-[#D0D0D5] text-xs leading-[18px] text-center font-serif">
+                        <Text className="text-[#D0D0D5] text-xs leading-[18px] font-serif">
 
                             Ao criar sua conta, você concorda com nossos{" "}
 
@@ -144,9 +144,9 @@ export default function Cadastro() {
 
 
                     {/* Botão */}
-                    <Pressable className="w-full h-[53px] bg-[#5EA7ED] rounded-xl items-center justify-center mb-6">
+                    <Pressable className="w-full h-[55px] bg-[#5EA7ED] rounded-xl items-center justify-center mb-6">
 
-                        <Text className="text-white text-[19px] font-serif">
+                        <Text className="text-white text-[18px] font-serif">
                             Criar conta
                         </Text>
 
@@ -160,11 +160,10 @@ export default function Cadastro() {
                             Já tem uma conta?{" "}
                         </Text>
 
-                        <Link
-                            href="/login"
-                            className="text-[#72A8DD] text-[13px] font-serif underline"
-                        >
-                            Entrar
+                        <Link href="/login">
+                            <Text className="text-[#72A8DD] text-[13px] font-serif underline">
+                                Entrar
+                            </Text>
                         </Link>
 
                     </View>
