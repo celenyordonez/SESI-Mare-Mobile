@@ -97,7 +97,7 @@ export default function Cadastro() {
                         </Text>
 
                         <Link
-                            href="/"
+                            href="/login"
                             className="text-[#72A8DD] text-[13px] font-serif underline"
                         >
                             Redefinir senha
