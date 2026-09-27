@@ -1,17 +1,20 @@
-import { Text, View, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
+import Navbar from "../components/navbar";
 
 export default function Index() {
   return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
+    <View className="flex-1 bg-[#080A10]">
+
+      {/* Conteúdo da página */}
+      <View className="flex-1 items-center justify-center">
+        <Text className="text-white text-3xl font-bold">
+          Maré
+        </Text>
+      </View>
+
+      {/* Navbar */}
+      <Navbar />
+
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
