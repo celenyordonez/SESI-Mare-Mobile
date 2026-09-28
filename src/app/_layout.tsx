@@ -58,7 +58,8 @@ export function NavBar() {
 }
 
 const styles = StyleSheet.create({
-     tabBarContainer: {
+  
+  tabBarContainer: {
     flexDirection: 'row',
     backgroundColor: '#1E293B',
     height: 80,
@@ -67,6 +68,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderTopWidth: 0,
   },
+
   tabItem: {
     flex: 1,
     alignItems: 'center',
@@ -75,15 +77,34 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     height: 60,
   },
+
   tabItemActive: {
     backgroundColor: '#405B7A',
   },
+
   tabLabel: {
     fontSize: 12,
     marginTop: 4,
     color: '#94A3B8',
   },
+
   tabLabelActive: {
     color: '#E2E8F0',
   },
+
+  botaoPost: {
+    backgroundColor: '#4CA3FF',
+    borderRadius: 12,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 15,
+  },
+
+  textoBotaoPost: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
 })
