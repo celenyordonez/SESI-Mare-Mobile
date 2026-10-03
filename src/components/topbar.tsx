@@ -23,7 +23,7 @@ export default function TopBar({
     const pathname = usePathname();
 
     return (
-        <View className="px-8 pt-6">
+        <View className="px-8 pt-6 pb-4">
 
             <View className="flex-row items-center">
 
