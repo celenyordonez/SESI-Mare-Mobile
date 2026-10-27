@@ -1,68 +1,40 @@
-import { View, Text, ScrollView } from "react-native";
-
-import Navbar from "../components/navbar";
-import Topbar from "../components/topbar";
-import FeedTabs from "../components/FeedTabs";
-import PostCard from "../components/postCard";
-
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Link } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { apiRequest } from "../services/api";
+import type { Usuario } from "../types/auth";
 
 export default function Index() {
-  return (
-    <SafeAreaView className="flex-1 bg-[#080A10]">
+    const router = useRouter();
 
-      {/* Topbar */}
-      <Topbar
-        titulo="Bom dia, Usuário"
-        subtitulo="O que você quer descobrir hoje?"
-      />
+    useEffect(() => {
+        async function verificarLogin() {
+            try {
+                const token = await AsyncStorage.getItem("token");
 
-      {/* Feed Tabs */}
-      <FeedTabs />
+                if (!token) {
+                    router.replace("/login");
+                    return;
+                }
 
-      {/* Feed */}
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-      >
+                await apiRequest<Usuario>("/usuarios/me", {
+                    autenticado: true,
+                });
 
-        <View className="mt-5">
+                router.replace("/home");
+            } catch {
+                await AsyncStorage.multiRemove(["token", "usuario"]);
+                router.replace("/login");
+            }
+        }
 
-          {/* Primeiro post */}
-          <PostCard />
+        verificarLogin();
+    }, [router]);
 
+    return (
+        <View className="flex-1 bg-[#080A10] items-center justify-center">
+            <ActivityIndicator size="large" color="#5EA7ED" />
         </View>
-
-        <View className="h-6" />
-
-        {/* Links para testar as telas */}
-        <View className="flex-1 items-center justify-center gap-4">
-
-          <Text className="text-white text-lg font-serif">
-            Testar telas
-          </Text>
-
-          <Link href="/cadastro">
-            <Text className="text-white text-[15px] font-serif underline">
-              Cadastro
-            </Text>
-          </Link>
-
-          <Link href="/login">
-            <Text className="text-white text-[15px] font-serif underline">
-              Login
-            </Text>
-          </Link>
-
-        </View>
-
-      </ScrollView>
-
-
-      {/* Navbar */}
-      <Navbar />
-
-    </SafeAreaView>
-  );
+    );
 }
