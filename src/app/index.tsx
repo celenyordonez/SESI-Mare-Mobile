@@ -25,7 +25,9 @@ export default function Index() {
                 });
 
                 router.replace(
-                    usuario.preferenciasConcluidas ? "/home" : "/filtrar",
+                    usuario.preferenciasConcluidas
+                        ? "/home"
+                        : ({ pathname: "/descoberta", params: { onboarding: "sim" } } as never),
                 );
             } catch {
                 await AsyncStorage.multiRemove(["token", "usuario"]);

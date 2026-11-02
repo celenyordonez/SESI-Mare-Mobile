@@ -1,15 +1,24 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Navbar from "../components/navbar";
 import Topbar from "../components/topbar";
+import AtalhoMusicalCard from "../components/AtalhoMusicalCard";
 import MusicCard from "../components/musicCard";
 import PostCard from "../components/postCard";
 import Searchbar from "../components/searchBar";
 import FotoArtista from "../components/FotoArtista";
+import { ClockCounterClockwiseIcon, XIcon } from "phosphor-react-native";
 import { useBuscaGlobal } from "../hooks/useBuscaGlobal";
 import type { Musica } from "../services/musicaService";
+import { embaralharLista } from "../services/recomendacaoService";
+import {
+    buscarHistoricoPesquisa,
+    limparHistoricoPesquisa,
+    registrarPesquisa,
+    removerPesquisaDoHistorico,
+} from "../services/historicoPesquisaService";
 
 function normalizar(value: unknown) {
     return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
@@ -17,9 +26,50 @@ function normalizar(value: unknown) {
 
 export default function Explorar() {
     const router = useRouter();
-    const [termo, setTermo] = useState("");
+    const parametros = useLocalSearchParams<{ q?: string }>();
+    const termoDaRota = parametros.q?.trim() ?? "";
+    const [termo, setTermo] = useState(termoDaRota);
+    const [historico, setHistorico] = useState<string[]>([]);
     const { musicas, artistas, posts, usuarios, generosFavoritos, artistasFavoritos,
         usuarioLogadoId, carregando, erro, buscando, resultados: resultadosBusca, recarregar } = useBuscaGlobal(termo);
+
+    useEffect(() => {
+        let ativo = true;
+        void buscarHistoricoPesquisa().then((itens) => {
+            if (ativo) setHistorico(itens);
+        });
+        return () => { ativo = false; };
+    }, []);
+
+    useEffect(() => {
+        setTermo(termoDaRota);
+    }, [termoDaRota]);
+
+    async function guardarPesquisa(valor: string) {
+        if (!valor.trim()) return;
+        try {
+            setHistorico(await registrarPesquisa(valor));
+        } catch (erroHistorico) {
+            console.warn("Não foi possível salvar esta pesquisa no histórico.", erroHistorico);
+        }
+    }
+
+    async function removerPesquisa(valor: string) {
+        try {
+            setHistorico(await removerPesquisaDoHistorico(valor));
+        } catch (erroHistorico) {
+            console.warn("Não foi possível remover esta pesquisa do histórico.", erroHistorico);
+        }
+    }
+
+    async function limparPesquisas() {
+        try {
+            await limparHistoricoPesquisa();
+            setHistorico([]);
+        } catch (erroHistorico) {
+            console.warn("Não foi possível limpar o histórico de pesquisa.", erroHistorico);
+        }
+    }
 
     const contagemPosts = useMemo(() => {
         const counts = new Map<number, number>();
@@ -28,6 +78,23 @@ export default function Explorar() {
     }, [posts]);
     const emAlta = useMemo(() => [...musicas].sort((a, b) => (contagemPosts.get(b.id) ?? 0) - (contagemPosts.get(a.id) ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicas, contagemPosts]);
     const bemAvaliadas = useMemo(() => [...musicas].filter((m) => (m.avaliacoes ?? 0) > 0).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicas]);
+    const imagensPersonalizadas = useMemo(() => {
+        const generos = new Set(generosFavoritos.map(normalizar));
+        const idsArtistas = new Set(artistasFavoritos.map((artista) => artista.artistaId));
+        const favoritas = musicas.filter((musica) =>
+            (musica.genero && generos.has(normalizar(musica.genero))) ||
+            (musica.artista?.id != null && idsArtistas.has(musica.artista.id)),
+        );
+        return embaralharLista(favoritas.filter((musica) => musica.capa));
+    }, [musicas, generosFavoritos, artistasFavoritos]);
+    const imagensCatalogoEmbaralhadas = useMemo(
+        () => embaralharLista(musicas.filter((musica) => musica.capa)),
+        [musicas],
+    );
+    const artistasPersonalizadosEmbaralhados = useMemo(() => {
+        const idsArtistas = new Set(artistasFavoritos.map((artista) => artista.artistaId));
+        return embaralharLista(artistas.filter((artista) => idsArtistas.has(artista.id) && artista.fotoURL));
+    }, [artistas, artistasFavoritos]);
     const recomendadas = useMemo(() => {
         const generos = new Set(generosFavoritos.map(normalizar));
         const idsArtistas = new Set(artistasFavoritos.map((a) => a.artistaId));
@@ -61,11 +128,64 @@ export default function Explorar() {
 
     return <SafeAreaView className="flex-1 bg-[#080A10]">
         <Topbar titulo="Explorar" subtitulo="Encontre músicas, artistas e pessoas" />
-        <Searchbar value={termo} onChangeText={setTermo} />
+        <Searchbar
+            value={termo}
+            onChangeText={setTermo}
+            onSubmitEditing={(valor) => void guardarPesquisa(valor)}
+            onEndEditing={(valor) => void guardarPesquisa(valor)}
+        />
         {buscando ? <ScrollView className="flex-1" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => void recarregar()} tintColor="#58AAF0" colors={["#58AAF0"]} />}>{resultadosPesquisa()}</ScrollView> : <ScrollView className="flex-1" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => void recarregar()} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
+            {historico.length > 0 && (
+                <View className="mt-3">
+                    <View className="mx-6 mb-3 flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                            <ClockCounterClockwiseIcon size={16} color="#8793A7" />
+                            <Text className="ml-2 text-sm font-medium text-white">Pesquisas recentes</Text>
+                        </View>
+                        <Pressable onPress={() => void limparPesquisas()} accessibilityRole="button" accessibilityLabel="Limpar histórico de pesquisa">
+                            <Text className="text-xs text-[#83C6FF]">Limpar</Text>
+                        </Pressable>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
+                        {historico.map((pesquisa) => (
+                            <View key={pesquisa} className="mr-2 flex-row overflow-hidden rounded-full border border-[#252D3C] bg-[#111420]">
+                                <Pressable
+                                    onPress={() => setTermo(pesquisa)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Pesquisar novamente: ${pesquisa}`}
+                                    className="flex-row items-center py-2 pl-3 pr-2"
+                                >
+                                    <Text className="max-w-[160px] text-xs text-[#D0D0D5]" numberOfLines={1}>{pesquisa}</Text>
+                                </Pressable>
+                                <Pressable
+                                    onPress={() => void removerPesquisa(pesquisa)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Remover ${pesquisa} do histórico`}
+                                    className="items-center justify-center px-2"
+                                >
+                                    <XIcon size={13} color="#8793A7" />
+                                </Pressable>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
             {erro && <Text className="text-red-400 text-sm mx-6 mt-4">Não foi possível carregar o conteúdo.</Text>}
             {carregando && musicas.length === 0 ? <View className="py-10"><ActivityIndicator color="#5EA7ED" /></View> : <>
                 {secaoMusicas("Em alta", emAlta, "banner")}
+                <View className="mt-7">
+                    <Text className="text-white text-lg font-serif mx-6 mb-3">Mais para explorar</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
+                        <AtalhoMusicalCard
+                            tipo="descoberta"
+                            imagem={imagensPersonalizadas[0]?.capa ?? imagensCatalogoEmbaralhadas[0]?.capa}
+                        />
+                        <AtalhoMusicalCard
+                            tipo="universo"
+                            imagem={artistasPersonalizadosEmbaralhados[0]?.fotoURL ?? imagensPersonalizadas[1]?.capa ?? imagensCatalogoEmbaralhadas[1]?.capa}
+                        />
+                    </ScrollView>
+                </View>
                 {secaoMusicas("Mais bem avaliadas", bemAvaliadas, "quadrado")}
                 {secaoMusicas("Talvez você goste", recomendadas, "quadrado")}
                 <View className="mt-7"><Text className="text-white text-lg font-serif mx-6 mb-3">Artistas</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>

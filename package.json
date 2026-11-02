@@ -12,6 +12,7 @@
     "expo-glass-effect": "~58.0.5",
     "expo-haptics": "~58.0.7",
     "expo-image": "~58.0.18",
+    "expo-image-manipulator": "~58.0.16",
     "expo-image-picker": "~58.0.10",
     "expo-linear-gradient": "~58.0.3",
     "expo-linking": "~58.0.15",
@@ -35,7 +36,8 @@
     "react-native-toast-message": "^2.5.2",
     "react-native-web": "^0.21.4",
     "react-native-worklets": "0.13.0",
-    "tailwindcss": "^3.4.19"
+    "tailwindcss": "^3.4.19",
+    "thumbhash": "^0.1.1"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",

@@ -28,10 +28,12 @@ import PostCard from "../../components/postCard";
 import MusicCard from "../../components/musicCard";
 import PlataformaMusicalIcon from "../../components/PlataformaMusicalIcon";
 import FotoArtista from "../../components/FotoArtista";
+import { usePaletaCapa } from "../../hooks/usePaletaCapa";
 import { buscarMusicaPorId, buscarMusicas, buscarPostsDaMusica, type Musica } from "../../services/musicaService";
 import { buscarIdsSalvos, alternarSalvamentoMusica } from "../../services/salvamentoService";
 import { buscarMeuPerfil } from "../../services/usuarioService";
 import { feedbackAcao } from "../../services/feedbackTatil";
+import { corComOpacidade } from "../../services/paletaCapaService";
 import type { Post } from "../../services/postService";
 
 const capaPadrao = require("../../../assets/images/logo.png");
@@ -53,6 +55,8 @@ export default function DetalheMusica() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [revisao, setRevisao] = useState(0);
+    const paleta = usePaletaCapa(musica?.capa);
+    const corDinamica = paleta?.dominante ?? "#58AAF0";
 
     useEffect(() => {
         let ativo = true;
@@ -154,7 +158,17 @@ export default function DetalheMusica() {
             ) : (
                 <ScrollView className="flex-1" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => { setErro(""); setCarregando(true); setRevisao((valor) => valor + 1); }} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
                     {/* Capa ampla com imagem desfocada e informações sobrepostas, como no site. */}
-                    <View className="relative mx-4 mt-4 h-[280px] overflow-hidden rounded-xl border border-[#293449] bg-[#111420]">
+                    <View
+                        className="relative mx-4 mt-4 h-[280px] overflow-hidden rounded-xl border bg-[#111420]"
+                        style={{
+                            borderColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.68),
+                            shadowColor: corDinamica,
+                            shadowOffset: { width: 0, height: 5 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 22,
+                            elevation: 6,
+                        }}
+                    >
                         <ImageBackground
                             source={musica.capa ? { uri: musica.capa } : capaPadrao}
                             blurRadius={18}
@@ -162,6 +176,16 @@ export default function DetalheMusica() {
                             resizeMode="cover"
                         />
                         <View className="absolute inset-0 bg-black/50" />
+                        <View
+                            pointerEvents="none"
+                            className="absolute inset-0"
+                            style={{ backgroundColor: corComOpacidade(paleta?.dominante ?? "#58AAF0", 0.22) }}
+                        />
+                        <View
+                            pointerEvents="none"
+                            className="absolute left-5 right-5 top-0 h-px"
+                            style={{ backgroundColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.82) }}
+                        />
                         <Image
                             source={musica.capa ? { uri: musica.capa } : capaPadrao}
                             className="absolute inset-0 w-full h-full"
@@ -178,15 +202,19 @@ export default function DetalheMusica() {
                                 onPress={() => void alternarSalvo()}
                                 disabled={salvando}
                                 accessibilityLabel={salva ? "Remover dos salvos" : "Salvar música"}
-                                className="flex-row items-center rounded-lg bg-black/60 px-3 py-2 mr-2"
+                                className="flex-row items-center rounded-lg border px-3 py-2 mr-2"
+                                style={{
+                                    borderColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.42),
+                                    backgroundColor: corComOpacidade(paleta?.dominante ?? "#000000", 0.6),
+                                }}
                             >
-                                <BookmarkSimpleIcon size={18} color={salva ? "#58AAF0" : "#FFFFFF"} weight={salva ? "fill" : "regular"} />
+                                <BookmarkSimpleIcon size={18} color={salva ? corDinamica : "#FFFFFF"} weight={salva ? "fill" : "regular"} />
                                 <Text className={`text-xs ml-2 ${salva ? "text-[#58AAF0]" : "text-white"}`}>
                                     {salvando ? "Salvando..." : salva ? "Salva" : "Salvar"}
                                 </Text>
                             </Pressable>
                             <View className="flex-row items-center rounded-lg bg-black/60 px-3 py-2">
-                                <StarIcon size={18} color="#58AAF0" weight="fill" />
+                                <StarIcon size={18} color={corDinamica} weight="fill" />
                                 <Text className="text-white text-base ml-2">{Number(musica.nota ?? 0).toFixed(1)}</Text>
                             </View>
                         </View>
@@ -217,8 +245,19 @@ export default function DetalheMusica() {
                     </View>
 
                     {linksParaOuvir.length > 0 ? (
-                        <View className="mx-4 mt-5 rounded-xl border border-[#293449] bg-[#182131] p-4">
-                            <Text className="text-white text-xl font-medium">Ouvir</Text>
+                        <View
+                            className="mx-4 mt-5 overflow-hidden rounded-xl border p-4"
+                            style={{
+                                borderColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.42),
+                                backgroundColor: corComOpacidade(paleta?.dominante ?? "#182131", 0.16),
+                            }}
+                        >
+                            <View
+                                pointerEvents="none"
+                                className="absolute -right-10 -top-10 h-28 w-28 rounded-full"
+                                style={{ backgroundColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.14) }}
+                            />
+                            <Text style={{ color: paleta?.acento ?? "#FFFFFF" }} className="text-xl font-medium">Ouvir</Text>
                             <Text className="text-[#8D96A6] text-xs mt-1 mb-3">
                                 Escolha a plataforma que você usa para ouvir.
                             </Text>
@@ -227,11 +266,15 @@ export default function DetalheMusica() {
                                     <Pressable
                                         key={nome}
                                         onPress={() => void abrirServico(nome, link)}
-                                        className="w-[48%] h-11 flex-row items-center rounded-md border border-[#293449] bg-[#111420] px-3 mb-2"
+                                        className="w-[48%] h-11 flex-row items-center rounded-md border px-3 mb-2"
+                                        style={{
+                                            borderColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.22),
+                                            backgroundColor: corComOpacidade(paleta?.dominante ?? "#111420", 0.12),
+                                        }}
                                     >
                                         <PlataformaMusicalIcon plataforma={nome as "Spotify" | "YouTube Music" | "Amazon Music" | "Apple Music"} tamanho={21} />
                                         <Text className="flex-1 text-white text-xs ml-2" numberOfLines={1}>{nome}</Text>
-                                        <ArrowSquareOutIcon size={14} color="#8495A9" />
+                                        <ArrowSquareOutIcon size={14} color={paleta?.acento ?? "#8495A9"} />
                                     </Pressable>
                                 ))}
                             </View>
@@ -266,6 +309,13 @@ export default function DetalheMusica() {
                     <Pressable
                         onPress={() => roteador.push({ pathname: "/criar", params: { musica: String(musicaId) } })}
                         className="h-12 flex-row items-center justify-center rounded-lg bg-[#58AAF0] mx-4 mt-7"
+                        style={{
+                            shadowColor: corDinamica,
+                            shadowOffset: { width: 0, height: 3 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 12,
+                            elevation: 4,
+                        }}
                     >
                         <PlusIcon size={17} color="#07111E" weight="bold" />
                         <Text className="text-[#07111E] text-sm font-serif ml-2">Adicionar uma avaliação</Text>

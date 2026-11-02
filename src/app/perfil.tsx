@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { ImageManipulator as EditorDeImagem, SaveFormat } from "expo-image-manipulator";
 import Toast from "react-native-toast-message";
 import {
     CameraIcon,
@@ -156,33 +157,65 @@ export default function Perfil() {
     async function escolherImagem(tipo: TipoImagemPerfil) {
         if (!perfil || alterandoImagem) return;
 
+        setAlterandoImagem(true);
         try {
             const resultado = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ["images"],
                 allowsEditing: true,
-                aspect: tipo === "foto" ? [1, 1] : [16, 5],
-                quality: 0.85,
+                // O formato da capa segue o corte 3:1 usado no web.
+                aspect: tipo === "foto" ? [1, 1] : [3, 1],
+                quality: 0.75,
             });
             if (resultado.canceled || !resultado.assets[0]) return;
 
             const imagem = resultado.assets[0];
+            const tamanhoMaximo = 5 * 1024 * 1024;
+            const tamanhoImagem = imagem.fileSize ?? imagem.file?.size ?? 0;
+
+            // Redimensiona apenas fotos que ultrapassariam o limite da API.
+            // A proporção é mantida e o resultado é convertido para JPEG.
+            const imagemParaEnviar = !tamanhoImagem || tamanhoImagem > tamanhoMaximo
+                ? await EditorDeImagem.manipulate(imagem.uri, {
+                      maxWidth: 1600,
+                      maxHeight: 1600,
+                  })
+                      .renderAsync()
+                      .then((resultadoImagem) =>
+                          resultadoImagem.saveAsync({
+                              format: SaveFormat.JPEG,
+                              compress: 0.68,
+                          }),
+                      )
+                : null;
+
             const formulario = new FormData();
             formulario.append("tipo", tipo);
 
-            if (Platform.OS === "web" && imagem.file) {
-                formulario.append("imagem", imagem.file);
+            if (Platform.OS === "web") {
+                const arquivo = imagemParaEnviar
+                    ? await fetch(imagemParaEnviar.uri).then((resposta) => resposta.blob())
+                    : imagem.file;
+
+                if (!arquivo) {
+                    throw new Error("Não foi possível preparar a imagem para envio.");
+                }
+
+                formulario.append(
+                    "imagem",
+                    arquivo,
+                    imagemParaEnviar ? `${tipo}.jpg` : imagem.fileName ?? `${tipo}.jpg`,
+                );
             } else {
                 formulario.append(
                     "imagem",
                     {
-                        uri: imagem.uri,
-                        name: imagem.fileName ?? `${tipo}.jpg`,
-                        type: imagem.mimeType ?? "image/jpeg",
+                        uri: imagemParaEnviar?.uri ?? imagem.uri,
+                        name: imagemParaEnviar ? `${tipo}.jpg` : imagem.fileName ?? `${tipo}.jpg`,
+                        type: imagemParaEnviar ? "image/jpeg" : imagem.mimeType ?? "image/jpeg",
                     } as unknown as Blob,
                 );
             }
 
-            setAlterandoImagem(true);
             const dadosAtualizados = await enviarImagemDoPerfil(formulario);
             setPerfil((atual) =>
                 atual
@@ -290,7 +323,7 @@ export default function Perfil() {
                                 onPress={() => void escolherImagem("foto")}
                                 disabled={alterandoImagem}
                                 accessibilityLabel="Trocar foto de perfil"
-                                className="absolute -right-8 bottom-0 w-8 h-8 rounded-full bg-[#58AAF0] border-2 border-[#080A10] items-center justify-center"
+                                className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-8 h-8 rounded-full bg-[#58AAF0] border-2 border-[#080A10] items-center justify-center"
                             >
                                 <CameraIcon size={15} color="#FFFFFF" />
                             </Pressable>

@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
-import { DeviceEventEmitter, View, Pressable, Image } from "react-native";
+import { View, Pressable, Image } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 
 import {
     GearIcon,
-    UserIcon,
+    BellIcon,
     CaretLeftIcon,
 } from "phosphor-react-native";
-import { buscarFotoPerfil } from "../services/perfilCache";
 
 interface TopBarProps {
     titulo?: string;
@@ -19,24 +17,6 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
 
     const router = useRouter();
     const pathname = usePathname();
-    const [foto, setFoto] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (tipo !== "normal") return;
-        let ativo = true;
-        const carregarFoto = () => {
-            void buscarFotoPerfil()
-                .then((imagem) => { if (ativo) setFoto(imagem); })
-                .catch((erro) => console.error("Erro ao carregar a foto do perfil:", erro));
-        };
-
-        carregarFoto();
-        const ouvinte = DeviceEventEmitter.addListener("usuarioAtualizado", carregarFoto);
-        return () => {
-            ativo = false;
-            ouvinte.remove();
-        };
-    }, [tipo]);
 
     return (
         <View className="px-8 pt-6 pb-4">
@@ -44,7 +24,7 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
             <View className="flex-row items-center">
                 {tipo === "normal" ? (
                     <>
-                        {/* Configurações à esquerda e perfil à direita. */}
+                        {/* Configurações à esquerda e notificações à direita. */}
                         <Pressable
                             onPress={() => router.push("/configuracoes")}
                             accessibilityLabel="Abrir configurações"
@@ -71,22 +51,15 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
                         </Pressable>
 
                         <Pressable
-                            onPress={() => router.push("/perfil")}
-                            accessibilityLabel="Abrir meu perfil"
+                            onPress={() => router.push("/notificacoes")}
+                            accessibilityLabel="Abrir notificações"
                             className="w-10 h-10 items-center justify-center"
                         >
-                            {foto ? (
-                                <Image
-                                    source={{ uri: foto }}
-                                    className="w-9 h-9 rounded-full border border-[#354052]"
-                                />
-                            ) : (
-                                <UserIcon
-                                    size={24}
-                                    color={pathname === "/perfil" ? "#58AAF0" : "#D0D0D5"}
-                                    weight={pathname === "/perfil" ? "fill" : "regular"}
-                                />
-                            )}
+                            <BellIcon
+                                size={24}
+                                color={pathname === "/notificacoes" ? "#58AAF0" : "#D0D0D5"}
+                                weight={pathname === "/notificacoes" ? "fill" : "regular"}
+                            />
                         </Pressable>
                     </>
                 ) : tipo === "voltar" ? (

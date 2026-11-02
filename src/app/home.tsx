@@ -7,47 +7,59 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import FeedTabs from "../components/FeedTabs";
 import Navbar from "../components/navbar";
 import PostCard from "../components/postCard";
+import MusicaDoDiaCard from "../components/MusicaDoDiaCard";
+import Searchbar from "../components/searchBar";
 import Topbar from "../components/topbar";
+import { buscarMusicaDoDia, type MusicaDoDia } from "../services/recomendacaoService";
 import { buscarPosts as buscarPublicacoes, type Post } from "../services/postService";
+import { registrarPesquisa } from "../services/historicoPesquisaService";
 import { buscarMeuPerfil } from "../services/usuarioService";
 
 type AbaFeed = "paraVoce" | "seguindo";
-type UsuarioLogado = { id: number; nome: string; username: string };
 
 export default function Home() {
+    const router = useRouter();
     const [abaAtiva, setAbaAtiva] = useState<AbaFeed>("paraVoce");
+    const [termoBusca, setTermoBusca] = useState("");
     const [publicacoesRecomendadas, setPublicacoesRecomendadas] = useState<Post[]>([]);
     const [publicacoesSeguindo, setPublicacoesSeguindo] = useState<Post[]>([]);
-    const [usuarioLogado, setUsuarioLogado] = useState<UsuarioLogado | null>(null);
+    const [usuarioId, setUsuarioId] = useState<number | null>(null);
+    const [musicaDoDia, setMusicaDoDia] = useState<MusicaDoDia["musica"]>(null);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState("");
     const idSolicitacao = useRef(0);
 
-    // Busca o perfil para exibir o nome da pessoa no cabeçalho.
+    useEffect(() => {
+        let ativo = true;
+        void buscarMeuPerfil()
+            .then((usuario) => {
+                if (ativo) setUsuarioId(usuario.id);
+            })
+            .catch((erroUsuario) => console.error("Erro ao buscar o perfil do usuário:", erroUsuario));
+
+        return () => {
+            ativo = false;
+        };
+    }, []);
+
+    // Recomendação diária chega pequena e não bloqueia a abertura do feed.
     useEffect(() => {
         let ativo = true;
 
-        async function carregarUsuario() {
-            try {
-                const usuario = await buscarMeuPerfil();
-                if (ativo) {
-                    setUsuarioLogado({
-                        id: usuario.id,
-                        nome: usuario.nome,
-                        username: usuario.username,
-                    });
-                }
-            } catch (erroUsuario) {
-                console.error("Erro ao buscar o perfil do usuário:", erroUsuario);
-            }
-        }
+        void buscarMusicaDoDia()
+            .then((resposta) => {
+                if (ativo) setMusicaDoDia(resposta.musica);
+            })
+            .catch((erroRecomendacao) => {
+                console.error("Erro ao buscar a música do dia:", erroRecomendacao);
+            });
 
-        void carregarUsuario();
         return () => {
             ativo = false;
         };
@@ -105,6 +117,16 @@ export default function Home() {
             ? publicacoesSeguindo
             : publicacoesRecomendadas;
 
+    function pesquisar(consulta: string) {
+        const termo = consulta.trim();
+        if (!termo) return;
+
+        void registrarPesquisa(termo).catch((erroBusca) => {
+            console.warn("Não foi possível salvar a pesquisa no histórico.", erroBusca);
+        });
+        router.push({ pathname: "/explorar", params: { q: termo } } as never);
+    }
+
     function removerPublicacao(id: number) {
         setPublicacoesRecomendadas((lista) =>
             lista.filter((publicacao) => publicacao.id !== id),
@@ -116,11 +138,8 @@ export default function Home() {
 
     return (
         <SafeAreaView className="flex-1 bg-[#080A10]">
-            {/* Cabeçalho com o nome da pessoa conectada. */}
-            <Topbar
-                titulo={`Olá, ${usuarioLogado?.nome ?? usuarioLogado?.username ?? "Usuário"}`}
-                subtitulo="O que você quer descobrir hoje?"
-            />
+            <Topbar />
+            <Searchbar value={termoBusca} onChangeText={setTermoBusca} onSubmitEditing={pesquisar} />
 
             {/* Alterna entre recomendações e publicações de quem você segue. */}
             <FeedTabs
@@ -140,7 +159,21 @@ export default function Home() {
                     />
                 }
             >
-                <View className="flex-1 mt-2">
+                {musicaDoDia ? (
+                    <>
+                        <Text className="mx-5 mb-2 mt-4 font-serif text-lg text-white">Música do dia</Text>
+                        <MusicaDoDiaCard musica={musicaDoDia} />
+                        <View className="mx-5 mb-4 mt-1 flex-row items-center">
+                            <View className="h-px flex-1 bg-[#252D3C]" />
+                            <Text className="mx-3 text-[10px] font-semibold uppercase tracking-[1.4px] text-[#718096]">
+                                Publicações
+                            </Text>
+                            <View className="h-px flex-1 bg-[#252D3C]" />
+                        </View>
+                    </>
+                ) : null}
+
+                <View className="flex-1">
                     {carregando ? (
                         <View className="py-12 items-center">
                             <ActivityIndicator size="large" color="#5EA7ED" />
@@ -184,8 +217,7 @@ export default function Home() {
                                     publicacao.musica?.duracaoSegundos
                                 }
                                 ehMeuPost={
-                                    usuarioLogado !== null &&
-                                    publicacao.usuario?.id === usuarioLogado.id
+                                    usuarioId !== null && publicacao.usuario?.id === usuarioId
                                 }
                                 onExcluir={() => removerPublicacao(publicacao.id)}
                             />

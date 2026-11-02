@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StarIcon } from "phosphor-react-native";
+import { CheckIcon, MagnifyingGlassIcon, StarIcon, XIcon } from "phosphor-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import Topbar from "../components/topbar";
+import PlataformaMusicalIcon from "../components/PlataformaMusicalIcon";
 import { buscarMusicas } from "../services/musicaService";
 import { buscarArtistasFavoritos, buscarGenerosFavoritos } from "../services/usuarioService";
 import { criarPost } from "../services/postService";
@@ -48,16 +49,26 @@ export default function Criar() {
     const idsFavoritos = new Set(artistasFavoritos.map((item) => item.artistaId));
     const generosNormalizados = new Set(generosFavoritos.map((item) => item.trim().toLocaleLowerCase("pt-BR")));
     const recomendadas = musicas.filter((musica) => (musica.genero && generosNormalizados.has(musica.genero.trim().toLocaleLowerCase("pt-BR"))) || (musica.artista?.id != null && idsFavoritos.has(musica.artista.id))).slice(0, 8);
-    const linksOuvir: [string, string][] = selecionada ? [
-        ["Spotify", selecionada.spotifyUrl ?? ""], ["Apple Music", selecionada.appleMusicUrl ?? ""],
-        ["Amazon Music", selecionada.amazonMusicUrl ?? ""], ["YouTube Music", selecionada.youtubeMusicUrl ?? ""],
-    ].filter((item): item is [string, string] => item[1].length > 0) : [];
+    const linksOuvir = selecionada ? [
+        { nome: "Spotify" as const, url: selecionada.spotifyUrl ?? "" },
+        { nome: "Apple Music" as const, url: selecionada.appleMusicUrl ?? "" },
+        { nome: "Amazon Music" as const, url: selecionada.amazonMusicUrl ?? "" },
+        { nome: "YouTube Music" as const, url: selecionada.youtubeMusicUrl ?? "" },
+    ].filter((item) => item.url.length > 0) : [];
 
     const filtradas = useMemo(() => {
         const termo = busca.trim().toLocaleLowerCase("pt-BR");
         if (!termo) return musicas;
         return musicas.filter((musica) => `${musica.titulo} ${musica.artista?.nome ?? ""}`.toLocaleLowerCase("pt-BR").includes(termo));
     }, [busca, musicas]);
+
+    const podePublicar = Boolean(selecionada && nota > 0 && texto.trim());
+
+    function selecionarMusica(musica: Musica) {
+        setSelecionada(musica);
+        setNota(0);
+        setBusca("");
+    }
 
     async function publicar() {
         if (!selecionada || nota === 0 || !texto.trim()) {
@@ -79,49 +90,151 @@ export default function Criar() {
     return (
         <SafeAreaView className="flex-1 bg-[#080A10]">
             <Topbar titulo="Criar avaliação" subtitulo="O que você achou dessa música?" tipo="voltar" />
-            <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                <Text className="text-white text-base font-serif mt-2 mb-3">Músicas recomendadas</Text>
-                {carregando ? <Text className="text-[#718096] text-xs mb-5">Carregando recomendações...</Text> : recomendadas.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 mb-5" contentContainerStyle={{ paddingHorizontal: 4 }}>{recomendadas.map((musica) => <Pressable key={musica.id} onPress={() => { setSelecionada(musica); setNota(0); }} className={`w-[132px] mr-3 rounded-lg border bg-[#111420] p-2 ${selecionada?.id === musica.id ? "border-[#58AAF0]" : "border-[#354052]"}`}><Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="w-full aspect-square rounded-lg" resizeMode="cover" /><Text className="text-white text-xs mt-2" numberOfLines={1}>{musica.titulo}</Text><Text className="text-[#8B93A3] text-[11px] mt-1" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text></Pressable>)}</ScrollView> : <Text className="text-[#718096] text-xs mb-5">Nenhuma recomendação para suas preferências.</Text>}
-                <Text className="text-white text-base font-serif mt-2 mb-3">Escolha uma música</Text>
-                <TextInput className="h-11 bg-[#111420] border border-[#354052] rounded-lg px-3 text-white text-sm mb-4" value={busca} onChangeText={setBusca} placeholder="Buscar música ou artista..." placeholderTextColor="#718096" />
-                {carregando ? <ActivityIndicator color="#5EA7ED" /> : (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1" contentContainerStyle={{ paddingHorizontal: 4 }}>
-                        {filtradas.slice(0, 12).map((musica) => (
-                            <Pressable key={musica.id} onPress={() => { setSelecionada(musica); setNota(0); setBusca(""); }} className={`w-[132px] mr-3 rounded-lg border bg-[#111420] p-2 ${selecionada?.id === musica.id ? "border-[#58AAF0]" : "border-[#354052]"}`}>
-                                <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="w-full aspect-square rounded-lg" resizeMode="cover" />
-                                <Text className="text-white text-xs mt-2" numberOfLines={1}>{musica.titulo}</Text>
-                                <Text className="text-[#8B93A3] text-[11px] mt-1" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
+            <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <Text className="mb-2 font-serif text-lg text-white">Escolha uma música</Text>
+                <Text className="mb-3 text-xs text-[#8793A7]">Sugestões com base nos artistas e gêneros que você curte.</Text>
+                {carregando ? (
+                    <View className="h-24 items-center justify-center">
+                        <ActivityIndicator color="#5EA7ED" />
+                        <Text className="mt-2 text-xs text-[#718096]">Carregando músicas...</Text>
+                    </View>
+                ) : recomendadas.length ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 mb-4" contentContainerStyle={{ paddingHorizontal: 4 }}>
+                        {recomendadas.map((musica) => (
+                            <Pressable
+                                key={musica.id}
+                                onPress={() => selecionarMusica(musica)}
+                                accessibilityRole="button"
+                                accessibilityLabel={"Selecionar " + musica.titulo}
+                                className={"mr-3 w-[132px] rounded-xl border p-2 " + (selecionada?.id === musica.id ? "border-[#58AAF0] bg-[#17243A]" : "border-[#354052] bg-[#111420]")}
+                            >
+                                <View className="relative">
+                                    <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="aspect-square w-full rounded-lg" resizeMode="cover" />
+                                    {selecionada?.id === musica.id && <View className="absolute right-2 top-2 h-6 w-6 items-center justify-center rounded-full bg-[#58AAF0]"><CheckIcon size={14} color="#07111E" weight="bold" /></View>}
+                                </View>
+                                <Text className="mt-2 text-xs text-white" numberOfLines={1}>{musica.titulo}</Text>
+                                <Text className="mt-1 text-[11px] text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
                             </Pressable>
                         ))}
-                        {!filtradas.length && <Text className="text-[#718096] text-sm py-4">Nenhuma música encontrada.</Text>}
                     </ScrollView>
+                ) : (
+                    <Text className="mb-3 text-xs text-[#718096]">Sem sugestões por enquanto. Pesquise no catálogo abaixo.</Text>
                 )}
 
-                {selecionada && <>
-                    <View className="flex-row items-center mt-5 p-3 rounded-xl border border-[#354052] bg-[#111420]">
-                        <Image source={selecionada.capa ? { uri: selecionada.capa } : require("../../assets/images/logo.png")} className="w-16 h-16 rounded-lg" />
-                        <View className="flex-1 ml-3"><Text className="text-white text-sm font-semibold" numberOfLines={1}>{selecionada.titulo}</Text><Text className="text-[#8B93A3] text-xs mt-1" numberOfLines={1}>{selecionada.artista?.nome ?? "Artista desconhecido"}</Text><View className="flex-row items-center mt-2"><StarIcon size={14} color="#58AAF0" weight="fill" /><Text className="text-[#D0D0D5] text-xs ml-1">{(selecionada.nota ?? 0) > 0 ? selecionada.nota?.toFixed(1) : "Sem avaliações"}</Text><Text className="text-[#718096] text-xs ml-1">({selecionada.avaliacoes ?? 0})</Text></View></View>
-                    </View>
-                    {linksOuvir.length > 0 && <View className="flex-row flex-wrap mt-3">{linksOuvir.map(([service, url]) => <Pressable key={service} onPress={() => void Linking.openURL(url)} className="px-3 py-2 mr-2 mb-2 rounded-lg bg-[#1C314B]"><Text className="text-white text-xs">Ouvir no {service}</Text></Pressable>)}</View>}
-                    <Text className="text-white text-base font-serif mt-6">Sua nota</Text>
-                    <View className="flex-row items-center mt-3">
-                        {[1, 2, 3, 4, 5].map((estrela) => (
-                            <View key={estrela} className="relative mr-2">
-                                <StarIcon size={32} color="#52627C" weight="regular" />
-                                <View className="absolute left-0 top-0 h-8 overflow-hidden" style={{ width: nota >= estrela ? 32 : nota >= estrela - 0.5 ? 16 : 0 }}><StarIcon size={32} color="#58AAF0" weight="fill" /></View>
-                                {estrela > 1 && <Pressable onPress={() => setNota(estrela - 0.5)} className="absolute left-0 top-0 w-1/2 h-full" accessibilityLabel={`Nota ${estrela - 0.5}`} />}
-                                <Pressable onPress={() => setNota(estrela)} className={`absolute top-0 h-full ${estrela === 1 ? "left-0 w-full" : "right-0 w-1/2"}`} accessibilityLabel={`Nota ${estrela}`} />
-                            </View>
+                <View className="flex-row items-center rounded-xl border border-[#354052] bg-[#111420] px-3">
+                    <MagnifyingGlassIcon size={18} color="#718096" />
+                    <TextInput
+                        className="h-12 flex-1 px-3 text-sm text-white"
+                        value={busca}
+                        onChangeText={setBusca}
+                        placeholder="Buscar música ou artista..."
+                        placeholderTextColor="#718096"
+                        returnKeyType="search"
+                    />
+                    {!!busca && <Pressable onPress={() => setBusca("")} accessibilityLabel="Limpar busca" className="p-2"><XIcon size={17} color="#8793A7" /></Pressable>}
+                </View>
+                {!!busca.trim() && (
+                    <View className="mt-2 rounded-xl border border-[#263143] bg-[#0D111A] p-2">
+                        {carregando ? <ActivityIndicator color="#5EA7ED" /> : filtradas.slice(0, 8).map((musica) => (
+                            <Pressable key={musica.id} onPress={() => selecionarMusica(musica)} className="mb-1 flex-row items-center rounded-lg p-2">
+                                <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="h-11 w-11 rounded-lg" resizeMode="cover" />
+                                <View className="ml-3 flex-1">
+                                    <Text className="text-sm text-white" numberOfLines={1}>{musica.titulo}</Text>
+                                    <Text className="mt-1 text-xs text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
+                                </View>
+                                {selecionada?.id === musica.id && <CheckIcon size={18} color="#58AAF0" weight="bold" />}
+                            </Pressable>
                         ))}
-                        {nota > 0 && <Text className="text-[#D0D0D5] text-sm ml-2">{nota.toFixed(1).replace(".", ",")}/5</Text>}
+                        {!carregando && !filtradas.length && <Text className="p-3 text-center text-xs text-[#8793A7]">Nenhuma música encontrada.</Text>}
                     </View>
-                    <Text className="text-white text-base font-serif mt-6 mb-3">Seu comentário</Text>
-                    <TextInput className="min-h-[120px] bg-[#111420] border border-[#354052] rounded-lg px-3 py-3 text-white text-sm" value={texto} onChangeText={setTexto} placeholder="Escreva algo sobre a música..." placeholderTextColor="#718096" multiline textAlignVertical="top" maxLength={500} />
-                    <Text className="text-[#718096] text-xs text-right mt-1">{texto.length}/500</Text>
-                    <Pressable onPress={() => void publicar()} disabled={publicando} className={`h-12 rounded-xl items-center justify-center mt-5 ${publicando ? "bg-[#3C6589]" : "bg-[#5EA7ED]"}`}>
-                        {publicando ? <ActivityIndicator color="#FFFFFF" /> : <Text className="text-white text-base font-serif">Publicar avaliação</Text>}
-                    </Pressable>
-                </>}
+                )}
+
+                {selecionada ? (
+                    <View className="mt-4 flex-row items-center rounded-xl border border-[#58AAF0]/60 bg-[#111722] p-3">
+                        <Image source={selecionada.capa ? { uri: selecionada.capa } : require("../../assets/images/logo.png")} className="h-16 w-16 rounded-lg" resizeMode="cover" />
+                        <View className="ml-3 flex-1">
+                            <Text className="text-[10px] font-semibold uppercase tracking-wider text-[#58AAF0]">Música selecionada</Text>
+                            <Text className="mt-1 text-sm font-semibold text-white" numberOfLines={1}>{selecionada.titulo}</Text>
+                            <Text className="mt-1 text-xs text-[#8793A7]" numberOfLines={1}>{selecionada.artista?.nome ?? "Artista desconhecido"}</Text>
+                            <View className="mt-2 flex-row items-center">
+                                <StarIcon size={13} color="#58AAF0" weight="fill" />
+                                <Text className="ml-1 text-xs text-[#D0D0D5]">{(selecionada.nota ?? 0) > 0 ? selecionada.nota?.toFixed(1) : "Sem avaliações"}</Text>
+                                <Text className="ml-1 text-xs text-[#718096]">({selecionada.avaliacoes ?? 0} avaliações)</Text>
+                            </View>
+                        </View>
+                        <Pressable onPress={() => { setSelecionada(null); setNota(0); }} accessibilityLabel="Trocar música" className="p-2">
+                            <XIcon size={18} color="#8793A7" />
+                        </Pressable>
+                    </View>
+                ) : (
+                    <Text className="mt-3 text-xs text-[#718096]">Selecione uma música para continuar.</Text>
+                )}
+
+                {linksOuvir.length > 0 && (
+                    <View className="mt-3 flex-row flex-wrap">
+                        {linksOuvir.map(({ nome, url }) => (
+                            <Pressable key={nome} onPress={() => void Linking.openURL(url)} className="mb-2 mr-2 flex-row items-center rounded-lg border border-[#354052] bg-[#111420] px-3 py-2">
+                                <PlataformaMusicalIcon plataforma={nome} tamanho={18} />
+                                <Text className="ml-2 text-xs text-white">Ouvir</Text>
+                            </Pressable>
+                        ))}
+                    </View>
+                )}
+
+                <View className="mt-6 rounded-2xl border border-[#263143] bg-[#0D111A] p-4">
+                    <Text className="font-serif text-lg text-white">Sua nota</Text>
+                    <View className="mt-3 flex-row items-center">
+                        {[1, 2, 3, 4, 5].map((estrela) => (
+                            <Pressable
+                                key={estrela}
+                                onPress={() => setNota(estrela)}
+                                accessibilityRole="button"
+                                accessibilityLabel={"Dar nota " + estrela + " de 5"}
+                                accessibilityState={{ selected: nota === estrela }}
+                                className="mr-2 p-1"
+                            >
+                                <StarIcon
+                                    size={34}
+                                    color={nota >= estrela ? "#58AAF0" : "#52627C"}
+                                    weight={nota >= estrela ? "fill" : "regular"}
+                                />
+                            </Pressable>
+                        ))}
+                        <Text className="ml-2 font-serif text-2xl text-white">{nota > 0 ? nota.toFixed(1).replace(".", ",") : "—"}<Text className="text-sm text-[#718096]"> / 5</Text></Text>
+                    </View>
+                </View>
+
+                <View className="mt-4 rounded-2xl border border-[#263143] bg-[#0D111A] p-4">
+                    <Text className="font-serif text-lg text-white">Seu comentário</Text>
+                    <Text className="mt-1 text-xs leading-5 text-[#8793A7]">Conte o que mais chamou sua atenção nessa música.</Text>
+                    <TextInput
+                        className="mt-3 min-h-[130px] rounded-xl border border-[#354052] bg-[#111420] px-3 py-3 text-sm leading-5 text-white"
+                        value={texto}
+                        onChangeText={setTexto}
+                        placeholder="Fale sobre a letra, o som ou o que sentiu ouvindo..."
+                        placeholderTextColor="#718096"
+                        multiline
+                        textAlignVertical="top"
+                        maxLength={500}
+                    />
+                    <View className="mt-2 flex-row items-center justify-between">
+                        <Text className="flex-1 text-[11px] text-[#718096]">Sua avaliação aparecerá no seu perfil.</Text>
+                        <Text className={"ml-2 text-xs " + (texto.length >= 480 ? "text-amber-300" : "text-[#718096]")}>{texto.length}/500</Text>
+                    </View>
+                </View>
+
+                {!podePublicar && <Text className="mt-4 text-center text-xs text-[#8793A7]">Para publicar, escolha uma música, dê uma nota e escreva sua avaliação.</Text>}
+                <Pressable
+                    onPress={() => void publicar()}
+                    disabled={!podePublicar || publicando}
+                    className={"mt-4 h-12 flex-row items-center justify-center rounded-xl " + (podePublicar && !publicando ? "bg-[#58AAF0]" : "bg-[#263143]")}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+                >
+                    {publicando ? <ActivityIndicator color="#FFFFFF" /> : <>
+                        <CheckIcon size={18} color={podePublicar ? "#07111E" : "#718096"} weight="bold" />
+                        <Text className={"ml-2 text-sm font-semibold " + (podePublicar ? "text-[#07111E]" : "text-[#718096]")}>Publicar avaliação</Text>
+                    </>}
+                </Pressable>
             </ScrollView>
         </SafeAreaView>
     );

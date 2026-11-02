@@ -55,7 +55,9 @@ export default function Login() {
             });
 
             router.replace(
-                resposta.usuario.preferenciasConcluidas ? "/home" : "/filtrar",
+                resposta.usuario.preferenciasConcluidas
+                    ? "/home"
+                    : ({ pathname: "/descoberta", params: { onboarding: "sim" } } as never),
             );
         } catch (erro) {
             if (
