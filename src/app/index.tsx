@@ -1,7 +1,9 @@
+
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { apiRequest } from "../services/api";
 import type { Usuario } from "../types/auth";
 
@@ -18,11 +20,13 @@ export default function Index() {
                     return;
                 }
 
-                await apiRequest<Usuario>("/usuarios/me", {
+                const usuario = await apiRequest<Usuario>("/usuarios/me", {
                     autenticado: true,
                 });
 
-                router.replace("/home");
+                router.replace(
+                    usuario.preferenciasConcluidas ? "/home" : "/filtrar",
+                );
             } catch {
                 await AsyncStorage.multiRemove(["token", "usuario"]);
                 router.replace("/login");

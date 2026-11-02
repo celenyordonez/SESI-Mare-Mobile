@@ -14,6 +14,7 @@ export default function Navbar() {
 
     const router = useRouter();
     const pathname = usePathname();
+    const inicioAtivo = pathname === "/" || pathname === "/home";
 
     return (
         <View className="h-[75px] bg-[#111420] border-t border-[#171E2B] flex-row">
@@ -25,12 +26,12 @@ export default function Navbar() {
             >
                 <HouseLineIcon
                     size={24}
-                    color={pathname === "/" ? "#58AAF0" : "#D0D0D5"}
-                    weight={pathname === "/" ? "fill" : "regular"}
+                    color={inicioAtivo ? "#58AAF0" : "#D0D0D5"}
+                    weight={inicioAtivo ? "fill" : "regular"}
                 />
 
                 <Text
-                    className={`text-xs mt-1 ${pathname === "/" ? "text-[#58AAF0]" : "text-[#D0D0D5]"
+                    className={`text-xs mt-1 ${inicioAtivo ? "text-[#58AAF0]" : "text-[#D0D0D5]"
                         }`}
                 >
                     Início

@@ -9,12 +9,17 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { EyeIcon, EyeSlashIcon } from "phosphor-react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { fazerLogin } from "../services/authService";
+import { ApiError } from "../services/api";
+import {
+    fazerLogin,
+    reenviarVerificacao,
+} from "../services/authService";
 import Toast from "react-native-toast-message";
 
 export default function Login() {
@@ -23,6 +28,9 @@ export default function Login() {
     const [usuario, setUsuario] = useState("");
     const [senha, setSenha] = useState("");
     const [carregando, setCarregando] = useState(false);
+    const [emailPendente, setEmailPendente] = useState(false);
+    const [reenviando, setReenviando] = useState(false);
+    const [mostrarSenha, setMostrarSenha] = useState(false);
 
     async function entrar() {
         if (!usuario.trim() || !senha) {
@@ -36,8 +44,9 @@ export default function Login() {
 
         try {
             setCarregando(true);
+            setEmailPendente(false);
 
-            await fazerLogin(usuario.trim(), senha);
+            const resposta = await fazerLogin(usuario.trim(), senha);
 
             Toast.show({
                 type: "success",
@@ -45,20 +54,62 @@ export default function Login() {
                 text2: "Bem-vindo de volta.",
             });
 
-            router.replace("/home");
+            router.replace(
+                resposta.usuario.preferenciasConcluidas ? "/home" : "/filtrar",
+            );
         } catch (erro) {
+            if (
+                erro instanceof ApiError &&
+                erro.code === "EMAIL_NAO_VERIFICADO"
+            ) {
+                setEmailPendente(true);
+
+                Toast.show({
+                    type: "error",
+                    text1: "E-mail não confirmado",
+                    text2: "Confirme seu endereço antes de entrar.",
+                });
+
+                return;
+            }
+
             Toast.show({
                 type: "error",
                 text1: "Erro ao fazer login",
-                text2:
-                    erro instanceof Error
-                        ? erro.message
-                        : "Verifique seus dados e tente novamente.",
+                text2: erro instanceof Error
+                    ? erro.message
+                    : "Verifique seus dados e tente novamente.",
             });
         } finally {
             setCarregando(false);
         }
     }
+
+
+    async function reenviarEmail() {
+        try {
+            setReenviando(true);
+
+            await reenviarVerificacao(usuario.trim());
+
+            Toast.show({
+                type: "success",
+                text1: "Solicitação realizada",
+                text2: "Se a conta precisar de confirmação, enviaremos um novo e-mail.",
+            });
+        } catch (erro) {
+            Toast.show({
+                type: "error",
+                text1: "Não foi possível reenviar",
+                text2: erro instanceof Error
+                    ? erro.message
+                    : "Tente novamente.",
+            });
+        } finally {
+            setReenviando(false);
+        }
+    }
+
 
     return (
         <SafeAreaView className="flex-1 bg-[#080A10]">
@@ -102,11 +153,11 @@ export default function Login() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-5"
+                            className="w-full h-12 bg-[#0C121D] border border-[#354052] rounded-[9px] px-3 text-white text-[13px] mb-5"
                             value={usuario}
                             onChangeText={setUsuario}
                             placeholder="E-mail ou usuário"
-                            placeholderTextColor="#4B4B6B"
+                            placeholderTextColor="#718096"
                             autoCapitalize="none"
                             autoCorrect={false}
                         />
@@ -115,14 +166,27 @@ export default function Login() {
                             Senha
                         </Text>
 
-                        <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#171E2B] rounded-[9px] px-[11px] text-white text-[13px] mb-5"
-                            value={senha}
-                            onChangeText={setSenha}
-                            placeholder="Senha"
-                            placeholderTextColor="#4B4B6B"
-                            secureTextEntry
-                        />
+                        <View className="w-full h-12 flex-row items-center bg-[#0C121D] border border-[#354052] rounded-[9px] mb-5">
+                            <TextInput
+                                className="flex-1 h-full px-3 text-white text-[13px]"
+                                value={senha}
+                                onChangeText={setSenha}
+                                placeholder="Senha"
+                                placeholderTextColor="#718096"
+                                secureTextEntry={!mostrarSenha}
+                            />
+
+                            <Pressable
+                                onPress={() => setMostrarSenha(!mostrarSenha)}
+                                className="px-3 h-full items-center justify-center"
+                            >
+                                {mostrarSenha ? (
+                                    <EyeSlashIcon size={20} color="#718096" />
+                                ) : (
+                                    <EyeIcon size={20} color="#718096" />
+                                )}
+                            </Pressable>
+                        </View>
                     </View>
 
                     {/* Redefinir senha */}
@@ -131,7 +195,7 @@ export default function Login() {
                             Esqueceu a senha?{" "}
                         </Text>
 
-                        <Link href="/login" asChild>
+                        <Link href="/recuperar-senha" asChild>
                             <Text className="text-[#72A8DD] text-[13px] font-serif underline">
                                 Redefinir senha
                             </Text>
@@ -152,6 +216,24 @@ export default function Login() {
                             </Text>
                         )}
                     </Pressable>
+
+
+                    {emailPendente && (
+                        <Pressable
+                            onPress={reenviarEmail}
+                            disabled={reenviando}
+                            className="w-full items-center mb-5"
+                        >
+                            {reenviando ? (
+                                <ActivityIndicator color="#5EA7ED" />
+                            ) : (
+                                <Text className="text-[#72A8DD] text-sm underline">
+                                    Reenviar e-mail de confirmação
+                                </Text>
+                            )}
+                        </Pressable>
+                    )}
+
 
                     {/* Cadastro */}
                     <View className="w-full flex-row items-center justify-center mb-4">

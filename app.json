@@ -4,11 +4,11 @@
     "slug": "mare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "mare",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/logo.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +26,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "A Maré usa suas fotos para atualizar a imagem do seu perfil e a capa.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-splash-screen",
         {

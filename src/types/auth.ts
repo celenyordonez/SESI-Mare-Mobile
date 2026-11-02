@@ -17,4 +17,9 @@ export type CadastroResponse = {
     id: number;
     username: string;
     email: string;
+    emailPendente: boolean;
+};
+
+export type ReenvioVerificacaoResponse = {
+    message: string;
 };

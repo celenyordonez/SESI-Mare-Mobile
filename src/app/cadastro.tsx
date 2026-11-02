@@ -13,9 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { EyeIcon, EyeSlashIcon } from "phosphor-react-native";
 
 import { cadastrarUsuario } from "../services/authService";
 import Toast from "react-native-toast-message";
+import { ApiError } from "@/services/api";
 
 export default function Cadastro() {
     const router = useRouter();
@@ -27,18 +29,40 @@ export default function Cadastro() {
     const [carregando, setCarregando] = useState(false);
     const emailNormalizado = email.trim().toLowerCase();
     const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const [mostrarSenha, setMostrarSenha] = useState(false);
+    const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+
 
     async function cadastrar() {
-        if (
-            !usuario.trim() ||
-            !email.trim() ||
-            !senha ||
-            !confirmarSenha
-        ) {
+        const username = usuario.trim();
+        const emailNormalizado = email.trim().toLowerCase();
+
+        const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const formatoUsuario = /^[a-zA-Z0-9._]{3,20}$/;
+
+        if (!username || !emailNormalizado || !senha || !confirmarSenha) {
             Toast.show({
                 type: "error",
                 text1: "Campos incompletos",
                 text2: "Preencha todos os campos para continuar.",
+            });
+            return;
+        }
+
+        if (!formatoUsuario.test(username)) {
+            Toast.show({
+                type: "error",
+                text1: "Usuário inválido",
+                text2: "Use de 3 a 20 caracteres: letras, números, ponto ou underline.",
+            });
+            return;
+        }
+
+        if (!formatoEmail.test(emailNormalizado) || emailNormalizado.length > 254) {
+            Toast.show({
+                type: "error",
+                text1: "E-mail inválido",
+                text2: "Digite um endereço de e-mail válido.",
             });
             return;
         }
@@ -52,20 +76,19 @@ export default function Cadastro() {
             return;
         }
 
-        if (!formatoEmail.test(emailNormalizado)) {
-            Toast.show({
-                type: "error",
-                text1: "E-mail inválido",
-                text2: "Digite um endereço de e-mail válido.",
-            });
-            return;
-        }
+        const senhaValida =
+            senha.length >= 8 &&
+            senha.length <= 128 &&
+            /[a-z]/.test(senha) &&
+            /[A-Z]/.test(senha) &&
+            /[0-9]/.test(senha) &&
+            /[^a-zA-Z0-9]/.test(senha);
 
-        if (senha.length < 8) {
+        if (!senhaValida) {
             Toast.show({
                 type: "error",
-                text1: "Senha muito curta",
-                text2: "A senha deve ter pelo menos 8 caracteres.",
+                text1: "Senha inválida",
+                text2: "Use ao menos 8 caracteres, incluindo maiúscula, minúscula, número e símbolo.",
             });
             return;
         }
@@ -73,39 +96,35 @@ export default function Cadastro() {
         try {
             setCarregando(true);
 
-            console.log("1. Iniciando cadastro...");
-
-            await cadastrarUsuario(
-                usuario.trim(),
-                emailNormalizado,
-                senha
-            );
-
-            console.log("2. Cadastro concluído!");
+            await cadastrarUsuario(username, emailNormalizado, senha);
 
             Toast.show({
                 type: "success",
                 text1: "Conta criada!",
-                text2: "Seu cadastro foi concluído com sucesso.",
+                text2: "Enviamos um link de confirmação para seu e-mail.",
             });
 
             router.replace("/login");
         } catch (erro) {
-            console.log("3. Erro no cadastro:", erro);
+            if (
+                erro instanceof ApiError &&
+                erro.status === 502 &&
+                erro.data?.emailPendente
+            ) {
+                Toast.show({
+                    type: "info",
+                    text1: "Conta criada!",
+                    text2: "Não conseguimos enviar o e-mail. Entre e solicite um novo envio.",
+                });
 
-            Toast.show({
-                type: "error",
-                text1: "Não foi possível cadastrar",
-                text2:
-                    erro instanceof Error
-                        ? erro.message
-                        : "Tente novamente.",
-            });
+                router.replace("/login");
+                return;
+            }
         } finally {
-            console.log("4. Finalizando cadastro...");
             setCarregando(false);
         }
     }
+
 
     return (
         <SafeAreaView className="flex-1 bg-[#080A10]">
@@ -174,27 +193,43 @@ export default function Cadastro() {
                             Senha
                         </Text>
 
-                        <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#354052] rounded-[9px] px-3 text-white text-[13px] mb-4"
-                            value={senha}
-                            onChangeText={setSenha}
-                            placeholder="Senha"
-                            placeholderTextColor="#718096"
-                            secureTextEntry
-                        />
+                        <View className="w-full h-12 flex-row items-center bg-[#0C121D] border border-[#354052] rounded-[9px] mb-4">
+                            <TextInput
+                                className="flex-1 h-full px-3 text-white text-[13px]"
+                                value={senha}
+                                onChangeText={setSenha}
+                                placeholder="Senha"
+                                placeholderTextColor="#718096"
+                                secureTextEntry={!mostrarSenha}
+                            />
+
+                            <Pressable
+                                onPress={() => setMostrarSenha(!mostrarSenha)}
+                                className="px-3 h-full items-center justify-center"
+                            >
+                                {mostrarSenha ? (
+                                    <EyeSlashIcon size={20} color="#718096" />
+                                ) : (
+                                    <EyeIcon size={20} color="#718096" />
+                                )}
+                            </Pressable>
+                        </View>
 
                         <Text className="text-[#EEEEF1] text-sm font-serif mb-1">
                             Confirmar senha
                         </Text>
 
-                        <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#354052] rounded-[9px] px-3 text-white text-[13px] mb-5"
-                            value={confirmarSenha}
-                            onChangeText={setConfirmarSenha}
-                            placeholder="Confirmar senha"
-                            placeholderTextColor="#718096"
-                            secureTextEntry
-                        />
+                        <View className="w-full h-12 flex-row items-center bg-[#0C121D] border border-[#354052] rounded-[9px] mb-5">
+                            <TextInput
+                                className="flex-1 h-full px-3 text-white text-[13px]"
+                                value={confirmarSenha}
+                                onChangeText={setConfirmarSenha}
+                                placeholder="Confirmar senha"
+                                placeholderTextColor="#718096"
+                                secureTextEntry={!mostrarConfirmarSenha}
+                            />
+
+                        </View>
                     </View>
 
                     <View className="w-full px-1 mb-5">
