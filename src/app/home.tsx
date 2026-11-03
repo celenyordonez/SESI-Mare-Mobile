@@ -57,7 +57,9 @@ export default function Home() {
             .then((resposta) => {
                 if (ativo) {
                     setMusicaDoDia(resposta.musica);
-                    atualizarWidgetMusicaDoDia(resposta.musica);
+                    void atualizarWidgetMusicaDoDia(resposta.musica).catch((erroWidget) => {
+                        console.warn("Não foi possível atualizar o widget da Maré:", erroWidget);
+                    });
                 }
             })
             .catch((erroRecomendacao) => {

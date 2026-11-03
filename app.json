@@ -4,7 +4,7 @@
     "slug": "mare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/logo-adaptive.png",
     "scheme": "mare",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -15,7 +15,7 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#080A10",
-        "foregroundImage": "./assets/images/logo.png"
+          "foregroundImage": "./assets/images/logo-adaptive.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -61,11 +61,11 @@
               "displayName": "Música do dia",
               "description": "Veja a música escolhida para você hoje.",
               "android": {
-                "minWidth": 220,
-                "minHeight": 160,
-                "targetCellWidth": 4,
-                "targetCellHeight": 3,
-                "resizeMode": "horizontal"
+                "minWidth": 160,
+                "minHeight": 115,
+                "targetCellWidth": 2,
+                "targetCellHeight": 2,
+                "resizeMode": "none"
               }
             }
           ]

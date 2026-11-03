@@ -1,5 +1,5 @@
-import { Button, Column, Image, Row, Text } from "@expo/ui/jetpack-compose";
-import { background, cornerRadius, fillMaxSize, padding, paddingAll, size } from "@expo/ui/jetpack-compose/modifiers";
+import { Box, Button, Column, Image, Row, Text } from "@expo/ui/jetpack-compose";
+import { background, cornerRadius, fillMaxSize, paddingAll } from "@expo/ui/jetpack-compose/modifiers";
 import { createWidget } from "expo-widgets";
 
 export type DadosWidgetMusicaDoDia = {
@@ -63,76 +63,75 @@ function WidgetMaisParaExplorar(dados: DadosWidgetMusicaDoDia) {
     const rota = musicaDoDia ? "/home" : funcao!.rota;
 
     return (
-        <Column
-            verticalArrangement="spaceBetween"
+        <Box
             modifiers={[
                 fillMaxSize(),
                 background("#111420"),
-                cornerRadius(20),
-                paddingAll(14),
+                cornerRadius(18),
             ]}
         >
-            <Text color="#8793A7" style={{ fontSize: 10, fontWeight: "700" }} maxLines={1} overflow="ellipsis">
-                {musicaDoDia ? "MARÉ · MÚSICA DO DIA" : "MARÉ · MAIS PARA EXPLORAR"}
-            </Text>
+            {dados.capa ? (
+                <Image
+                    source={{ uri: dados.capa }}
+                    contentScale="crop"
+                    contentDescription={musicaDoDia ? `Capa de ${titulo}` : null}
+                    alpha={musicaDoDia ? 0.5 : 0.24}
+                    modifiers={[fillMaxSize(), cornerRadius(18)]}
+                />
+            ) : null}
 
-            <Row verticalAlignment="center">
-                {musicaDoDia && dados.capa ? (
-                    <Image
-                        source={{ uri: dados.capa }}
-                        contentScale="crop"
-                        contentDescription={`Capa de ${titulo}`}
-                        modifiers={[size(62, 62), cornerRadius(10)]}
-                    />
-                ) : (
-                    <Text color={cor} style={{ fontSize: 34, fontWeight: "700" }} modifiers={[size(62, 62)]}>
-                        {musicaDoDia ? "♪" : "✦"}
+            <Column
+                verticalArrangement="spaceBetween"
+                modifiers={[fillMaxSize(), paddingAll(10)]}
+            >
+                <Row verticalAlignment="center" horizontalArrangement="spaceBetween">
+                    <Text color="#FFFFFF" style={{ fontSize: 9, fontWeight: "700" }} maxLines={1} overflow="ellipsis">
+                        {musicaDoDia ? "MÚSICA DO DIA" : "MAIS PARA EXPLORAR"}
                     </Text>
-                )}
+                    <Text color={cor} style={{ fontSize: 9, fontWeight: "700" }}>
+                        {indice + 1}/{quantidadeSlides}
+                    </Text>
+                </Row>
 
-                <Column verticalArrangement="center" modifiers={[padding(12, 0, 0, 0)]}>
-                    <Text color="#FFFFFF" style={{ fontSize: 17, fontWeight: "700" }} maxLines={1} overflow="ellipsis">
+                <Column verticalArrangement="center">
+                    <Text color="#FFFFFF" style={{ fontSize: 15, fontWeight: "700" }} maxLines={2} overflow="ellipsis">
                         {titulo}
                     </Text>
-                    <Text color="#B7C1D0" style={{ fontSize: 12 }} maxLines={2} overflow="ellipsis">
+                    <Text color="#F0F3F7" style={{ fontSize: 10, fontWeight: "500" }} maxLines={1} overflow="ellipsis">
                         {descricao}
                     </Text>
                 </Column>
-            </Row>
 
-            <Row verticalAlignment="center" horizontalArrangement="spaceBetween">
-                <Button
-                    {...({ target: "mare-anterior" } as object)}
-                    onClick={() => ({ indice: (indice + quantidadeSlides - 1) % quantidadeSlides })}
-                    colors={{ containerColor: "#202838", contentColor: "#D0D8E4" }}
-                    contentPadding={{ start: 12, end: 12, top: 4, bottom: 4 }}
-                >
-                    <Text color="#D0D8E4" style={{ fontSize: 18, fontWeight: "700" }}>‹</Text>
-                </Button>
+                <Row verticalAlignment="center" horizontalArrangement="spaceBetween">
+                    <Button
+                        {...({ target: "mare-anterior" } as object)}
+                        onClick={() => ({ indice: (indice + quantidadeSlides - 1) % quantidadeSlides })}
+                        colors={{ containerColor: "#202838", contentColor: "#FFFFFF" }}
+                        contentPadding={{ start: 7, end: 7, top: 1, bottom: 1 }}
+                    >
+                        <Text color="#FFFFFF" style={{ fontSize: 15, fontWeight: "700" }}>‹</Text>
+                    </Button>
 
-                <Text color={cor} style={{ fontSize: 11, fontWeight: "700" }}>
-                    {indice + 1} / {quantidadeSlides}
-                </Text>
+                    <Button
+                        {...({ target: `mare-open:${rota}` } as object)}
+                        onClick={() => ({ indice })}
+                        colors={{ containerColor: cor, contentColor: "#08111B" }}
+                        contentPadding={{ start: 10, end: 10, top: 2, bottom: 2 }}
+                    >
+                        <Text color="#08111B" style={{ fontSize: 10, fontWeight: "700" }}>Abrir</Text>
+                    </Button>
 
-                <Button
-                    {...({ target: "mare-proximo" } as object)}
-                    onClick={() => ({ indice: (indice + 1) % quantidadeSlides })}
-                    colors={{ containerColor: "#202838", contentColor: "#D0D8E4" }}
-                    contentPadding={{ start: 12, end: 12, top: 4, bottom: 4 }}
-                >
-                    <Text color="#D0D8E4" style={{ fontSize: 18, fontWeight: "700" }}>›</Text>
-                </Button>
-
-                <Button
-                    {...({ target: `mare-open:${rota}` } as object)}
-                    onClick={() => ({ indice })}
-                    colors={{ containerColor: cor, contentColor: "#08111B" }}
-                    contentPadding={{ start: 12, end: 12, top: 4, bottom: 4 }}
-                >
-                    <Text color="#08111B" style={{ fontSize: 12, fontWeight: "700" }}>Abrir</Text>
-                </Button>
-            </Row>
-        </Column>
+                    <Button
+                        {...({ target: "mare-proximo" } as object)}
+                        onClick={() => ({ indice: (indice + 1) % quantidadeSlides })}
+                        colors={{ containerColor: "#202838", contentColor: "#FFFFFF" }}
+                        contentPadding={{ start: 7, end: 7, top: 1, bottom: 1 }}
+                    >
+                        <Text color="#FFFFFF" style={{ fontSize: 15, fontWeight: "700" }}>›</Text>
+                    </Button>
+                </Row>
+            </Column>
+        </Box>
     );
 }
 
