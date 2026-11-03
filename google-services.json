@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "368415807982",
+    "project_id": "mare-e9538",
+    "storage_bucket": "mare-e9538.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:368415807982:android:07366e6f1071448a0156ff",
+        "android_client_info": {
+          "package_name": "com.mare.musical"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWeDTBqLHT6IwV8Gxnp3Dwru6aUper_4E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
