@@ -11,6 +11,7 @@
       "icon": "./assets/images/logo.png"
     },
     "android": {
+      "package": "com.mare.musical",
       "adaptiveIcon": {
         "backgroundColor": "#080A10",
         "foregroundImage": "./assets/images/logo.png"
@@ -37,6 +38,36 @@
           "backgroundColor": "#080A10",
           "image": "./assets/images/logo.png",
           "imageWidth": 120
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "color": "#58AAF0",
+          "defaultChannel": "mare-atividade"
+        }
+      ],
+      "./plugins/withAndroidWidgetLaunch",
+      [
+        "expo-widgets",
+        {
+          "enableAndroid": true,
+          "ios": null,
+          "widgets": [
+            {
+              "name": "MusicaDoDia",
+              "displayName": "Música do dia",
+              "description": "Veja a música escolhida para você hoje.",
+              "android": {
+                "minWidth": 220,
+                "minHeight": 160,
+                "targetCellWidth": 4,
+                "targetCellHeight": 3,
+                "resizeMode": "horizontal"
+              }
+            }
+          ]
         }
       ]
     ],

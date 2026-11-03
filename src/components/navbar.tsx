@@ -5,7 +5,7 @@ import {
     HouseLineIcon,
     MagnifyingGlassIcon,
     PlusIcon,
-    BookmarkSimpleIcon,
+    ChatCircleIcon,
     UserIcon,
 } from "phosphor-react-native";
 
@@ -95,24 +95,26 @@ export default function Navbar() {
                 </View>
             </Pressable>
 
-            {/* Salvos */}
+            {/* Conversas: a coleção salva é acessada pela aba do perfil. */}
             <Pressable
                 className="flex-1 items-center justify-center"
-                onPress={() => router.push("/salvos")}
+                onPress={() => router.push("/mensagens" as never)}
+                accessibilityRole="button"
+                accessibilityLabel="Abrir conversas"
             >
-                <BookmarkSimpleIcon
+                <ChatCircleIcon
                     size={24}
-                    color={pathname === "/salvos" ? "#58AAF0" : "#D0D0D5"}
-                    weight={pathname === "/salvos" ? "fill" : "regular"}
+                    color={pathname.startsWith("/mensagens") ? "#58AAF0" : "#D0D0D5"}
+                    weight={pathname.startsWith("/mensagens") ? "fill" : "regular"}
                 />
 
                 <Text
-                    className={`text-xs mt-1 ${pathname === "/salvos"
+                    className={`text-xs mt-1 ${pathname.startsWith("/mensagens")
                             ? "text-[#58AAF0]"
                             : "text-[#D0D0D5]"
                         }`}
                 >
-                    Salvos
+                    Conversas
                 </Text>
             </Pressable>
 

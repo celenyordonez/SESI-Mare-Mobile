@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     DeviceEventEmitter,
@@ -14,7 +14,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator as EditorDeImagem, SaveFormat } from "expo-image-manipulator";
 import Toast from "react-native-toast-message";
@@ -22,6 +22,7 @@ import {
     CameraIcon,
     ChatCircleIcon,
     DotsThreeIcon,
+    MagnifyingGlassIcon,
     MusicNoteIcon,
     PencilSimpleIcon,
     ShareNetworkIcon,
@@ -56,13 +57,19 @@ import type { Post } from "../services/postService";
 type AbaPerfil = "avaliacoes" | "comentarios" | "curtidos" | "salvos";
 type TipoImagemPerfil = "foto" | "capa";
 
+function normalizarPesquisa(texto: string) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+}
+
 export default function Perfil() {
     const roteador = useRouter();
+    const parametros = useLocalSearchParams<{ aba?: string }>();
     const [perfil, setPerfil] = useState<MeuPerfil | null>(null);
     const [avaliacoes, setAvaliacoes] = useState<Post[]>([]);
     const [comentarios, setComentarios] = useState<ComentarioPerfil[]>([]);
     const [curtidos, setCurtidos] = useState<Post[]>([]);
     const [musicasSalvas, setMusicasSalvas] = useState<{ musica: Musica }[]>([]);
+    const [pesquisaSalvos, setPesquisaSalvos] = useState("");
     const [abaAtiva, setAbaAtiva] = useState<AbaPerfil>("avaliacoes");
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
@@ -74,6 +81,10 @@ export default function Perfil() {
     const [usuarioEditado, setUsuarioEditado] = useState("");
     const [bioEditada, setBioEditada] = useState("");
     const [revisao, setRevisao] = useState(0);
+
+    useEffect(() => {
+        if (parametros.aba === "salvos") setAbaAtiva("salvos");
+    }, [parametros.aba]);
 
     useEffect(() => {
         let ativo = true;
@@ -111,6 +122,16 @@ export default function Perfil() {
             ativo = false;
         };
     }, [revisao]);
+
+    const musicasSalvasFiltradas = useMemo(() => {
+        const consulta = normalizarPesquisa(pesquisaSalvos.trim());
+        if (!consulta) return musicasSalvas;
+        return musicasSalvas.filter(({ musica }) =>
+            [musica.titulo, musica.artista?.nome, musica.genero].some((campo) =>
+                normalizarPesquisa(campo ?? "").includes(consulta),
+            ),
+        );
+    }, [musicasSalvas, pesquisaSalvos]);
 
     async function compartilharPerfil() {
         if (!perfil) return;
@@ -450,23 +471,46 @@ export default function Perfil() {
                         ) : null}
 
                         {abaAtiva === "salvos" ? (
-                            musicasSalvas.length ? musicasSalvas.map(({ musica }) => (
-                                <View key={musica.id} className="mx-4 my-2">
-                                    <MusicCard
-                                        id={musica.id}
-                                        tipo="post"
-                                        titulo={musica.titulo}
-                                        artista={musica.artista?.nome}
-                                        artistaId={musica.artista?.id}
-                                        capa={musica.capa}
-                                        nota={musica.nota}
-                                        avaliacoes={musica.avaliacoes ?? musica._count?.posts}
-                                        duracaoSegundos={musica.duracaoSegundos}
-                                        salva
-                                        onAlternarSalvamento={() => void removerMusicaSalva(musica.id)}
-                                    />
-                                </View>
-                            )) : (
+                            musicasSalvas.length ? (
+                                <>
+                                    <View className="mx-4 mb-2 flex-row items-center rounded-xl border border-[#29384B] bg-[#0D1520] px-3">
+                                        <MagnifyingGlassIcon size={19} color="#8495A9" />
+                                        <TextInput
+                                            className="flex-1 px-3 py-3 text-sm text-white"
+                                            value={pesquisaSalvos}
+                                            onChangeText={setPesquisaSalvos}
+                                            placeholder="Buscar nas músicas salvas..."
+                                            placeholderTextColor="#738196"
+                                            autoCapitalize="none"
+                                            accessibilityLabel="Buscar nas músicas salvas"
+                                        />
+                                        {pesquisaSalvos ? (
+                                            <Pressable onPress={() => setPesquisaSalvos("")} accessibilityLabel="Limpar busca nas músicas salvas">
+                                                <XIcon size={18} color="#8495A9" />
+                                            </Pressable>
+                                        ) : null}
+                                    </View>
+                                    {musicasSalvasFiltradas.length ? musicasSalvasFiltradas.map(({ musica }) => (
+                                        <View key={musica.id} className="mx-4 my-2">
+                                            <MusicCard
+                                                id={musica.id}
+                                                tipo="post"
+                                                titulo={musica.titulo}
+                                                artista={musica.artista?.nome}
+                                                artistaId={musica.artista?.id}
+                                                capa={musica.capa}
+                                                nota={musica.nota}
+                                                avaliacoes={musica.avaliacoes ?? musica._count?.posts}
+                                                duracaoSegundos={musica.duracaoSegundos}
+                                                salva
+                                                onAlternarSalvamento={() => void removerMusicaSalva(musica.id)}
+                                            />
+                                        </View>
+                                    )) : (
+                                        <Text className="text-[#718096] text-sm text-center py-8">Nenhuma música salva corresponde à sua busca.</Text>
+                                    )}
+                                </>
+                            ) : (
                                 <Text className="text-[#718096] text-sm text-center py-8">Nenhuma música salva.</Text>
                             )
                         ) : null}

@@ -1,10 +1,18 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowRightIcon, ChartBarIcon, MusicNotesIcon } from "phosphor-react-native";
+import {
+    ArrowRightIcon,
+    ArrowsLeftRightIcon,
+    ChartBarIcon,
+    DiceFiveIcon,
+    GridFourIcon,
+    HeartIcon,
+    MusicNotesIcon,
+} from "phosphor-react-native";
 
 type Props = {
-    tipo: "descoberta" | "universo";
+    tipo: "descoberta" | "universo" | "roleta" | "duelo" | "momento" | "bingo";
     imagem?: string | null;
 };
 
@@ -12,20 +20,50 @@ type Props = {
 export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
     const router = useRouter();
     const descoberta = tipo === "descoberta";
-    const cor = descoberta ? "#8CC8FF" : "#83D9C9";
+    const universo = tipo === "universo";
+    const roleta = tipo === "roleta";
+    const duelo = tipo === "duelo";
+    const momento = tipo === "momento";
+    const cor = descoberta
+        ? "#8CC8FF"
+        : universo
+            ? "#83D9C9"
+            : roleta
+                ? "#F5C879"
+                : duelo
+                    ? "#B9A1FF"
+                    : momento
+                        ? "#FF9A8B"
+                        : "#FFB77A";
     const coresSobreposicao: [string, string, ...string[]] = descoberta
         ? ["rgba(5,12,22,0.12)", "rgba(7,12,20,0.48)", "rgba(7,12,20,0.94)"]
-        : ["rgba(5,15,15,0.14)", "rgba(5,14,14,0.48)", "rgba(5,14,14,0.94)"];
+        : universo
+            ? ["rgba(5,15,15,0.14)", "rgba(5,14,14,0.48)", "rgba(5,14,14,0.94)"]
+            : duelo
+                ? ["rgba(15,10,25,0.12)", "rgba(15,10,25,0.5)", "rgba(10,9,16,0.95)"]
+                : momento
+                    ? ["rgba(25,9,11,0.12)", "rgba(25,9,11,0.5)", "rgba(13,9,12,0.95)"]
+                    : ["rgba(23,15,5,0.1)", "rgba(23,17,8,0.5)", "rgba(13,12,12,0.95)"];
+
+    const configuracoes = {
+        descoberta: { titulo: "Descoberta", descricao: "Músicas novas, do seu jeito", selo: "PARA DESCOBRIR", rota: "/descoberta" },
+        universo: { titulo: "Minha Maré", descricao: "O retrato do seu gosto musical", selo: "SUA MARÉ", rota: "/universo" },
+        roleta: { titulo: "Roleta musical", descricao: "Deixe o acaso escolher uma faixa", selo: "SURPRESA MUSICAL", rota: "/roleta" },
+        duelo: { titulo: "Duelo musical", descricao: "Escolha a sua favorita", selo: "CARA A CARA", rota: "/duelo" },
+        momento: { titulo: "Seu Momento", descricao: "O que combina com você agora?", selo: "PELO SEU MOMENTO", rota: "/momento" },
+        bingo: { titulo: "Bingo musical", descricao: "Complete sua cartela ouvindo música", selo: "DESAFIOS MUSICAIS", rota: "/bingo" },
+    } as const;
+    const { titulo, descricao, selo, rota } = configuracoes[tipo];
 
     return (
         <Pressable
-            onPress={() => router.push((descoberta ? "/descoberta" : "/universo") as never)}
+            onPress={() => router.push(rota as never)}
             accessibilityRole="button"
-            accessibilityLabel={descoberta ? "Abrir Descoberta" : "Abrir Meu Universo Musical"}
+            accessibilityLabel={`Abrir ${titulo}`}
             className="relative mr-3 h-[184px] w-[274px] overflow-hidden rounded-2xl border"
             style={({ pressed }) => ({
                 opacity: pressed ? 0.9 : 1,
-                borderColor: descoberta ? "rgba(140,200,255,0.72)" : "rgba(131,217,201,0.72)",
+                borderColor: descoberta ? "rgba(140,200,255,0.72)" : universo ? "rgba(131,217,201,0.72)" : "rgba(245,200,121,0.78)",
                 borderWidth: 1.5,
                 shadowColor: cor,
                 shadowOffset: { width: 0, height: 6 },
@@ -55,24 +93,32 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
                         className="flex-row items-center rounded-full border px-2.5 py-1.5"
                         style={{
                             backgroundColor: "rgba(8,10,16,0.52)",
-                            borderColor: descoberta ? "rgba(140,200,255,0.34)" : "rgba(131,217,201,0.34)",
+                            borderColor: descoberta ? "rgba(140,200,255,0.34)" : universo ? "rgba(131,217,201,0.34)" : "rgba(245,200,121,0.36)",
                         }}
                     >
                         {descoberta
                             ? <MusicNotesIcon size={14} color={cor} weight="fill" />
-                            : <ChartBarIcon size={14} color={cor} weight="fill" />}
+                            : universo
+                                ? <ChartBarIcon size={14} color={cor} weight="fill" />
+                                : roleta
+                                    ? <DiceFiveIcon size={14} color={cor} weight="fill" />
+                                    : duelo
+                                        ? <ArrowsLeftRightIcon size={14} color={cor} weight="bold" />
+                                        : momento
+                                            ? <HeartIcon size={14} color={cor} weight="fill" />
+                                            : <GridFourIcon size={14} color={cor} weight="fill" />}
                         <Text style={{ color: cor }} className="ml-1.5 text-[9px] font-bold tracking-[1.1px]">
-                            {descoberta ? "PARA DESCOBRIR" : "SEU UNIVERSO"}
+                            {selo}
                         </Text>
                     </View>
                 </View>
                 <View className="flex-row items-end justify-between">
                     <View className="mr-3 flex-1">
-                        <Text className="font-serif text-[22px] leading-7 text-white" numberOfLines={1}>
-                            {descoberta ? "Descoberta" : "Meu universo"}
+                        <Text style={momento ? { fontSize: 18, lineHeight: 24 } : undefined} className="font-serif text-[22px] leading-7 text-white" numberOfLines={1}>
+                            {titulo}
                         </Text>
                         <Text className="mt-1 text-xs leading-4 text-[#D0D8E4]" numberOfLines={1}>
-                            {descoberta ? "Músicas novas, do seu jeito" : "O retrato do seu gosto musical"}
+                            {descricao}
                         </Text>
                     </View>
                     <View

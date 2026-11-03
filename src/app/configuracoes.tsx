@@ -32,6 +32,11 @@ import {
     type PreferenciasNotificacao,
 } from "../services/preferenciaService";
 import { excluirMinhaConta } from "../services/usuarioService";
+import {
+    ativarNotificacoesPush,
+    removerTokenPushDoServidor,
+    verificarRegistroPush,
+} from "../services/notificacaoPushService";
 
 const preferenciasPadrao: PreferenciasNotificacao = {
     curtidas: true,
@@ -45,6 +50,8 @@ export default function Configuracoes() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [salvando, setSalvando] = useState<keyof PreferenciasNotificacao | null>(null);
+    const [pushAtivo, setPushAtivo] = useState(false);
+    const [alterandoPush, setAlterandoPush] = useState(false);
 
     // As preferências são guardadas na conta e sincronizadas com o servidor.
     const carregarPreferencias = useCallback(async () => {
@@ -67,6 +74,41 @@ export default function Configuracoes() {
     useEffect(() => {
         void carregarPreferencias();
     }, [carregarPreferencias]);
+
+    useEffect(() => {
+        let ativo = true;
+        void verificarRegistroPush()
+            .then((registrado) => { if (ativo) setPushAtivo(registrado); })
+            .catch((erro) => console.warn("Não foi possível consultar a permissão de push:", erro));
+        return () => { ativo = false; };
+    }, []);
+
+    async function alternarNotificacoesPush(ativar: boolean) {
+        if (alterandoPush) return;
+        setAlterandoPush(true);
+        try {
+            if (ativar) {
+                await ativarNotificacoesPush();
+                setPushAtivo(true);
+                Toast.show({
+                    type: "success",
+                    text1: "Notificações ativadas",
+                    text2: "Você receberá novidades da Maré neste aparelho.",
+                });
+            } else {
+                await removerTokenPushDoServidor();
+                setPushAtivo(false);
+            }
+        } catch (erro) {
+            Toast.show({
+                type: "error",
+                text1: "Não foi possível ativar notificações",
+                text2: erro instanceof Error ? erro.message : "Tente novamente.",
+            });
+        } finally {
+            setAlterandoPush(false);
+        }
+    }
 
     async function alternarPreferencia(chave: keyof PreferenciasNotificacao) {
         if (salvando !== null) return;
@@ -207,7 +249,7 @@ export default function Configuracoes() {
                         </Text>
                     </View>
                     <Text className="text-[#718096] text-xs mb-2">
-                        Escolha quais atividades devem aparecer para você.
+                        Escolha quais atividades devem aparecer para você e no celular.
                     </Text>
 
                     {carregando ? (
@@ -223,6 +265,24 @@ export default function Configuracoes() {
                         </View>
                     ) : (
                         <View>
+                            <View className="flex-row items-center border-b border-[#202633] py-4">
+                                <View className="h-10 w-10 items-center justify-center rounded-full bg-[#171E2B]">
+                                    <BellIcon size={20} color="#58AAF0" />
+                                </View>
+                                <View className="ml-3 mr-2 flex-1">
+                                    <Text className="text-sm text-white">Notificações no celular</Text>
+                                    <Text className="mt-1 text-xs text-[#718096]">
+                                        Receba alertas mesmo quando o app estiver fechado.
+                                    </Text>
+                                </View>
+                                <Switch
+                                    value={pushAtivo}
+                                    onValueChange={(valor) => void alternarNotificacoesPush(valor)}
+                                    disabled={alterandoPush}
+                                    trackColor={{ false: "#354052", true: "#28577D" }}
+                                    thumbColor={pushAtivo ? "#58AAF0" : "#A0A8B5"}
+                                />
+                            </View>
                             {linhaNotificacao("Curtidas", "Quando alguém curtir suas publicações.", "curtidas", HeartIcon)}
                             {linhaNotificacao("Comentários", "Quando alguém comentar nas suas publicações.", "comentarios", ChatCircleIcon)}
                             {linhaNotificacao("Novos seguidores", "Quando alguém começar a seguir você.", "seguidores", UserPlusIcon)}

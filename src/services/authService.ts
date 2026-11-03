@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiRequest } from "./api";
 import { invalidarCacheSalvos } from "./salvamentoService";
 import { invalidarCacheFotoPerfil } from "./perfilCache";
+import { removerTokenPushDoServidor } from "./notificacaoPushService";
 import type {
     CadastroResponse,
     LoginResponse,
@@ -66,6 +67,7 @@ export async function redefinirSenha(token: string, senha: string) {
 }
 
 export async function fazerLogout() {
+    await removerTokenPushDoServidor();
     await AsyncStorage.multiRemove(["token", "usuario"]);
     invalidarCacheSalvos();
     invalidarCacheFotoPerfil();

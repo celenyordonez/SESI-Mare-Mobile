@@ -184,6 +184,22 @@ export default function Explorar() {
                             tipo="universo"
                             imagem={artistasPersonalizadosEmbaralhados[0]?.fotoURL ?? imagensPersonalizadas[1]?.capa ?? imagensCatalogoEmbaralhadas[1]?.capa}
                         />
+                        <AtalhoMusicalCard
+                            tipo="roleta"
+                            imagem={imagensPersonalizadas[2]?.capa ?? imagensCatalogoEmbaralhadas[2]?.capa}
+                        />
+                        <AtalhoMusicalCard
+                            tipo="duelo"
+                            imagem={imagensCatalogoEmbaralhadas[3]?.capa}
+                        />
+                        <AtalhoMusicalCard
+                            tipo="momento"
+                            imagem={imagensPersonalizadas[3]?.capa ?? imagensCatalogoEmbaralhadas[4]?.capa}
+                        />
+                        <AtalhoMusicalCard
+                            tipo="bingo"
+                            imagem={artistasPersonalizadosEmbaralhados[1]?.fotoURL ?? imagensCatalogoEmbaralhadas[5]?.capa}
+                        />
                     </ScrollView>
                 </View>
                 {secaoMusicas("Mais bem avaliadas", bemAvaliadas, "quadrado")}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ShareNetworkIcon, UserIcon } from "phosphor-react-native";
+import { ChatCircleIcon, ShareNetworkIcon, UserIcon } from "phosphor-react-native";
 import Toast from "react-native-toast-message";
 
 import Navbar from "../../components/navbar";
@@ -17,6 +17,7 @@ import {
     type ComentarioPerfil,
     type PerfilPublico as PerfilPublicoDados,
 } from "../../services/usuarioService";
+import { iniciarConversa as abrirConversaPrivada } from "../../services/mensagemPrivadaService";
 
 type AbaPerfilPublico = "avaliacoes" | "comentarios";
 
@@ -29,6 +30,7 @@ export default function PerfilPublico() {
     const [abaAtiva, setAbaAtiva] = useState<AbaPerfilPublico>("avaliacoes");
     const [seguindo, setSeguindo] = useState(false);
     const [salvandoSeguir, setSalvandoSeguir] = useState(false);
+    const [abrindoConversa, setAbrindoConversa] = useState(false);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
 
@@ -108,6 +110,31 @@ export default function PerfilPublico() {
         }
     }
 
+    async function iniciarConversa() {
+        if (!perfil || abrindoConversa || meuId === perfil.id) return;
+        setAbrindoConversa(true);
+        try {
+            const conversa = await abrirConversaPrivada(perfil.id);
+            roteador.push({
+                pathname: "/mensagens/[id]",
+                params: {
+                    id: String(conversa.id),
+                    nome: perfil.nome,
+                    username: perfil.username,
+                    foto: perfil.foto ?? "",
+                },
+            } as never);
+        } catch (erroConversa) {
+            Toast.show({
+                type: "error",
+                text1: "Não foi possível abrir a conversa",
+                text2: erroConversa instanceof Error ? erroConversa.message : "Tente novamente.",
+            });
+        } finally {
+            setAbrindoConversa(false);
+        }
+    }
+
     function abrirListaRelacoes(tipo: "seguidores" | "seguindo") {
         if (!perfil) return;
         roteador.push({ pathname: "/relacoes/[id]", params: { id: String(perfil.id), tipo } } as never);
@@ -144,15 +171,27 @@ export default function PerfilPublico() {
                                 <ShareNetworkIcon size={20} color="#FFFFFF" />
                             </Pressable>
                             {meuId !== perfil.id ? (
-                                <Pressable
-                                    onPress={() => void alternarSeguir()}
-                                    disabled={salvandoSeguir}
-                                    className={`px-4 py-2 rounded-lg ${seguindo ? "border border-[#354052] bg-[#111420]" : "bg-[#58AAF0]"}`}
-                                >
-                                    <Text className="text-white text-xs font-semibold">
-                                        {salvandoSeguir ? "Aguarde..." : seguindo ? "Seguindo" : "Seguir"}
-                                    </Text>
-                                </Pressable>
+                                <View className="flex-row items-center">
+                                    <Pressable
+                                        onPress={() => void iniciarConversa()}
+                                        disabled={abrindoConversa}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Enviar mensagem privada"
+                                        className="mr-2 flex-row items-center rounded-lg border border-[#354052] bg-[#111420] px-3 py-2"
+                                    >
+                                        <ChatCircleIcon size={16} color="#D0D8E4" />
+                                        <Text className="ml-1.5 text-xs font-semibold text-white">{abrindoConversa ? "Abrindo..." : "Mensagem"}</Text>
+                                    </Pressable>
+                                    <Pressable
+                                        onPress={() => void alternarSeguir()}
+                                        disabled={salvandoSeguir}
+                                        className={`px-4 py-2 rounded-lg ${seguindo ? "border border-[#354052] bg-[#111420]" : "bg-[#58AAF0]"}`}
+                                    >
+                                        <Text className="text-white text-xs font-semibold">
+                                            {salvandoSeguir ? "Aguarde..." : seguindo ? "Seguindo" : "Seguir"}
+                                        </Text>
+                                    </Pressable>
+                                </View>
                             ) : null}
                         </View>
 

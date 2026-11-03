@@ -1,56 +1,110 @@
-# Welcome to your Expo app 👋
+# 🌊 Maré — Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**A experiência Maré na palma da sua mão.**
 
-## Get started
+O Maré Mobile é a versão mobile da plataforma social Maré, desenvolvida para proporcionar uma experiência mais direcionada ao uso em dispositivos móveis.
 
-1. Install dependencies
+A aplicação permite que os usuários acompanhem suas comunidades musicais, compartilhem avaliações, descubram músicas e interajam com outros perfis diretamente pelo celular.
 
-   ```bash
-   npm install
-   ```
+## 📱 Tecnologias
 
-2. Start the app
+- **React Native** — Desenvolvimento mobile.
+- **Expo** — Plataforma de desenvolvimento.
+- **Expo Router** — Navegação e gerenciamento de rotas.
+- **TypeScript** — Tipagem estática.
+- **NativeWind** — Estilização com classes utilitárias.
+- **Phosphor React Native** — Biblioteca de ícones.
+- **AsyncStorage** — Armazenamento local de dados.
+- **Expo Linear Gradient** — Gradientes e elementos visuais.
 
-   ```bash
-   npx expo start
-   ```
+## ✨ Funcionalidades
 
-In the output, you'll find options to open the app in a
+- Autenticação de usuários.
+- Gerenciamento de sessão.
+- Feed de publicações.
+- Avaliações musicais.
+- Curtidas e comentários.
+- Perfis de usuários.
+- Sistema de seguidores.
+- Pesquisa de músicas e usuários.
+- Salvamento de músicas.
+- Recomendações musicais.
+- Notificações.
+- Navegação adaptada para dispositivos móveis.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📁 Estrutura do projeto
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+mobile/
+├── app/
+│   ├── (tabs)/
+│   ├── login.tsx
+│   ├── cadastro.tsx
+│   └── index.tsx
+├── src/
+│   ├── components/
+│   ├── hooks/
+│   ├── services/
+│   ├── contexts/
+│   ├── types/
+│   └── utils/
+├── assets/
+├── app.json
+├── package.json
+└── tsconfig.json
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+*A estrutura pode variar conforme a organização atual do projeto.*
 
-### Other setup steps
+## ⚙️ Como executar
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 1. Clone o repositório
 
-## Learn more
+```bash
+git clone URL_DO_REPOSITORIO
+cd nome-do-repositorio
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 2. Instale as dependências
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm install
+```
 
-## Join the community
+### 3. Configure o endereço da API
 
-Join our community of developers creating universal apps.
+Configure o endereço da API no serviço responsável pelas requisições.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Exemplo:
+
+```ts
+export const API_URL = "http://SEU_IP_LOCAL:3000";
+```
+
+**Importante:** ao testar em um dispositivo físico, utilize o endereço IP da máquina que está executando o backend, e não `localhost`.
+
+### 4. Inicie o Expo
+
+```bash
+npx expo start
+```
+
+Utilize o aplicativo Expo Go ou um ambiente de desenvolvimento compatível para executar a aplicação.
+
+## 📲 Proposta mobile
+
+Enquanto a versão web oferece uma experiência mais ampla para diferentes tamanhos de tela, o aplicativo mobile busca priorizar:
+
+- Navegação simplificada.
+- Interface pensada para toque.
+- Componentes adaptados para telas menores.
+- Acesso rápido às principais funcionalidades.
+- Experiência mais próxima de um aplicativo nativo.
+
+## 🔗 Integração
+
+O aplicativo utiliza a mesma API e estrutura de dados da versão web, permitindo que os usuários acessem suas contas e conteúdos em ambas as plataformas.
+
+---
+
+Desenvolvido como parte do projeto acadêmico **Maré — TCC**.

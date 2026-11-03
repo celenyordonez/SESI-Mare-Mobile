@@ -24,11 +24,11 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
             <View className="flex-row items-center">
                 {tipo === "normal" ? (
                     <>
-                        {/* Configurações à esquerda e notificações à direita. */}
+                        {/* Lados simétricos para manter a logo centralizada. */}
                         <Pressable
                             onPress={() => router.push("/configuracoes")}
                             accessibilityLabel="Abrir configurações"
-                            className="w-10 h-10 items-center justify-center"
+                            className="h-10 w-10 items-center justify-center"
                         >
                             <GearIcon
                                 size={22}
@@ -53,7 +53,7 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
                         <Pressable
                             onPress={() => router.push("/notificacoes")}
                             accessibilityLabel="Abrir notificações"
-                            className="w-10 h-10 items-center justify-center"
+                            className="h-10 w-10 items-center justify-center"
                         >
                             <BellIcon
                                 size={24}

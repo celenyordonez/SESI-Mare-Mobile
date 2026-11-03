@@ -19,6 +19,7 @@ import { buscarMusicaDoDia, type MusicaDoDia } from "../services/recomendacaoSer
 import { buscarPosts as buscarPublicacoes, type Post } from "../services/postService";
 import { registrarPesquisa } from "../services/historicoPesquisaService";
 import { buscarMeuPerfil } from "../services/usuarioService";
+import { atualizarWidgetMusicaDoDia } from "../services/widgetMusicaDoDiaService";
 
 type AbaFeed = "paraVoce" | "seguindo";
 
@@ -54,7 +55,10 @@ export default function Home() {
 
         void buscarMusicaDoDia()
             .then((resposta) => {
-                if (ativo) setMusicaDoDia(resposta.musica);
+                if (ativo) {
+                    setMusicaDoDia(resposta.musica);
+                    atualizarWidgetMusicaDoDia(resposta.musica);
+                }
             })
             .catch((erroRecomendacao) => {
                 console.error("Erro ao buscar a música do dia:", erroRecomendacao);

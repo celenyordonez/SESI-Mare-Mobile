@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Animated,
     Image,
+    Modal,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -11,14 +13,18 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
+import type { ComponentRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { captureRef } from "react-native-view-shot";
+import * as Sharing from "expo-sharing";
 import {
     ArrowLeftIcon,
     ArrowRightIcon,
     ChartBarIcon,
     MusicNotesIcon,
+    ShareNetworkIcon,
     StarIcon,
 } from "phosphor-react-native";
 
@@ -46,6 +52,7 @@ export default function Universo() {
     const router = useRouter();
     const { width: larguraTela, height: alturaTela } = useWindowDimensions();
     const carrosselRef = useRef<ScrollViewInstance | null>(null);
+    const cartaoCompartilhamentoRef = useRef<ComponentRef<typeof View>>(null);
     const animacaoConteudo = useRef(new Animated.Value(1)).current;
     const [indiceAtivo, setIndiceAtivo] = useState(0);
     const [dados, setDados] = useState<EstatisticasUniverso | null>(null);
@@ -54,6 +61,8 @@ export default function Universo() {
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState("");
     const [erroColecao, setErroColecao] = useState("");
+    const [compartilhamentoAberto, setCompartilhamentoAberto] = useState(false);
+    const [compartilhando, setCompartilhando] = useState(false);
     const capaParaPaleta = dados?.artistas[0]?.fotoURL ?? musicasSalvas[0]?.musica.capa;
     const paleta = usePaletaCapa(capaParaPaleta);
     const corAcento = paleta?.acento ?? "#83C6FF";
@@ -81,7 +90,7 @@ export default function Universo() {
                 setErroColecao("Não foi possível carregar suas músicas salvas.");
             }
         } catch (erroBusca) {
-            setErro(erroBusca instanceof Error ? erroBusca.message : "Não foi possível carregar seu universo musical.");
+            setErro(erroBusca instanceof Error ? erroBusca.message : "Não foi possível carregar Minha Maré.");
         } finally {
             setCarregando(false);
             setAtualizando(false);
@@ -122,6 +131,10 @@ export default function Universo() {
     const assinaturaSlides = slides.join("|");
     const indiceSeguro = Math.min(indiceAtivo, Math.max(0, slides.length - 1));
     const alturaCartao = Math.min(540, Math.max(400, alturaTela * 0.61));
+    // A coleção precisa de uma área vertical maior para mostrar capa, título e artista.
+    const alturaCartaoColecao = Math.min(640, Math.max(560, alturaTela * 0.76));
+    const larguraCartaoCompartilhamento = Math.min(larguraTela - 56, 360);
+    const alturaCartaoCompartilhamento = Math.min(520, Math.max(420, alturaTela * 0.62));
 
     useEffect(() => {
         setIndiceAtivo(0);
@@ -144,6 +157,36 @@ export default function Universo() {
         carrosselRef.current?.scrollTo({ x: proximo * larguraTela, animated: true });
     }
 
+    async function compartilharRetrospectiva() {
+        if (!cartaoCompartilhamentoRef.current || compartilhando) return;
+        setCompartilhando(true);
+        try {
+            const disponivel = await Sharing.isAvailableAsync();
+            if (!disponivel) {
+                Alert.alert("Compartilhamento indisponível", "Este dispositivo não oferece um app para compartilhar a imagem.");
+                return;
+            }
+
+            const imagem = await captureRef(cartaoCompartilhamentoRef, {
+                format: "png",
+                quality: 1,
+                result: "tmpfile",
+                width: 1080,
+                height: Math.round(1080 * alturaCartaoCompartilhamento / larguraCartaoCompartilhamento),
+            });
+            await Sharing.shareAsync(imagem, {
+                mimeType: "image/png",
+                dialogTitle: "Compartilhar Minha Maré",
+                UTI: "public.png",
+            });
+        } catch (erroCompartilhamento) {
+            console.error("Erro ao gerar ou compartilhar a retrospectiva:", erroCompartilhamento);
+            Alert.alert("Não foi possível compartilhar", "Tente novamente em instantes.");
+        } finally {
+            setCompartilhando(false);
+        }
+    }
+
     function renderizarSlide(tipo: TelaRetrospectiva) {
         const generoPrincipal = generosEmDestaque[0];
         const artistaPrincipal = artistasEmDestaque[0];
@@ -155,11 +198,11 @@ export default function Universo() {
                         <Image source={{ uri: capaParaPaleta }} className="absolute inset-0 h-full w-full" resizeMode="cover" />
                     ) : null}
                     <LinearGradient
-                        colors={["rgba(7,10,16,0.08)", "rgba(7,10,16,0.5)", "rgba(7,10,16,0.97)"]}
+                        colors={["rgba(7,10,16,0.26)", "rgba(7,10,16,0.68)", "rgba(7,10,16,0.98)"]}
                         locations={[0, 0.45, 1]}
                         className="absolute inset-0"
                     />
-                    <View className="absolute -right-14 -top-10 h-52 w-52 rounded-full" style={{ backgroundColor: corComOpacidade(corDominante, 0.3) }} />
+                    <View className="absolute -right-14 -top-10 h-52 w-52 rounded-full" style={{ backgroundColor: corComOpacidade(corDominante, 0.2) }} />
                     <View className="flex-1 justify-between p-6">
                         <View className="flex-row items-center self-start rounded-full border border-white/15 bg-black/25 px-3 py-2">
                             <MusicNotesIcon size={15} color={corAcento} weight="fill" />
@@ -167,7 +210,7 @@ export default function Universo() {
                         </View>
                         <View className="rounded-2xl border border-white/10 bg-black/75 p-5">
                             <Text className="font-serif text-[38px] leading-[44px] text-white">
-                                Seu universo, faixa a faixa.
+                                Sua Maré, faixa a faixa.
                             </Text>
                             <Text className="mt-3 text-sm leading-5 text-[#E0E5ED]">
                                 Uma história construída pelas músicas que você avaliou.
@@ -271,7 +314,7 @@ export default function Universo() {
                         <Image source={{ uri: artistaPrincipal.fotoURL }} className="absolute inset-0 h-full w-full" resizeMode="cover" />
                     ) : null}
                     <LinearGradient
-                        colors={["rgba(7,10,16,0.15)", "rgba(7,10,16,0.58)", "rgba(7,10,16,0.97)"]}
+                        colors={["rgba(7,10,16,0.26)", "rgba(7,10,16,0.7)", "rgba(7,10,16,0.98)"]}
                         locations={[0, 0.48, 1]}
                         className="absolute inset-0"
                     />
@@ -338,13 +381,15 @@ export default function Universo() {
         }
 
         return (
-            <View className="flex-1 justify-between p-6">
+            <View className="flex-1 p-5">
                 <View className="flex-row items-center">
                     <StarIcon size={17} color={corAcento} weight="fill" />
                     <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.4px]">SUA COLEÇÃO</Text>
                 </View>
-                <View className="rounded-2xl border border-white/10 bg-black/65 p-4">
-                    <Text className="font-serif text-[30px] leading-9 text-white">Músicas que você guardou para voltar.</Text>
+                <View className="mt-4 rounded-2xl border border-white/10 bg-black/65 p-4">
+                    <Text className="font-serif text-[26px] leading-8 text-white" numberOfLines={2}>
+                        Músicas que você guardou para voltar.
+                    </Text>
                     <Text className="mt-2 text-sm text-[#B7C1D0]">
                         {formatarQuantidade(musicasSalvas.length, "música salva", "músicas salvas")}
                     </Text>
@@ -352,28 +397,31 @@ export default function Universo() {
                 {erroColecao ? (
                     <Text className="text-sm text-[#B7C1D0]">{erroColecao}</Text>
                 ) : (
-                    <View className="flex-row items-end justify-center">
+                    <View className="mt-5 flex-row items-start justify-center pb-4">
                         {musicasSalvas.slice(0, 3).map(({ musica }, posicao) => (
                             <Pressable
                                 key={musica.id}
                                 onPress={() => router.push(`/musica/${musica.id}` as never)}
                                 accessibilityRole="button"
                                 accessibilityLabel={`Abrir ${musica.titulo}`}
-                                className="mx-1.5 flex-1"
-                                style={{ transform: [{ translateY: posicao === 1 ? -16 : 0 }] }}
+                                className="mx-1.5 min-w-0 flex-1"
+                                style={{ transform: [{ translateY: posicao === 1 ? -10 : 0 }] }}
                             >
                                 <Image
                                     source={musica.capa ? { uri: musica.capa } : imagemPadrao}
                                     className="aspect-square w-full rounded-2xl border border-white/15 bg-[#171E2B]"
                                     resizeMode="cover"
                                 />
-                                <Text className="mt-2 text-xs font-semibold text-white" numberOfLines={1}>{musica.titulo}</Text>
-                                <Text className="mt-1 text-[10px] text-[#AAB4C5]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
+                                <Text className="mt-2 text-xs leading-4 font-semibold text-white" numberOfLines={1} ellipsizeMode="tail">
+                                    {musica.titulo}
+                                </Text>
+                                <Text className="mt-1 text-[10px] leading-4 text-[#AAB4C5]" numberOfLines={1} ellipsizeMode="tail">
+                                    {musica.artista?.nome ?? "Artista desconhecido"}
+                                </Text>
                             </Pressable>
                         ))}
                     </View>
                 )}
-                <View />
             </View>
         );
     }
@@ -410,7 +458,7 @@ export default function Universo() {
                     <>
                         <View className="mx-5 mt-2 flex-row items-center justify-between">
                             <View>
-                                <Text className="font-serif text-2xl text-white">Meu universo musical</Text>
+                                <Text className="font-serif text-2xl text-white">Minha Maré</Text>
                                 <Text className="mt-1 text-xs text-[#8793A7]">Uma retrospectiva do seu gosto.</Text>
                             </View>
                             <Text className="text-xs font-medium text-[#8793A7]">{indiceSeguro + 1} / {slides.length}</Text>
@@ -453,7 +501,7 @@ export default function Universo() {
                                     <Animated.View
                                         className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#111622]"
                                         style={{
-                                            height: alturaCartao,
+                                            height: slide === "colecao" ? alturaCartaoColecao : alturaCartao,
                                             opacity: indice === indiceSeguro ? animacaoConteudo : 1,
                                             transform: [{
                                                 translateY: indice === indiceSeguro
@@ -485,22 +533,130 @@ export default function Universo() {
                             >
                                 <ArrowLeftIcon size={19} color="#D0D7E2" />
                             </Pressable>
-                            <Text className="text-xs text-[#8793A7]">Deslize para continuar</Text>
+                            <Text className="text-xs text-[#8793A7]">
+                                {indiceSeguro < slides.length - 1 ? "Deslize para continuar" : "Sua retrospectiva está pronta"}
+                            </Text>
                             <Pressable
-                                onPress={() => indiceSeguro < slides.length - 1 ? irParaSlide(indiceSeguro + 1) : router.back()}
+                                onPress={() => indiceSeguro < slides.length - 1 ? irParaSlide(indiceSeguro + 1) : setCompartilhamentoAberto(true)}
                                 accessibilityRole="button"
-                                accessibilityLabel={indiceSeguro < slides.length - 1 ? "Avançar uma parte" : "Concluir retrospectiva"}
+                                accessibilityLabel={indiceSeguro < slides.length - 1 ? "Avançar uma parte" : "Compartilhar retrospectiva"}
                                 className="h-11 w-11 items-center justify-center rounded-full"
                                 style={{ backgroundColor: corAcento }}
                             >
                                 {indiceSeguro < slides.length - 1
                                     ? <ArrowRightIcon size={20} color="#07111E" weight="bold" />
-                                    : <StarIcon size={19} color="#07111E" weight="fill" />}
+                                    : <ShareNetworkIcon size={19} color="#07111E" weight="bold" />}
                             </Pressable>
                         </View>
                     </>
                 ) : null}
             </ScrollView>
+
+            <Modal
+                visible={compartilhamentoAberto}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setCompartilhamentoAberto(false)}
+            >
+                <ScrollView
+                    className="flex-1 bg-black/85"
+                    contentContainerStyle={{ flexGrow: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 20, paddingVertical: 24 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View className="w-full items-center">
+                        <Text className="mb-4 text-base font-semibold text-white">Prévia da retrospectiva</Text>
+                        <View
+                            ref={cartaoCompartilhamentoRef}
+                            collapsable={false}
+                            className="relative overflow-hidden rounded-[28px] border border-white/15 bg-[#101622]"
+                            style={{
+                                width: larguraCartaoCompartilhamento,
+                                height: alturaCartaoCompartilhamento,
+                            }}
+                        >
+                            {capaParaPaleta ? (
+                                <Image source={{ uri: capaParaPaleta }} className="absolute inset-0 h-full w-full" resizeMode="cover" />
+                            ) : null}
+                            <LinearGradient
+                                colors={["rgba(5,9,16,0.4)", "rgba(5,9,16,0.84)", "rgba(5,9,16,0.99)"]}
+                                locations={[0, 0.45, 1]}
+                                className="absolute inset-0"
+                            />
+                            <View
+                                pointerEvents="none"
+                                className="absolute -right-12 -top-10 h-48 w-48 rounded-full"
+                                style={{ backgroundColor: corComOpacidade(corDominante, 0.22) }}
+                            />
+                            <View className="flex-1 justify-between p-6">
+                                <View className="flex-row items-center self-start rounded-full border border-white/15 bg-black/50 px-3 py-2">
+                                    <MusicNotesIcon size={14} color={corAcento} weight="fill" />
+                                    <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.5px]">MARÉ · RETROSPECTIVA</Text>
+                                </View>
+                                <View>
+                                    <Text className="font-serif text-[30px] leading-9 text-white">Minha Maré</Text>
+                                    <Text className="mt-2 text-sm text-[#E0E5ED]">Um retrato feito pelas músicas que avaliei.</Text>
+                                    <View className="mt-6 rounded-2xl border border-white/10 bg-black/60 p-4">
+                                        <Text className="text-[64px] font-semibold leading-[70px] text-white">{dados?.totalAvaliacoes ?? 0}</Text>
+                                        <Text className="text-sm text-[#D1D7E0]">
+                                            {formatarQuantidade(dados?.totalAvaliacoes ?? 0, "música avaliada", "músicas avaliadas")}
+                                        </Text>
+                                    </View>
+                                    <View className="mt-3 flex-row">
+                                        <View className="flex-1 rounded-xl border border-white/10 bg-black/55 p-3">
+                                            <Text className="text-[10px] uppercase tracking-wider text-[#AAB4C5]">Nota média</Text>
+                                            <View className="mt-1.5 flex-row items-center">
+                                                <StarIcon size={15} color={corAcento} weight="fill" />
+                                                <Text className="ml-1.5 text-xl font-semibold text-white">
+                                                    {dados?.totalAvaliacoes ? formatarNota(dados.mediaGeral) : "—"}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <View className="ml-3 flex-1 rounded-xl border border-white/10 bg-black/55 p-3">
+                                            <Text className="text-[10px] uppercase tracking-wider text-[#AAB4C5]">Artistas</Text>
+                                            <Text className="mt-1.5 text-xl font-semibold text-white">{dados?.artistas.length ?? 0}</Text>
+                                        </View>
+                                    </View>
+                                    {(generosEmDestaque[0] || artistasEmDestaque[0]) ? (
+                                        <View className="mt-3 rounded-xl border border-white/10 bg-black/55 p-3">
+                                            {generosEmDestaque[0] ? (
+                                                <Text className="text-xs text-[#E0E5ED]" numberOfLines={1}>
+                                                    Gênero em destaque · <Text style={{ color: corAcento }}>{generosEmDestaque[0].nome}</Text>
+                                                </Text>
+                                            ) : null}
+                                            {artistasEmDestaque[0] ? (
+                                                <Text className="mt-1 text-xs text-[#E0E5ED]" numberOfLines={1}>
+                                                    Artista em destaque · <Text style={{ color: corAcento }}>{artistasEmDestaque[0].nome}</Text>
+                                                </Text>
+                                            ) : null}
+                                        </View>
+                                    ) : null}
+                                </View>
+                                <Text style={{ color: corAcento }} className="text-[10px] font-semibold tracking-[1.5px]">MARE · MEU SOM, MINHA MARÉ</Text>
+                            </View>
+                        </View>
+
+                        <Pressable
+                            onPress={() => void compartilharRetrospectiva()}
+                            disabled={compartilhando}
+                            accessibilityRole="button"
+                            className="mt-5 h-12 w-full flex-row items-center justify-center rounded-xl"
+                            style={{ backgroundColor: corAcento, opacity: compartilhando ? 0.7 : 1, maxWidth: 360 }}
+                        >
+                            <ShareNetworkIcon size={18} color="#07111E" weight="bold" />
+                            <Text className="ml-2 text-sm font-semibold text-[#07111E]">
+                                {compartilhando ? "Preparando imagem..." : "Compartilhar imagem"}
+                            </Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={() => setCompartilhamentoAberto(false)}
+                            accessibilityRole="button"
+                            className="mt-2 py-3"
+                        >
+                            <Text className="text-sm text-[#AAB4C5]">Voltar à retrospectiva</Text>
+                        </Pressable>
+                    </View>
+                </ScrollView>
+            </Modal>
             <Navbar />
         </SafeAreaView>
     );
