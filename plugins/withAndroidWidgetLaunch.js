@@ -18,16 +18,22 @@ module.exports = function withAndroidWidgetLaunch(config) {
             "java",
             ...pacoteAndroid.split("."),
         );
-        const arquivoProvedor = path.join(diretorioPacote, "MusicaDoDiaProvider.kt");
-        if (!fs.existsSync(arquivoProvedor)) {
-            throw new Error("O provedor MúsicaDoDia não foi gerado pelo plugin expo-widgets.");
+        if (!fs.existsSync(diretorioPacote)) {
+            throw new Error("Os provedores Android dos widgets não foram gerados pelo plugin expo-widgets.");
+        }
+        const arquivosProvedores = fs.readdirSync(diretorioPacote)
+            .filter((arquivo) => arquivo.endsWith("Provider.kt"));
+        if (!arquivosProvedores.length) {
+            throw new Error("Nenhum provedor Android foi gerado pelo plugin expo-widgets.");
         }
 
-        const codigoAtual = fs.readFileSync(arquivoProvedor, "utf8");
-        if (codigoAtual.includes("mare-open:")) return configMod;
+        for (const arquivo of arquivosProvedores) {
+            const caminhoArquivo = path.join(diretorioPacote, arquivo);
+            const codigoAtual = fs.readFileSync(caminhoArquivo, "utf8");
+            if (codigoAtual.includes('target.startsWith("mare-open:")')) continue;
 
-        const declaracaoClasse = codigoAtual.trim().replace(/\s*$/, "");
-        const codigoComAbertura = `${declaracaoClasse} {
+            const declaracaoClasse = codigoAtual.trim();
+            const codigoComAbertura = `${declaracaoClasse} {
   override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
     if (intent.action == "expo.modules.widgets.ACTION_WIDGET_INTERACTION") {
       val target = intent.getStringExtra("expo.modules.widgets.extra.TARGET").orEmpty()
@@ -48,8 +54,8 @@ module.exports = function withAndroidWidgetLaunch(config) {
   }
 }
 `;
-
-        fs.writeFileSync(arquivoProvedor, codigoComAbertura, "utf8");
+            fs.writeFileSync(caminhoArquivo, codigoComAbertura, "utf8");
+        }
         return configMod;
     }]);
 };

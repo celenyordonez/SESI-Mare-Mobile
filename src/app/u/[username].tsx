@@ -18,6 +18,7 @@ import {
     type PerfilPublico as PerfilPublicoDados,
 } from "../../services/usuarioService";
 import { iniciarConversa as abrirConversaPrivada } from "../../services/mensagemPrivadaService";
+import { buscarPlaylistsPublicas, type Playlist } from "../../services/playlistService";
 
 type AbaPerfilPublico = "avaliacoes" | "comentarios";
 
@@ -26,6 +27,7 @@ export default function PerfilPublico() {
     const roteador = useRouter();
     const [perfil, setPerfil] = useState<PerfilPublicoDados | null>(null);
     const [comentarios, setComentarios] = useState<ComentarioPerfil[]>([]);
+    const [playlistsPublicas, setPlaylistsPublicas] = useState<Playlist[]>([]);
     const [meuId, setMeuId] = useState<number | null>(null);
     const [abaAtiva, setAbaAtiva] = useState<AbaPerfilPublico>("avaliacoes");
     const [seguindo, setSeguindo] = useState(false);
@@ -39,15 +41,17 @@ export default function PerfilPublico() {
 
         async function carregarPerfil() {
             try {
-                const [dadosPerfil, meuPerfil] = await Promise.all([
+                const [dadosPerfil, meuPerfil, playlists] = await Promise.all([
                     buscarPerfilPublico(username),
                     buscarMeuPerfil().catch(() => null),
+                    buscarPlaylistsPublicas(username),
                 ]);
                 const comentariosPerfil = await buscarComentariosPublicos(dadosPerfil.id);
 
                 if (!ativo) return;
                 setPerfil(dadosPerfil);
                 setComentarios(comentariosPerfil);
+                setPlaylistsPublicas(playlists);
                 setMeuId(meuPerfil?.id ?? null);
                 setSeguindo(dadosPerfil.seguindoPorMim);
             } catch (erroCarregamento) {
@@ -215,6 +219,22 @@ export default function PerfilPublico() {
                             </View>
                         </View>
                     </View>
+
+                    {playlistsPublicas.length > 0 ? (
+                        <View className="mt-6">
+                            <Text className="px-5 pb-3 font-serif text-lg text-[#142338] dark:text-white">Playlists públicas</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+                                {playlistsPublicas.map((playlist) => (
+                                    <View key={playlist.id} className="mr-3 w-64 rounded-2xl border border-[#29435F] bg-[#101A29] p-4">
+                                        <Text className="text-base font-semibold text-white" numberOfLines={1}>{playlist.nome}</Text>
+                                        {playlist.descricao ? <Text className="mt-1 text-xs text-[#D2DFEC]" numberOfLines={2}>{playlist.descricao}</Text> : null}
+                                        <Text className="mt-2 text-[11px] text-[#A9D8FF]">{playlist.musicas.length} músicas</Text>
+                                        {playlist.musicas.slice(0, 3).map(({ musica }) => <Text key={musica.id} className="mt-2 text-xs text-[#F3F7FC]" numberOfLines={1}>♪ {musica.titulo} · {musica.artista.nome}</Text>)}
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    ) : null}
 
                     <View className="flex-row mt-8 border-b border-[#D5E0EC] dark:border-[#202633]">
                         {(["avaliacoes", "comentarios"] as const).map((aba) => (

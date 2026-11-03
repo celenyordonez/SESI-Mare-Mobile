@@ -1,4 +1,5 @@
 import { apiRequest } from "./api";
+import type { Playlist } from "./playlistService";
 
 export type PessoaConversa = {
     id: number;
@@ -23,6 +24,7 @@ export type MensagemPrivada = {
     lidaEm?: string | null;
     remetente: PessoaConversa;
     musica?: MusicaCompartilhada | null;
+    playlist?: Playlist | null;
 };
 
 export type ConversaPrivada = {
@@ -96,6 +98,12 @@ export function compartilharMusica(conversaId: number, musicaId: number) {
         method: "POST",
         autenticado: true,
         body: JSON.stringify({ musicaId }),
+    });
+}
+
+export function compartilharPlaylistNaConversa(conversaId: number, playlistId: number) {
+    return apiRequest<MensagemPrivada>(`/conversas/${conversaId}/mensagens`, {
+        method: "POST", autenticado: true, body: JSON.stringify({ playlistId }),
     });
 }
 

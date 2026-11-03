@@ -70,6 +70,18 @@
                 "targetCellHeight": 2,
                 "resizeMode": "none"
               }
+            },
+            {
+              "name": "JogosMusicais",
+              "displayName": "Jogos musicais",
+              "description": "Acesse a Roleta, o Duelo, Seu Momento e o Bingo.",
+              "android": {
+                "minWidth": 160,
+                "minHeight": 115,
+                "targetCellWidth": 2,
+                "targetCellHeight": 2,
+                "resizeMode": "none"
+              }
             }
           ]
         }

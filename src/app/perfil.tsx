@@ -54,8 +54,9 @@ import {
 } from "../services/usuarioService";
 import type { Musica } from "../services/musicaService";
 import type { Post } from "../services/postService";
+import { adicionarMusicaPlaylist, atualizarPlaylist, buscarMinhasPlaylists, criarPlaylist, excluirPlaylist, type Playlist } from "../services/playlistService";
 
-type AbaPerfil = "avaliacoes" | "comentarios" | "curtidos" | "salvos";
+type AbaPerfil = "avaliacoes" | "comentarios" | "curtidos" | "salvos" | "playlists";
 type TipoImagemPerfil = "foto" | "capa";
 
 function normalizarPesquisa(texto: string) {
@@ -82,6 +83,10 @@ export default function Perfil() {
     const [usuarioEditado, setUsuarioEditado] = useState("");
     const [bioEditada, setBioEditada] = useState("");
     const [revisao, setRevisao] = useState(0);
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [nomePlaylist, setNomePlaylist] = useState("");
+    const [criandoPlaylist, setCriandoPlaylist] = useState(false);
+    const [playlistSelecionada, setPlaylistSelecionada] = useState<number | null>(null);
 
     useEffect(() => {
         if (parametros.aba === "salvos") setAbaAtiva("salvos");
@@ -92,13 +97,14 @@ export default function Perfil() {
 
         async function carregarPerfil() {
             try {
-                const [dadosPerfil, publicacoes, comentariosPerfil, curtidasPerfil, salvas] =
+                const [dadosPerfil, publicacoes, comentariosPerfil, curtidasPerfil, salvas, minhasPlaylists] =
                     await Promise.all([
                         buscarMeuPerfil(),
                         buscarPostsDoUsuario(),
                         buscarComentariosDoUsuario<ComentarioPerfil>(),
                         buscarPostsCurtidos(),
                         buscarMusicasSalvas(),
+                        buscarMinhasPlaylists(),
                     ]);
 
                 if (!ativo) return;
@@ -110,6 +116,7 @@ export default function Perfil() {
                 setComentarios(comentariosPerfil);
                 setCurtidos(curtidasPerfil);
                 setMusicasSalvas(salvas);
+                setPlaylists(minhasPlaylists);
             } catch (erroCarregamento) {
                 console.error("Erro ao carregar perfil:", erroCarregamento);
                 if (ativo) setErro("Não foi possível carregar seu perfil.");
@@ -298,7 +305,30 @@ export default function Perfil() {
         { id: "comentarios", titulo: "Comentários" },
         { id: "curtidos", titulo: "Curtidos" },
         { id: "salvos", titulo: "Músicas salvas" },
+        { id: "playlists", titulo: "Playlists" },
     ];
+
+    async function criarNovaPlaylist() {
+        if (!nomePlaylist.trim() || criandoPlaylist) return;
+        setCriandoPlaylist(true);
+        try {
+            const criada = await criarPlaylist(nomePlaylist.trim());
+            setPlaylists((lista) => [criada, ...lista]);
+            setNomePlaylist("");
+            Toast.show({ type: "success", text1: "Playlist criada." });
+        } catch (erro) {
+            Toast.show({ type: "error", text1: "Não foi possível criar a playlist", text2: erro instanceof Error ? erro.message : undefined });
+        } finally { setCriandoPlaylist(false); }
+    }
+
+    async function alternarVisibilidadePlaylist(playlist: Playlist) {
+        try {
+            const atualizada = await atualizarPlaylist(playlist.id, { publica: !playlist.publica });
+            setPlaylists((lista) => lista.map((item) => item.id === playlist.id ? atualizada : item));
+        } catch (erro) {
+            Toast.show({ type: "error", text1: "Não foi possível alterar a privacidade", text2: erro instanceof Error ? erro.message : undefined });
+        }
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
@@ -514,6 +544,26 @@ export default function Perfil() {
                             ) : (
                                 <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhuma música salva.</Text>
                             )
+                        ) : null}
+
+                        {abaAtiva === "playlists" ? (
+                            <View className="px-4 py-4">
+                                <View className="mb-4 flex-row gap-2">
+                                    <TextInput value={nomePlaylist} onChangeText={setNomePlaylist} maxLength={80} placeholder="Nome da playlist" placeholderTextColor="#8793A7" className="h-11 flex-1 rounded-xl border border-[#354052] bg-[#111420] px-3 text-sm text-white" />
+                                    <Pressable onPress={() => void criarNovaPlaylist()} disabled={!nomePlaylist.trim() || criandoPlaylist} className="items-center justify-center rounded-xl bg-[#58AAF0] px-4"><Text className="font-semibold text-[#081321]">Criar</Text></Pressable>
+                                </View>
+                                {!playlists.length ? <Text className="py-6 text-center text-sm text-[#8793A7]">Crie sua primeira playlist com músicas salvas.</Text> : playlists.map((playlist) => (
+                                    <View key={playlist.id} className="mb-4 overflow-hidden rounded-2xl border border-[#2A3C52] bg-[#101A29] p-4">
+                                        <View className="flex-row items-center justify-between">
+                                            <View className="flex-1"><Text className="text-base font-semibold text-white">{playlist.nome}</Text><Text className="mt-1 text-xs text-[#C3D0DE]">{playlist.musicas.length} músicas · {playlist.publica ? "Pública no perfil" : "Privada"}</Text></View>
+                                            <Pressable onPress={() => void alternarVisibilidadePlaylist(playlist)} className="rounded-full border border-[#53718F] px-3 py-2"><Text className="text-xs font-medium text-[#A9D8FF]">{playlist.publica ? "Tornar privada" : "Tornar pública"}</Text></Pressable>
+                                        </View>
+                                        <Pressable onPress={() => setPlaylistSelecionada(playlistSelecionada === playlist.id ? null : playlist.id)} className="mt-3 self-start rounded-lg bg-[#20364F] px-3 py-2"><Text className="text-xs font-semibold text-white">{playlistSelecionada === playlist.id ? "Fechar músicas salvas" : "Adicionar das músicas salvas"}</Text></Pressable>
+                                        {playlist.musicas.map(({ musica }) => <Text key={musica.id} className="mt-3 text-xs text-[#E8F0F8]">♪ {musica.titulo} · {musica.artista.nome}</Text>)}
+                                        {playlistSelecionada === playlist.id && musicasSalvas.map(({ musica }) => <Pressable key={musica.id} onPress={async () => { try { const atualizada = await adicionarMusicaPlaylist(playlist.id, musica.id); setPlaylists((lista) => lista.map((item) => item.id === playlist.id ? atualizada : item)); } catch (erro) { Toast.show({ type: "error", text1: "Não foi possível adicionar a música", text2: erro instanceof Error ? erro.message : undefined }); } }} className="mt-2 rounded-lg border border-[#354052] p-2"><Text className="text-xs text-[#A9D8FF]">+ {musica.titulo} · {musica.artista?.nome}</Text></Pressable>)}
+                                    </View>
+                                ))}
+                            </View>
                         ) : null}
                     </View>
                 </ScrollView>

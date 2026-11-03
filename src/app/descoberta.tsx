@@ -20,7 +20,6 @@ import {
     CheckIcon,
     MusicNotesIcon,
     XIcon,
-    XCircleIcon,
 } from "phosphor-react-native";
 import Toast from "react-native-toast-message";
 
@@ -35,6 +34,7 @@ import { corComOpacidade } from "../services/paletaCapaService";
 
 const capaPadrao = require("../../assets/images/logo.png");
 const CHAVE_TUTORIAL_DESCOBERTA = "mare:descoberta:tutorial-v1";
+const CHAVE_TUTORIAL_PERSONALIZACAO = "mare:descoberta:personalizacao-tutorial-v1";
 type MusicaDescoberta = Musica & { _count?: { posts?: number } };
 
 export default function Descoberta() {
@@ -63,9 +63,9 @@ export default function Descoberta() {
 
     useEffect(() => {
         let ativo = true;
-        if (emOnboarding) return;
+        const chaveTutorial = emOnboarding ? CHAVE_TUTORIAL_PERSONALIZACAO : CHAVE_TUTORIAL_DESCOBERTA;
 
-        AsyncStorage.getItem(CHAVE_TUTORIAL_DESCOBERTA)
+        AsyncStorage.getItem(chaveTutorial)
             .then((visto) => {
                 if (ativo && visto !== "sim") setTutorialAberto(true);
             })
@@ -79,7 +79,7 @@ export default function Descoberta() {
     async function fecharTutorial() {
         setTutorialAberto(false);
         try {
-            await AsyncStorage.setItem(CHAVE_TUTORIAL_DESCOBERTA, "sim");
+            await AsyncStorage.setItem(emOnboarding ? CHAVE_TUTORIAL_PERSONALIZACAO : CHAVE_TUTORIAL_DESCOBERTA, "sim");
         } catch (erroTutorial) {
             console.warn("Não foi possível salvar que o tutorial foi visto.", erroTutorial);
         }
@@ -265,12 +265,12 @@ export default function Descoberta() {
     });
     const opacidadeSim = progressoGesto.interpolate({
         inputRange: [0, 0.08, 0.35, 1],
-        outputRange: [0, 0.05, 0.36, 0.78],
+        outputRange: [0, 0.12, 0.58, 0.94],
         extrapolate: "clamp",
     });
     const opacidadeNao = progressoGesto.interpolate({
         inputRange: [-1, -0.35, -0.08, 0],
-        outputRange: [0.78, 0.36, 0.05, 0],
+        outputRange: [0.94, 0.58, 0.12, 0],
         extrapolate: "clamp",
     });
 
@@ -460,7 +460,7 @@ export default function Descoberta() {
                             }}
                             accessibilityLabel="Pular música"
                         >
-                            <XCircleIcon size={27} color={paleta?.acento ?? "#B5C0D1"} />
+                            <XIcon size={25} color={paleta?.acento ?? "#B5C0D1"} weight="bold" />
                         </Pressable>
                         <Pressable
                             onPress={avaliarMusica}
@@ -585,19 +585,19 @@ export default function Descoberta() {
                 style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, opacity: opacidadeSim, zIndex: 90, elevation: 90 }}
             >
                 <LinearGradient
-                    colors={["rgba(16, 185, 129, 0.34)", "rgba(16, 185, 129, 0.14)", "rgba(16, 185, 129, 0.02)"]}
+                    colors={["rgba(16, 185, 129, 0.50)", "rgba(16, 185, 129, 0.24)", "rgba(16, 185, 129, 0.04)"]}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     style={{ flex: 1 }}
                 />
                 <Animated.View
-                    className="absolute left-6 h-14 w-14 items-center justify-center rounded-full border border-emerald-300/60 bg-[#073B32]/70"
+                    className="absolute left-6 h-16 w-16 items-center justify-center rounded-full border-2 border-emerald-200 bg-[#073B32]/90"
                     style={{
                         top: "48%",
                         transform: [{ scale: opacidadeSim.interpolate({ inputRange: [0, 0.68], outputRange: [0.82, 1.08] }) }],
                     }}
                 >
-                    <CheckIcon size={29} color="#A7F3D0" weight="bold" />
+                    <CheckIcon size={34} color="#D1FAE5" weight="bold" />
                 </Animated.View>
             </Animated.View>
             <Animated.View
@@ -605,19 +605,19 @@ export default function Descoberta() {
                 style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, opacity: opacidadeNao, zIndex: 90, elevation: 90 }}
             >
                 <LinearGradient
-                    colors={["rgba(244, 63, 94, 0.30)", "rgba(244, 63, 94, 0.13)", "rgba(244, 63, 94, 0.02)"]}
+                    colors={["rgba(244, 63, 94, 0.48)", "rgba(244, 63, 94, 0.22)", "rgba(244, 63, 94, 0.04)"]}
                     start={{ x: 1, y: 0.5 }}
                     end={{ x: 0, y: 0.5 }}
                     style={{ flex: 1 }}
                 />
                 <Animated.View
-                    className="absolute right-6 h-14 w-14 items-center justify-center rounded-full border border-rose-300/60 bg-[#481B29]/70"
+                    className="absolute right-6 h-16 w-16 items-center justify-center rounded-full border-2 border-rose-200 bg-[#481B29]/90"
                     style={{
                         top: "48%",
                         transform: [{ scale: opacidadeNao.interpolate({ inputRange: [0, 0.68], outputRange: [0.82, 1.08] }) }],
                     }}
                 >
-                    <XIcon size={29} color="#FECDD3" weight="bold" />
+                    <XIcon size={34} color="#FFE4E6" weight="bold" />
                 </Animated.View>
             </Animated.View>
 
@@ -634,10 +634,22 @@ export default function Descoberta() {
                             Descubra músicas uma por vez e escolha o que fazer com cada cartão.
                         </Text>
                         <View className="mt-5 rounded-2xl border border-[#263447] bg-[#F4F7FA] dark:bg-[#0B1019] p-4">
-                            <Text className="text-sm font-semibold text-emerald-400">Arraste para a direita · SIM</Text>
-                            <Text className="mt-2 text-sm font-semibold text-rose-400">Arraste para a esquerda · NÃO</Text>
+                            <View className="flex-row items-center">
+                                <View className="mr-3 h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15">
+                                    <CheckIcon size={18} color="#34D399" weight="bold" />
+                                </View>
+                                <Text className="text-sm font-semibold text-emerald-400">Arraste para a direita</Text>
+                            </View>
+                            <View className="mt-3 flex-row items-center">
+                                <View className="mr-3 h-8 w-8 items-center justify-center rounded-full bg-rose-500/15">
+                                    <XIcon size={18} color="#FB7185" weight="bold" />
+                                </View>
+                                <Text className="text-sm font-semibold text-rose-400">Arraste para a esquerda</Text>
+                            </View>
                             <Text className="mt-3 text-sm leading-5 text-[#52677F] dark:text-[#8793A7]">
-                                “SIM” abre a criação de uma avaliação. “NÃO” pula para a próxima música. Você também pode usar os botões abaixo do cartão.
+                                {emOnboarding
+                                    ? "O ✓ à direita guarda o gênero e o artista nas suas preferências. O × à esquerda pula a faixa. Você também pode usar os botões abaixo do cartão."
+                                    : "O ✓ à direita abre a criação de uma avaliação. O × à esquerda pula a faixa. Você também pode usar os botões abaixo do cartão."}
                             </Text>
                         </View>
                         <Pressable

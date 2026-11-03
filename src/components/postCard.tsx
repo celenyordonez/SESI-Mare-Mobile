@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { Alert, Image, Pressable, Share, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
+import { ActivityIndicator, Alert, Image, Modal, Pressable, Share, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
+import { captureRef } from "react-native-view-shot";
+import * as Sharing from "expo-sharing";
 import { ChatCircleIcon, DotsThreeIcon, HeartIcon, PencilSimpleIcon, ShareNetworkIcon, TrashIcon, UserIcon } from "phosphor-react-native";
 import { alternarCurtidaPost, editarPost, excluirPost as excluirPostApi } from "../services/postService";
 import { feedbackAcao } from "../services/feedbackTatil";
@@ -53,10 +55,21 @@ export default function PostCard(props: PostCardProps) {
     const [textoEditado, setTextoEditado] = useState(content ?? "");
     const [notaEditada, setNotaEditada] = useState(nota);
     const [postFoiEditado, setPostFoiEditado] = useState(editado);
+    const cartaoCompartilhamentoRef = useRef<ComponentRef<typeof View>>(null);
+    const capturaEmAndamento = useRef(false);
+    const [modalImagemAberto, setModalImagemAberto] = useState(false);
+    const [cartaoPronto, setCartaoPronto] = useState(false);
+    const [capaPronta, setCapaPronta] = useState(!musicCover);
+    const [gerandoImagem, setGerandoImagem] = useState(false);
 
     useEffect(() => { setCurtido(curtidoPorMim); }, [curtidoPorMim]);
     useEffect(() => { setQuantidadeCurtidas(likes); }, [likes]);
     useEffect(() => { setPostFoiEditado(editado); }, [editado]);
+    useEffect(() => {
+        if (!modalImagemAberto || !cartaoPronto || !capaPronta || capturaEmAndamento.current) return;
+        const temporizador = setTimeout(() => { void compartilharComoImagem(); }, 180);
+        return () => clearTimeout(temporizador);
+    }, [modalImagemAberto, cartaoPronto, capaPronta]);
 
     function abrirPerfil() {
         if (username) router.push(`/u/${encodeURIComponent(username)}` as never);
@@ -121,6 +134,34 @@ export default function PostCard(props: PostCardProps) {
     async function compartilhar() {
         try { feedbackAcao(); await Share.share({ message: `${name ?? "Alguém"} avaliou “${musicTitle}” no Maré${postId ? `: /post/${postId}` : ""}` }); }
         catch (error) { console.error("Erro ao compartilhar publicação:", error); }
+    }
+
+    async function compartilharComoImagem() {
+        if (!cartaoCompartilhamentoRef.current || capturaEmAndamento.current) return;
+        capturaEmAndamento.current = true;
+        setGerandoImagem(true);
+        try {
+            const disponivel = await Sharing.isAvailableAsync();
+            if (!disponivel) throw new Error("O compartilhamento de imagens não está disponível neste aparelho.");
+            const imagem = await captureRef(cartaoCompartilhamentoRef, {
+                format: "png", quality: 1, result: "tmpfile", width: 1080, height: 1350,
+            });
+            setModalImagemAberto(false);
+            feedbackAcao();
+            await Sharing.shareAsync(imagem, { mimeType: "image/png", dialogTitle: "Compartilhar avaliação", UTI: "public.png" });
+        } catch (error) {
+            Alert.alert("Não foi possível compartilhar", error instanceof Error ? error.message : "Tente novamente.");
+        } finally {
+            capturaEmAndamento.current = false;
+            setGerandoImagem(false);
+            setModalImagemAberto(false);
+        }
+    }
+
+    function abrirCompartilhamentoComoImagem() {
+        setCartaoPronto(false);
+        setCapaPronta(!musicCover);
+        setModalImagemAberto(true);
     }
 
     function dataRelativa(data: string) {
@@ -193,6 +234,44 @@ export default function PostCard(props: PostCardProps) {
                 icone={<ShareNetworkIcon size={19} color="#58AAF0" />}
                 aoPressionar={() => { setOpcoesAbertas(false); void compartilhar(); }}
             />
+            <ItemMenuAcao
+                titulo="Compartilhar avaliação como imagem"
+                descricao="Criar um card da avaliação para enviar pelo celular"
+                icone={<ShareNetworkIcon size={19} color="#58AAF0" />}
+                aoPressionar={() => { setOpcoesAbertas(false); abrirCompartilhamentoComoImagem(); }}
+            />
         </MenuAcoes>
+
+        <Modal visible={modalImagemAberto} transparent animationType="fade" onRequestClose={() => setModalImagemAberto(false)}>
+            <View className="flex-1 items-center justify-center bg-black/80 px-5">
+                <View
+                    ref={cartaoCompartilhamentoRef}
+                    collapsable={false}
+                    onLayout={() => setCartaoPronto(true)}
+                    className="w-[320px] overflow-hidden rounded-[28px] border border-[#34506D] bg-[#081321] p-6"
+                >
+                    <View className="mb-5 flex-row items-center justify-between">
+                        <Text className="text-sm font-bold tracking-[3px] text-[#9BD3FF]">MARÉ</Text>
+                        <Text className="text-[10px] font-semibold tracking-[2px] text-[#B9C9D9]">AVALIAÇÃO MUSICAL</Text>
+                    </View>
+                    <View className="mb-5 flex-row items-center rounded-2xl border border-[#29435F] bg-[#101F31] p-3">
+                        {musicCover ? <Image source={{ uri: musicCover }} onLoadEnd={() => setCapaPronta(true)} onError={() => setCapaPronta(true)} className="h-24 w-24 rounded-xl bg-[#1A2B40]" resizeMode="cover" /> : <View onLayout={() => setCapaPronta(true)} className="h-24 w-24 items-center justify-center rounded-xl bg-[#1A2B40]"><Text className="text-xs font-bold text-[#9BD3FF]">MARÉ</Text></View>}
+                        <View className="ml-3 min-w-0 flex-1">
+                            <Text className="text-lg font-bold leading-6 text-white" numberOfLines={3}>{musicTitle}</Text>
+                            <Text className="mt-2 text-sm text-[#D2DFEC]" numberOfLines={2}>{artist || "Artista desconhecido"}</Text>
+                        </View>
+                    </View>
+                    <Text className="text-xs font-semibold tracking-[1px] text-[#B9C9D9]">AVALIAÇÃO DE {name || "USUÁRIO"}</Text>
+                    <Text className="mt-2 text-3xl font-bold text-[#8CC8FF]">{notaAtual.toFixed(1).replace(".", ",")} <Text className="text-lg text-[#C8D8E8]">/ 5</Text></Text>
+                    <View className="mt-3 h-px bg-[#29435F]" />
+                    <Text className="mt-3 text-sm leading-6 text-[#F3F7FC]" numberOfLines={5}>{textoAtual || "Uma avaliação musical na Maré."}</Text>
+                    <Text className="mt-6 text-xs text-[#B9C9D9]">@{username || "mare"} · mare</Text>
+                </View>
+                <View className="mt-5 flex-row items-center gap-3">
+                    <Pressable onPress={() => setModalImagemAberto(false)} disabled={gerandoImagem} className="rounded-xl border border-white/30 px-5 py-3"><Text className="font-semibold text-white">Cancelar</Text></Pressable>
+                    <View className="flex-row items-center rounded-xl bg-[#58AAF0] px-5 py-3">{gerandoImagem ? <ActivityIndicator size="small" color="#081321" /> : <Text className="font-semibold text-[#081321]">Preparando imagem…</Text>}</View>
+                </View>
+            </View>
+        </Modal>
     </View>;
 }

@@ -88,3 +88,14 @@ export async function atualizarWidgetMusicaDoDia(musica: MusicaDoDia["musica"]) 
         capa: capaLocal,
     });
 }
+
+/** Deixa o widget de jogos com a primeira experiência em destaque. */
+export function atualizarWidgetJogosMusicais(indice = 0) {
+    if (Platform.OS !== "android" || !requireOptionalNativeModule("ExpoWidgets")) return;
+    try {
+        const widget = require("../widgets/JogosMusicaisWidget") as { default: { updateSnapshot: (dados: { indice: number }) => void } };
+        widget.default.updateSnapshot({ indice: Math.max(0, indice) });
+    } catch (erro) {
+        console.warn("Não foi possível atualizar o widget de jogos musicais:", erro);
+    }
+}

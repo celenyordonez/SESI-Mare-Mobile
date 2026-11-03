@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { BellIcon, BellSlashIcon, DotsThreeIcon, LockKeyIcon, MusicNoteIcon, PaperPlaneTiltIcon, ProhibitIcon, XIcon } from "phosphor-react-native";
+import { BellIcon, BellSlashIcon, DotsThreeIcon, LockKeyIcon, MusicNoteIcon, PaperPlaneTiltIcon, ProhibitIcon, UserCircleIcon, XIcon } from "phosphor-react-native";
 import Toast from "react-native-toast-message";
 
 import Topbar from "../../components/topbar";
@@ -26,9 +26,11 @@ import {
     marcarConversaComoLida,
     buscarDetalhesConversa,
     atualizarConfiguracoesConversa,
+    compartilharPlaylistNaConversa,
     type MensagemPrivada,
 } from "../../services/mensagemPrivadaService";
 import { buscarMusicas, type Musica } from "../../services/musicaService";
+import { buscarMinhasPlaylists, type Playlist } from "../../services/playlistService";
 import { feedbackAcao } from "../../services/feedbackTatil";
 import { useContadoresNavegacao } from "../../components/ContadoresNavegacao";
 import { ApiError } from "../../services/api";
@@ -94,7 +96,21 @@ export default function ConversaPrivada() {
     const [resultadosMusica, setResultadosMusica] = useState<Musica[]>([]);
     const [buscandoMusica, setBuscandoMusica] = useState(false);
     const [erroBuscaMusica, setErroBuscaMusica] = useState("");
+    const [playlistsDoChat, setPlaylistsDoChat] = useState<Playlist[]>([]);
+    const [selecionandoPlaylist, setSelecionandoPlaylist] = useState(false);
     const conversaBloqueada = bloqueadaPorMim || bloqueadaPeloOutro;
+    const outraPessoaNasMensagens = mensagens.find(
+        (mensagem) => meuId !== null && mensagem.remetenteId !== meuId,
+    )?.remetente;
+    const usernameDoPerfil = username || outraPessoaNasMensagens?.username;
+
+    function abrirPerfilDaConversa() {
+        if (!usernameDoPerfil) return;
+        router.push({
+            pathname: "/u/[username]",
+            params: { username: usernameDoPerfil },
+        } as never);
+    }
 
     useEffect(() => {
         let ativo = true;
@@ -255,6 +271,21 @@ export default function ConversaPrivada() {
         }
     }
 
+    async function enviarPlaylist(playlist: Playlist) {
+        if (enviando || conversaBloqueada) return;
+        setEnviando(true);
+        try {
+            const enviada = await compartilharPlaylistNaConversa(conversaId, playlist.id);
+            setMensagens((atuais) => atuais.some((item) => item.id === enviada.id) ? atuais : [...atuais, enviada]);
+            ultimoIdRef.current = Math.max(ultimoIdRef.current, enviada.id);
+            setSeletorMusicaAberto(false);
+            setSelecionandoPlaylist(false);
+            feedbackAcao();
+        } catch (erroEnvio) {
+            Toast.show({ type: "error", text1: "Não foi possível compartilhar a playlist", text2: erroEnvio instanceof Error ? erroEnvio.message : "Tente novamente." });
+        } finally { setEnviando(false); }
+    }
+
     async function atualizarPreferencia(configuracao: { silenciada?: boolean; bloqueada?: boolean }) {
         try {
             const atualizada = await atualizarConfiguracoesConversa(conversaId, configuracao);
@@ -284,11 +315,25 @@ export default function ConversaPrivada() {
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
             <View className="mx-4 mb-2 flex-row items-center border-b border-[#D5E0EC] dark:border-[#202633] px-1 pb-3">
-                <Image source={foto ? { uri: foto } : imagemPadrao} className="h-10 w-10 rounded-full bg-[#202636]" />
-                <View className="ml-3 flex-1">
-                    <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{nome || username || "Conversa privada"}</Text>
-                    {username ? <Text className="mt-0.5 text-xs text-[#52677F] dark:text-[#8793A7]">@{username}</Text> : null}
-                </View>
+                <Pressable
+                    onPress={abrirPerfilDaConversa}
+                    disabled={!usernameDoPerfil}
+                    accessibilityRole="button"
+                    accessibilityLabel={usernameDoPerfil ? `Abrir perfil de @${usernameDoPerfil}` : "Perfil indisponível"}
+                    className="min-h-11 flex-1 flex-row items-center rounded-xl"
+                >
+                    <Image
+                        source={foto || outraPessoaNasMensagens?.foto ? { uri: foto || outraPessoaNasMensagens?.foto || undefined } : imagemPadrao}
+                        className="h-10 w-10 rounded-full bg-[#202636]"
+                    />
+                    <View className="ml-3 flex-1">
+                        <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>
+                            {nome || outraPessoaNasMensagens?.nome || username || "Conversa privada"}
+                        </Text>
+                        {usernameDoPerfil ? <Text className="mt-0.5 text-xs text-[#52677F] dark:text-[#8793A7]">@{usernameDoPerfil}</Text> : null}
+                    </View>
+                    {usernameDoPerfil ? <UserCircleIcon size={20} color="#58AAF0" weight="regular" /> : null}
+                </Pressable>
                 <Pressable
                     onPress={abrirOpcoes}
                     accessibilityRole="button"
@@ -358,7 +403,15 @@ export default function ConversaPrivada() {
                                         </View>
                                     ) : null}
                                     <View className={`max-w-[84%] rounded-2xl px-3.5 py-2.5 ${minha ? "self-end rounded-br-md bg-[#1C4770]" : "self-start rounded-bl-md bg-[#F4F7FA] dark:bg-[#171E2B]"}`}>
-                                        {item.musica ? (
+                                        {item.playlist ? (
+                                            <Pressable onPress={() => router.push(`/u/${encodeURIComponent(item.playlist!.usuario.username)}` as never)} className="w-60 rounded-xl border border-[#34506D] bg-[#101F31] p-3" accessibilityRole="link" accessibilityLabel={`Abrir playlist ${item.playlist.nome}`}>
+                                                <Text className="text-[10px] font-bold tracking-widest text-[#9BD3FF]">PLAYLIST PÚBLICA</Text>
+                                                <Text className="mt-1 text-sm font-semibold text-white" numberOfLines={2}>{item.playlist.nome}</Text>
+                                                <Text className="mt-1 text-xs text-[#D2DFEC]">por @{item.playlist.usuario.username} · {item.playlist.musicas.length} músicas</Text>
+                                                {item.playlist.musicas.slice(0, 2).map(({ musica }) => <Text key={musica.id} className="mt-2 text-xs text-[#F3F7FC]" numberOfLines={1}>♪ {musica.titulo} · {musica.artista.nome}</Text>)}
+                                                <Text className="mt-2 text-[10px] text-[#A9D8FF]">Ver perfil ›</Text>
+                                            </Pressable>
+                                        ) : item.musica ? (
                                             <Pressable
                                                 onPress={() => router.push(`/musica/${item.musica!.id}` as never)}
                                                 className="w-60 max-w-full flex-row items-center"
@@ -377,7 +430,7 @@ export default function ConversaPrivada() {
                                             </Pressable>
                                         ) : (
                                             <Text className="text-sm leading-5 text-[#142338] dark:text-white">
-                                                {item.texto.startsWith("[[mare-musica:") ? "Música removida do catálogo." : item.texto}
+                                                {item.texto.startsWith("[[mare-musica:") ? "Música removida do catálogo." : item.texto.startsWith("[[mare-playlist:") ? "Playlist indisponível ou privada." : item.texto}
                                             </Text>
                                         )}
                                         <View className="mt-1 flex-row items-center justify-end">
@@ -446,13 +499,21 @@ export default function ConversaPrivada() {
                     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="max-h-[82%] rounded-t-3xl border-t border-[#C5D3E1] dark:border-[#293143] bg-[#F4F7FA] dark:bg-[#0D111A] px-4 pb-3 pt-5">
                         <View className="mb-4 flex-row items-center justify-between">
                             <View>
-                                <Text className="font-serif text-xl text-[#142338] dark:text-white">Compartilhar música</Text>
-                                <Text className="mt-1 text-xs text-[#52677F] dark:text-[#8793A7]">Escolha uma faixa do catálogo Maré.</Text>
+                                <Text className="font-serif text-xl text-[#142338] dark:text-white">Compartilhar</Text>
+                                <Text className="mt-1 text-xs text-[#52677F] dark:text-[#8793A7]">Envie música ou playlist pública.</Text>
                             </View>
                             <Pressable onPress={() => setSeletorMusicaAberto(false)} accessibilityLabel="Fechar seletor de músicas" className="h-10 w-10 items-center justify-center rounded-full bg-[#F4F7FA] dark:bg-[#171E2B]">
                                 <XIcon size={19} color="#D0D8E4" />
                             </Pressable>
                         </View>
+                        <View className="mb-3 flex-row rounded-xl bg-[#171E2B] p-1">
+                            <Pressable onPress={() => setSelecionandoPlaylist(false)} className={`flex-1 items-center rounded-lg py-2 ${!selecionandoPlaylist ? "bg-[#29435F]" : ""}`}><Text className="text-xs font-semibold text-white">Músicas</Text></Pressable>
+                            <Pressable onPress={() => { setSelecionandoPlaylist(true); void buscarMinhasPlaylists().then(setPlaylistsDoChat).catch((erro) => Toast.show({ type: "error", text1: "Não foi possível carregar playlists", text2: erro instanceof Error ? erro.message : undefined })); }} className={`flex-1 items-center rounded-lg py-2 ${selecionandoPlaylist ? "bg-[#29435F]" : ""}`}><Text className="text-xs font-semibold text-white">Playlists</Text></Pressable>
+                        </View>
+                        {selecionandoPlaylist ? (
+                            <FlatList data={playlistsDoChat.filter((playlist) => playlist.publica)} keyExtractor={(playlist) => String(playlist.id)} className="max-h-[65%]" ListEmptyComponent={<Text className="py-7 text-center text-sm text-[#8793A7]">Você não tem playlists públicas. Torne uma pública no seu perfil para compartilhar.</Text>} renderItem={({ item }) => <Pressable onPress={() => void enviarPlaylist(item)} disabled={enviando} className="mb-2 rounded-xl border border-[#34506D] bg-[#101F31] p-3"><Text className="font-semibold text-white">{item.nome}</Text><Text className="mt-1 text-xs text-[#A9D8FF]">{item.musicas.length} músicas · Toque para enviar</Text></Pressable>} />
+                        ) : (
+                        <>
                         <TextInput
                             value={termoMusica}
                             onChangeText={setTermoMusica}
@@ -489,6 +550,8 @@ export default function ConversaPrivada() {
                                 </Pressable>
                             )}
                         />
+                        </>
+                        )}
                     </KeyboardAvoidingView>
                 </SafeAreaView>
             </Modal>

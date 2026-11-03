@@ -27,6 +27,7 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
     const roleta = tipo === "roleta";
     const duelo = tipo === "duelo";
     const momento = tipo === "momento";
+    const jogo = roleta || duelo || momento || tipo === "bingo";
     const cor = descoberta
         ? "#8CC8FF"
         : universo
@@ -63,16 +64,16 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
             onPress={() => router.push(rota as never)}
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${titulo}`}
-            className="relative mr-3 h-[184px] w-[274px] overflow-hidden rounded-2xl border"
+            className={`relative mr-3 overflow-hidden rounded-2xl border ${jogo ? "h-[196px] w-[286px]" : "h-[184px] w-[274px]"}`}
             style={({ pressed }) => ({
                 opacity: pressed ? 0.9 : 1,
                 borderColor: corComOpacidade(paleta?.acento ?? cor, 0.72),
                 borderWidth: 1.5,
                 shadowColor: paleta?.dominante ?? cor,
                 shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.36,
-                shadowRadius: 21,
-                elevation: 7,
+                shadowOpacity: jogo ? 0.55 : 0.36,
+                shadowRadius: jogo ? 26 : 21,
+                elevation: jogo ? 10 : 7,
             })}
         >
             {imagem ? (
@@ -99,6 +100,7 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
             ) : null}
             <View className="flex-1 justify-between p-4">
                 <View className="flex-row items-start justify-between">
+                    <View className="flex-row items-center gap-1.5">
                     <View
                         className="flex-row items-center rounded-full border px-2.5 py-1.5"
                         style={{
@@ -121,21 +123,21 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
                             {selo}
                         </Text>
                     </View>
+                    </View>
                 </View>
                 <View className="flex-row items-end justify-between">
                     <View className="mr-3 flex-1">
-                        <Text style={momento ? { fontSize: 18, lineHeight: 24 } : undefined} className="font-serif text-[22px] leading-7 text-[#142338] dark:text-white" numberOfLines={1}>
+                        <Text style={momento ? { fontSize: 18, lineHeight: 24 } : undefined} className="font-serif text-[22px] leading-7 text-white" numberOfLines={1}>
                             {titulo}
                         </Text>
-                        <Text className="mt-1 text-xs leading-4 text-[#405570] dark:text-[#D0D8E4]" numberOfLines={1}>
+                        <Text className="mt-1 text-xs leading-4 text-[#E2EAF3]" numberOfLines={1}>
                             {descricao}
                         </Text>
                     </View>
-                    <View
-                        className="h-10 w-10 items-center justify-center rounded-full"
-                        style={{ backgroundColor: cor }}
-                    >
-                        <ArrowRightIcon size={19} color="#08111B" weight="bold" />
+                    <View className="items-center">
+                        <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: cor }}>
+                            <ArrowRightIcon size={19} color="#08111B" weight="bold" />
+                        </View>
                     </View>
                 </View>
             </View>
