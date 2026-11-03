@@ -17,8 +17,9 @@ export type Musica = {
     _count?: { posts?: number };
 };
 
-export function buscarMusicas() {
-    return apiRequest<Musica[]>("/musicas");
+export function buscarMusicas(termo?: string) {
+    const consulta = termo?.trim() ? `?search=${encodeURIComponent(termo.trim())}` : "";
+    return apiRequest<Musica[]>(`/musicas${consulta}`);
 }
 
 export function buscarMusicaPorId(id: number) {

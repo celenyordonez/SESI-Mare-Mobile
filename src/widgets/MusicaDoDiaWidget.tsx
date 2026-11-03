@@ -70,7 +70,7 @@ function WidgetMaisParaExplorar(dados: DadosWidgetMusicaDoDia) {
                 cornerRadius(18),
             ]}
         >
-            {dados.capa ? (
+            {dados.capa?.startsWith("file://") ? (
                 <Image
                     source={{ uri: dados.capa }}
                     contentScale="crop"

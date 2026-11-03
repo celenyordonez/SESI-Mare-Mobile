@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     RefreshControl,
+    Pressable,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     View,
@@ -10,7 +12,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
-import { MusicNotesIcon, StarIcon } from "phosphor-react-native";
+import { MusicNotesIcon, ShareNetworkIcon, StarIcon } from "phosphor-react-native";
 
 import Topbar from "../../components/topbar";
 import Navbar from "../../components/navbar";
@@ -21,6 +23,8 @@ import { buscarArtistaPorId, type Artista } from "../../services/artistaService"
 import { buscarMusicas, type Musica } from "../../services/musicaService";
 import { buscarPosts, type Post } from "../../services/postService";
 import { buscarMeuPerfil } from "../../services/usuarioService";
+import { usePaletaCapa } from "../../hooks/usePaletaCapa";
+import { corComOpacidade } from "../../services/paletaCapaService";
 
 export default function DetalheArtista() {
     const { id: idParametro } = useLocalSearchParams<{ id: string }>();
@@ -32,6 +36,9 @@ export default function DetalheArtista() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [revisao, setRevisao] = useState(0);
+    const paleta = usePaletaCapa(artista?.fotoURL);
+    const corAcento = paleta?.acento ?? "#58AAF0";
+    const corDominante = paleta?.dominante ?? "#58AAF0";
 
     useEffect(() => {
         let ativo = true;
@@ -79,14 +86,23 @@ export default function DetalheArtista() {
         return () => { ativo = false; };
     }, [artistaId, revisao]);
 
+    async function compartilharArtista() {
+        if (!artista) return;
+        try {
+            await Share.share({ message: `Conheça ${artista.nome} na Maré.` });
+        } catch (erroCompartilhamento) {
+            console.error("Erro ao compartilhar artista:", erroCompartilhamento);
+        }
+    }
+
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
 
             {carregando ? (
                 <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#5EA7ED" />
-                    <Text className="text-[#718096] text-sm mt-3">Carregando artista...</Text>
+                    <Text className="text-[#52677F] dark:text-[#718096] text-sm mt-3">Carregando artista...</Text>
                 </View>
             ) : !artista ? (
                 <View className="flex-1 items-center justify-center px-8">
@@ -95,13 +111,33 @@ export default function DetalheArtista() {
             ) : (
                 <ScrollView className="flex-1" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => { setErro(""); setCarregando(true); setRevisao((valor) => valor + 1); }} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
                     {/* Capa ampla em camadas, seguindo a página web do artista. */}
-                    <View className="relative mx-4 mt-4 h-[250px] overflow-hidden rounded-xl border border-[#293449] bg-[#111420]">
+                    <View
+                        className="relative mx-4 mt-4 h-[250px] overflow-hidden rounded-xl border bg-white dark:bg-[#111420]"
+                        style={{
+                            borderColor: corComOpacidade(corAcento, 0.58),
+                            shadowColor: corDominante,
+                            shadowOpacity: 0.34,
+                            shadowRadius: 22,
+                            shadowOffset: { width: 0, height: 5 },
+                            elevation: 6,
+                        }}
+                    >
                         <FotoArtista
                             url={artista.fotoURL}
                             style={StyleSheet.absoluteFill}
                             blurRadius={18}
                         />
                         <View className="absolute inset-0 bg-black/50" />
+                        <View
+                            pointerEvents="none"
+                            className="absolute -right-12 -top-12 h-48 w-48 rounded-full"
+                            style={{ backgroundColor: corComOpacidade(corAcento, 0.24) }}
+                        />
+                        <View
+                            pointerEvents="none"
+                            className="absolute left-5 right-5 top-0 h-[2px]"
+                            style={{ backgroundColor: corComOpacidade(corAcento, 0.9) }}
+                        />
                         <FotoArtista
                             url={artista.fotoURL}
                             style={StyleSheet.absoluteFill}
@@ -113,24 +149,34 @@ export default function DetalheArtista() {
                             style={StyleSheet.absoluteFill}
                         />
                         <View className="absolute left-5 right-5 bottom-5">
-                            <Text className="text-[#58AAF0] text-xs uppercase tracking-[3px] mb-2">
+                            <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs uppercase tracking-[3px] mb-2">
                                 Artista
                             </Text>
-                            <Text className="text-white text-2xl font-serif" numberOfLines={2}>
+                            <Text className="text-[#142338] dark:text-white text-2xl font-serif" numberOfLines={2}>
                                 {artista.nome}
                             </Text>
-                            <View className="flex-row items-center mt-3">
-                                <MusicNotesIcon size={17} color="#AEB6C5" />
-                                <Text className="text-[#AEB6C5] text-sm ml-2">
-                                    {musicas.length} {musicas.length === 1 ? "música" : "músicas"}
-                                </Text>
+                            <View className="mt-3 flex-row items-center justify-between">
+                                <View className="flex-row items-center">
+                                    <MusicNotesIcon size={17} color="#AEB6C5" />
+                                    <Text className="text-[#AEB6C5] text-sm ml-2">
+                                        {musicas.length} {musicas.length === 1 ? "música" : "músicas"}
+                                    </Text>
+                                </View>
+                                <Pressable
+                                    onPress={() => void compartilharArtista()}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Compartilhar artista ${artista.nome}`}
+                                    className="h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/50"
+                                >
+                                    <ShareNetworkIcon size={17} color="#FFFFFF" />
+                                </Pressable>
                             </View>
                         </View>
                     </View>
 
                     <View className="mt-8 mb-4 px-5 flex-row items-center">
                         <MusicNotesIcon size={20} color="#58AAF0" />
-                        <Text className="text-white text-xl font-serif ml-2">
+                        <Text className="text-[#142338] dark:text-white text-xl font-serif ml-2">
                             Músicas de {artista.nome}
                         </Text>
                     </View>
@@ -154,14 +200,14 @@ export default function DetalheArtista() {
                             ))}
                         </ScrollView>
                     ) : (
-                        <Text className="text-[#718096] text-sm px-5 py-2">
+                        <Text className="text-[#52677F] dark:text-[#718096] text-sm px-5 py-2">
                             Nenhuma música cadastrada para este artista.
                         </Text>
                     )}
 
                     <View className="mt-9 px-5 mb-3 flex-row items-center">
                         <StarIcon size={19} color="#58AAF0" weight="fill" />
-                        <Text className="text-white text-lg font-serif ml-2">
+                        <Text className="text-[#142338] dark:text-white text-lg font-serif ml-2">
                             Posts sobre {artista.nome}
                         </Text>
                     </View>
@@ -189,7 +235,7 @@ export default function DetalheArtista() {
                                 ehMeuPost={post.usuario?.id === usuarioLogadoId}
                             />
                         ) : null)) : (
-                            <Text className="text-[#718096] text-sm px-5 py-6">
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm px-5 py-6">
                                 Ainda não há posts sobre este artista.
                             </Text>
                         )}

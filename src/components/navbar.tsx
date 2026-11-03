@@ -10,15 +10,21 @@ import {
 } from "phosphor-react-native";
 
 import { usePathname, useRouter } from "expo-router";
+import { useColorScheme } from "nativewind";
 import { buscarFotoPerfil } from "../services/perfilCache";
+import { useContadoresNavegacao } from "./ContadoresNavegacao";
 
 export default function Navbar() {
 
     const router = useRouter();
     const pathname = usePathname();
+    const { colorScheme } = useColorScheme();
+    const corIconeInativa = colorScheme === "dark" ? "#D0D0D5" : "#405570";
+    const corDestaque = colorScheme === "dark" ? "#58AAF0" : "#155B91";
     const inicioAtivo = pathname === "/" || pathname === "/home";
     const perfilAtivo = pathname === "/perfil";
     const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+    const { mensagensNaoLidas } = useContadoresNavegacao();
 
     useEffect(() => {
         let ativo = true;
@@ -37,7 +43,7 @@ export default function Navbar() {
     }, []);
 
     return (
-        <View className="h-[75px] bg-[#111420] border-t border-[#171E2B] flex-row">
+        <View className="h-[75px] bg-white dark:bg-[#111420] border-t border-[#D5E0EC] dark:border-[#171E2B] flex-row">
 
             {/* Início */}
             <Pressable
@@ -46,12 +52,14 @@ export default function Navbar() {
             >
                 <HouseLineIcon
                     size={24}
-                    color={inicioAtivo ? "#58AAF0" : "#D0D0D5"}
+                    color={inicioAtivo ? corDestaque : corIconeInativa}
                     weight={inicioAtivo ? "fill" : "regular"}
                 />
 
                 <Text
-                    className={`text-xs mt-1 ${inicioAtivo ? "text-[#58AAF0]" : "text-[#D0D0D5]"
+                    className={`text-xs mt-1 ${inicioAtivo
+                        ? (colorScheme === "dark" ? "text-[#155B91] dark:text-[#58AAF0]" : "text-[#155B91]")
+                        : "text-[#405570] dark:text-[#D0D0D5]"
                         }`}
                 >
                     Início
@@ -66,13 +74,13 @@ export default function Navbar() {
             >
                 <MagnifyingGlassIcon
                     size={24}
-                    color={pathname === "/explorar" ? "#58AAF0" : "#D0D0D5"}
+                    color={pathname === "/explorar" ? corDestaque : corIconeInativa}
                 />
 
                 <Text
                     className={`text-xs mt-1 ${pathname === "/explorar"
-                            ? "text-[#58AAF0]"
-                            : "text-[#D0D0D5]"
+                        ? (colorScheme === "dark" ? "text-[#155B91] dark:text-[#58AAF0]" : "text-[#155B91]")
+                        : "text-[#405570] dark:text-[#D0D0D5]"
                         }`}
                 >
                     Explorar
@@ -102,16 +110,25 @@ export default function Navbar() {
                 accessibilityRole="button"
                 accessibilityLabel="Abrir conversas"
             >
-                <ChatCircleIcon
-                    size={24}
-                    color={pathname.startsWith("/mensagens") ? "#58AAF0" : "#D0D0D5"}
-                    weight={pathname.startsWith("/mensagens") ? "fill" : "regular"}
-                />
+                <View>
+                    <ChatCircleIcon
+                        size={24}
+                        color={pathname.startsWith("/mensagens") ? "#58AAF0" : "#D0D0D5"}
+                        weight={pathname.startsWith("/mensagens") ? "fill" : "regular"}
+                    />
+                    {mensagensNaoLidas > 0 ? (
+                        <View className="absolute -right-2 -top-2 min-w-[17px] items-center rounded-full border border-white dark:border-[#111420] bg-[#58AAF0] px-1">
+                            <Text className="text-[9px] font-bold text-[#07111C]">
+                                {mensagensNaoLidas > 99 ? "99+" : mensagensNaoLidas}
+                            </Text>
+                        </View>
+                    ) : null}
+                </View>
 
                 <Text
                     className={`text-xs mt-1 ${pathname.startsWith("/mensagens")
-                            ? "text-[#58AAF0]"
-                            : "text-[#D0D0D5]"
+                            ? "text-[#155B91] dark:text-[#58AAF0]"
+                            : "text-[#405570] dark:text-[#D0D0D5]"
                         }`}
                 >
                     Conversas
@@ -128,7 +145,7 @@ export default function Navbar() {
                 {fotoPerfil ? (
                     <Image
                         source={{ uri: fotoPerfil }}
-                        className={`h-8 w-8 rounded-full border ${perfilAtivo ? "border-[#58AAF0]" : "border-[#354052]"}`}
+                        className={`h-8 w-8 rounded-full border ${perfilAtivo ? "border-[#58AAF0]" : "border-[#C5D3E1] dark:border-[#354052]"}`}
                     />
                 ) : (
                     <UserIcon
@@ -140,8 +157,8 @@ export default function Navbar() {
 
                 <Text
                     className={`text-xs mt-1 ${perfilAtivo
-                            ? "text-[#58AAF0]"
-                            : "text-[#D0D0D5]"
+                            ? "text-[#155B91] dark:text-[#58AAF0]"
+                            : "text-[#405570] dark:text-[#D0D0D5]"
                         }`}
                 >
                     Perfil

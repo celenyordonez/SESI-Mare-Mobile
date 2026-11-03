@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import Topbar from "../components/topbar";
 import PlataformaMusicalIcon from "../components/PlataformaMusicalIcon";
+import EstrelaNota from "../components/EstrelaNota";
 import { buscarMusicas } from "../services/musicaService";
 import { buscarArtistasFavoritos, buscarGenerosFavoritos } from "../services/usuarioService";
 import { criarPost } from "../services/postService";
@@ -88,15 +89,15 @@ export default function Criar() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar titulo="Criar avaliação" subtitulo="O que você achou dessa música?" tipo="voltar" />
             <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                <Text className="mb-2 font-serif text-lg text-white">Escolha uma música</Text>
-                <Text className="mb-3 text-xs text-[#8793A7]">Sugestões com base nos artistas e gêneros que você curte.</Text>
+                <Text className="mb-2 font-serif text-lg text-[#142338] dark:text-white">Escolha uma música</Text>
+                <Text className="mb-3 text-xs text-[#52677F] dark:text-[#8793A7]">Sugestões com base nos artistas e gêneros que você curte.</Text>
                 {carregando ? (
                     <View className="h-24 items-center justify-center">
                         <ActivityIndicator color="#5EA7ED" />
-                        <Text className="mt-2 text-xs text-[#718096]">Carregando músicas...</Text>
+                        <Text className="mt-2 text-xs text-[#52677F] dark:text-[#718096]">Carregando músicas...</Text>
                     </View>
                 ) : recomendadas.length ? (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 mb-4" contentContainerStyle={{ paddingHorizontal: 4 }}>
@@ -106,25 +107,25 @@ export default function Criar() {
                                 onPress={() => selecionarMusica(musica)}
                                 accessibilityRole="button"
                                 accessibilityLabel={"Selecionar " + musica.titulo}
-                                className={"mr-3 w-[132px] rounded-xl border p-2 " + (selecionada?.id === musica.id ? "border-[#58AAF0] bg-[#17243A]" : "border-[#354052] bg-[#111420]")}
+                                className={"mr-3 w-[132px] rounded-xl border p-2 " + (selecionada?.id === musica.id ? "border-[#58AAF0] bg-[#17243A]" : "border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420]")}
                             >
                                 <View className="relative">
                                     <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="aspect-square w-full rounded-lg" resizeMode="cover" />
                                     {selecionada?.id === musica.id && <View className="absolute right-2 top-2 h-6 w-6 items-center justify-center rounded-full bg-[#58AAF0]"><CheckIcon size={14} color="#07111E" weight="bold" /></View>}
                                 </View>
-                                <Text className="mt-2 text-xs text-white" numberOfLines={1}>{musica.titulo}</Text>
-                                <Text className="mt-1 text-[11px] text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
+                                <Text className="mt-2 text-xs text-[#142338] dark:text-white" numberOfLines={1}>{musica.titulo}</Text>
+                                <Text className="mt-1 text-[11px] text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
                             </Pressable>
                         ))}
                     </ScrollView>
                 ) : (
-                    <Text className="mb-3 text-xs text-[#718096]">Sem sugestões por enquanto. Pesquise no catálogo abaixo.</Text>
+                    <Text className="mb-3 text-xs text-[#52677F] dark:text-[#718096]">Sem sugestões por enquanto. Pesquise no catálogo abaixo.</Text>
                 )}
 
-                <View className="flex-row items-center rounded-xl border border-[#354052] bg-[#111420] px-3">
+                <View className="flex-row items-center rounded-xl border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] px-3">
                     <MagnifyingGlassIcon size={18} color="#718096" />
                     <TextInput
-                        className="h-12 flex-1 px-3 text-sm text-white"
+                        className="h-12 flex-1 px-3 text-sm text-[#142338] dark:text-white"
                         value={busca}
                         onChangeText={setBusca}
                         placeholder="Buscar música ou artista..."
@@ -134,18 +135,18 @@ export default function Criar() {
                     {!!busca && <Pressable onPress={() => setBusca("")} accessibilityLabel="Limpar busca" className="p-2"><XIcon size={17} color="#8793A7" /></Pressable>}
                 </View>
                 {!!busca.trim() && (
-                    <View className="mt-2 rounded-xl border border-[#263143] bg-[#0D111A] p-2">
+                    <View className="mt-2 rounded-xl border border-[#C5D3E1] dark:border-[#263143] bg-[#F4F7FA] dark:bg-[#0D111A] p-2">
                         {carregando ? <ActivityIndicator color="#5EA7ED" /> : filtradas.slice(0, 8).map((musica) => (
                             <Pressable key={musica.id} onPress={() => selecionarMusica(musica)} className="mb-1 flex-row items-center rounded-lg p-2">
                                 <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="h-11 w-11 rounded-lg" resizeMode="cover" />
                                 <View className="ml-3 flex-1">
-                                    <Text className="text-sm text-white" numberOfLines={1}>{musica.titulo}</Text>
-                                    <Text className="mt-1 text-xs text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
+                                    <Text className="text-sm text-[#142338] dark:text-white" numberOfLines={1}>{musica.titulo}</Text>
+                                    <Text className="mt-1 text-xs text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
                                 </View>
                                 {selecionada?.id === musica.id && <CheckIcon size={18} color="#58AAF0" weight="bold" />}
                             </Pressable>
                         ))}
-                        {!carregando && !filtradas.length && <Text className="p-3 text-center text-xs text-[#8793A7]">Nenhuma música encontrada.</Text>}
+                        {!carregando && !filtradas.length && <Text className="p-3 text-center text-xs text-[#52677F] dark:text-[#8793A7]">Nenhuma música encontrada.</Text>}
                     </View>
                 )}
 
@@ -153,13 +154,13 @@ export default function Criar() {
                     <View className="mt-4 flex-row items-center rounded-xl border border-[#58AAF0]/60 bg-[#111722] p-3">
                         <Image source={selecionada.capa ? { uri: selecionada.capa } : require("../../assets/images/logo.png")} className="h-16 w-16 rounded-lg" resizeMode="cover" />
                         <View className="ml-3 flex-1">
-                            <Text className="text-[10px] font-semibold uppercase tracking-wider text-[#58AAF0]">Música selecionada</Text>
-                            <Text className="mt-1 text-sm font-semibold text-white" numberOfLines={1}>{selecionada.titulo}</Text>
-                            <Text className="mt-1 text-xs text-[#8793A7]" numberOfLines={1}>{selecionada.artista?.nome ?? "Artista desconhecido"}</Text>
+                            <Text className="text-[10px] font-semibold uppercase tracking-wider text-[#155B91] dark:text-[#58AAF0]">Música selecionada</Text>
+                            <Text className="mt-1 text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{selecionada.titulo}</Text>
+                            <Text className="mt-1 text-xs text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>{selecionada.artista?.nome ?? "Artista desconhecido"}</Text>
                             <View className="mt-2 flex-row items-center">
                                 <StarIcon size={13} color="#58AAF0" weight="fill" />
-                                <Text className="ml-1 text-xs text-[#D0D0D5]">{(selecionada.nota ?? 0) > 0 ? selecionada.nota?.toFixed(1) : "Sem avaliações"}</Text>
-                                <Text className="ml-1 text-xs text-[#718096]">({selecionada.avaliacoes ?? 0} avaliações)</Text>
+                                <Text className="ml-1 text-xs text-[#405570] dark:text-[#D0D0D5]">{(selecionada.nota ?? 0) > 0 ? selecionada.nota?.toFixed(1) : "Sem avaliações"}</Text>
+                                <Text className="ml-1 text-xs text-[#52677F] dark:text-[#718096]">({selecionada.avaliacoes ?? 0} avaliações)</Text>
                             </View>
                         </View>
                         <Pressable onPress={() => { setSelecionada(null); setNota(0); }} accessibilityLabel="Trocar música" className="p-2">
@@ -167,48 +168,35 @@ export default function Criar() {
                         </Pressable>
                     </View>
                 ) : (
-                    <Text className="mt-3 text-xs text-[#718096]">Selecione uma música para continuar.</Text>
+                    <Text className="mt-3 text-xs text-[#52677F] dark:text-[#718096]">Selecione uma música para continuar.</Text>
                 )}
 
                 {linksOuvir.length > 0 && (
                     <View className="mt-3 flex-row flex-wrap">
                         {linksOuvir.map(({ nome, url }) => (
-                            <Pressable key={nome} onPress={() => void Linking.openURL(url)} className="mb-2 mr-2 flex-row items-center rounded-lg border border-[#354052] bg-[#111420] px-3 py-2">
+                            <Pressable key={nome} onPress={() => void Linking.openURL(url)} className="mb-2 mr-2 flex-row items-center rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] px-3 py-2">
                                 <PlataformaMusicalIcon plataforma={nome} tamanho={18} />
-                                <Text className="ml-2 text-xs text-white">Ouvir</Text>
+                                <Text className="ml-2 text-xs text-[#142338] dark:text-white">Ouvir</Text>
                             </Pressable>
                         ))}
                     </View>
                 )}
 
-                <View className="mt-6 rounded-2xl border border-[#263143] bg-[#0D111A] p-4">
-                    <Text className="font-serif text-lg text-white">Sua nota</Text>
+                <View className="mt-6 rounded-2xl border border-[#C5D3E1] dark:border-[#263143] bg-[#F4F7FA] dark:bg-[#0D111A] p-4">
+                    <Text className="font-serif text-lg text-[#142338] dark:text-white">Sua nota</Text>
                     <View className="mt-3 flex-row items-center">
                         {[1, 2, 3, 4, 5].map((estrela) => (
-                            <Pressable
-                                key={estrela}
-                                onPress={() => setNota(estrela)}
-                                accessibilityRole="button"
-                                accessibilityLabel={"Dar nota " + estrela + " de 5"}
-                                accessibilityState={{ selected: nota === estrela }}
-                                className="mr-2 p-1"
-                            >
-                                <StarIcon
-                                    size={34}
-                                    color={nota >= estrela ? "#58AAF0" : "#52627C"}
-                                    weight={nota >= estrela ? "fill" : "regular"}
-                                />
-                            </Pressable>
+                            <EstrelaNota key={estrela} estrela={estrela} nota={nota} tamanho={34} aoSelecionar={setNota} />
                         ))}
-                        <Text className="ml-2 font-serif text-2xl text-white">{nota > 0 ? nota.toFixed(1).replace(".", ",") : "—"}<Text className="text-sm text-[#718096]"> / 5</Text></Text>
+                        <Text className="ml-2 font-serif text-2xl text-[#142338] dark:text-white">{nota > 0 ? nota.toFixed(1).replace(".", ",") : "—"}<Text className="text-sm text-[#52677F] dark:text-[#718096]"> / 5</Text></Text>
                     </View>
                 </View>
 
-                <View className="mt-4 rounded-2xl border border-[#263143] bg-[#0D111A] p-4">
-                    <Text className="font-serif text-lg text-white">Seu comentário</Text>
-                    <Text className="mt-1 text-xs leading-5 text-[#8793A7]">Conte o que mais chamou sua atenção nessa música.</Text>
+                <View className="mt-4 rounded-2xl border border-[#C5D3E1] dark:border-[#263143] bg-[#F4F7FA] dark:bg-[#0D111A] p-4">
+                    <Text className="font-serif text-lg text-[#142338] dark:text-white">Seu comentário</Text>
+                    <Text className="mt-1 text-xs leading-5 text-[#52677F] dark:text-[#8793A7]">Conte o que mais chamou sua atenção nessa música.</Text>
                     <TextInput
-                        className="mt-3 min-h-[130px] rounded-xl border border-[#354052] bg-[#111420] px-3 py-3 text-sm leading-5 text-white"
+                        className="mt-3 min-h-[130px] rounded-xl border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] px-3 py-3 text-sm leading-5 text-[#142338] dark:text-white"
                         value={texto}
                         onChangeText={setTexto}
                         placeholder="Fale sobre a letra, o som ou o que sentiu ouvindo..."
@@ -218,12 +206,12 @@ export default function Criar() {
                         maxLength={500}
                     />
                     <View className="mt-2 flex-row items-center justify-between">
-                        <Text className="flex-1 text-[11px] text-[#718096]">Sua avaliação aparecerá no seu perfil.</Text>
-                        <Text className={"ml-2 text-xs " + (texto.length >= 480 ? "text-amber-300" : "text-[#718096]")}>{texto.length}/500</Text>
+                        <Text className="flex-1 text-[11px] text-[#52677F] dark:text-[#718096]">Sua avaliação aparecerá no seu perfil.</Text>
+                        <Text className={"ml-2 text-xs " + (texto.length >= 480 ? "text-amber-300" : "text-[#52677F] dark:text-[#718096]")}>{texto.length}/500</Text>
                     </View>
                 </View>
 
-                {!podePublicar && <Text className="mt-4 text-center text-xs text-[#8793A7]">Para publicar, escolha uma música, dê uma nota e escreva sua avaliação.</Text>}
+                {!podePublicar && <Text className="mt-4 text-center text-xs text-[#52677F] dark:text-[#8793A7]">Para publicar, escolha uma música, dê uma nota e escreva sua avaliação.</Text>}
                 <Pressable
                     onPress={() => void publicar()}
                     disabled={!podePublicar || publicando}
@@ -232,7 +220,7 @@ export default function Criar() {
                 >
                     {publicando ? <ActivityIndicator color="#FFFFFF" /> : <>
                         <CheckIcon size={18} color={podePublicar ? "#07111E" : "#718096"} weight="bold" />
-                        <Text className={"ml-2 text-sm font-semibold " + (podePublicar ? "text-[#07111E]" : "text-[#718096]")}>Publicar avaliação</Text>
+                        <Text className={"ml-2 text-sm font-semibold " + (podePublicar ? "text-[#07111E]" : "text-[#52677F] dark:text-[#718096]")}>Publicar avaliação</Text>
                     </>}
                 </Pressable>
             </ScrollView>

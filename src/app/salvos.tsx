@@ -12,7 +12,7 @@ export default function Salvos() {
     }, [router]);
 
     return (
-        <SafeAreaView className="flex-1 items-center justify-center bg-[#080A10]">
+        <SafeAreaView className="flex-1 items-center justify-center bg-[#E8EEF5] dark:bg-[#080A10]">
             <View className="items-center justify-center">
                 <ActivityIndicator color="#58AAF0" />
             </View>

@@ -7,6 +7,13 @@ export type PessoaConversa = {
     foto?: string | null;
 };
 
+export type MusicaCompartilhada = {
+    id: number;
+    titulo: string;
+    capa?: string | null;
+    artista: { id: number; nome: string };
+};
+
 export type MensagemPrivada = {
     id: number;
     conversaId: number;
@@ -15,6 +22,7 @@ export type MensagemPrivada = {
     criadaEm: string;
     lidaEm?: string | null;
     remetente: PessoaConversa;
+    musica?: MusicaCompartilhada | null;
 };
 
 export type ConversaPrivada = {
@@ -24,10 +32,17 @@ export type ConversaPrivada = {
     outroUsuario: PessoaConversa;
     ultimaMensagem: Pick<MensagemPrivada, "id" | "texto" | "remetenteId" | "criadaEm" | "lidaEm"> | null;
     mensagensNaoLidas: number;
+    silenciadaPorMim: boolean;
+    bloqueadaPorMim: boolean;
+    bloqueadaPeloOutro: boolean;
 };
 
 export function buscarConversas() {
     return apiRequest<ConversaPrivada[]>("/conversas", { autenticado: true });
+}
+
+export function buscarQuantidadeMensagensNaoLidas() {
+    return apiRequest<{ quantidade: number }>("/conversas/nao-lidas/quantidade", { autenticado: true });
 }
 
 export function iniciarConversa(usuarioId: number) {
@@ -38,9 +53,34 @@ export function iniciarConversa(usuarioId: number) {
     });
 }
 
+export function buscarDetalhesConversa(conversaId: number) {
+    return apiRequest<Pick<ConversaPrivada, "id" | "silenciadaPorMim" | "bloqueadaPorMim" | "bloqueadaPeloOutro">>(
+        `/conversas/${conversaId}`,
+        { autenticado: true },
+    );
+}
+
+export function atualizarConfiguracoesConversa(
+    conversaId: number,
+    configuracao: { silenciada?: boolean; bloqueada?: boolean },
+) {
+    return apiRequest<Pick<ConversaPrivada, "silenciadaPorMim" | "bloqueadaPorMim" | "bloqueadaPeloOutro">>(
+        `/conversas/${conversaId}/configuracoes`,
+        {
+            method: "PATCH",
+            autenticado: true,
+            body: JSON.stringify(configuracao),
+        },
+    );
+}
+
 export function buscarMensagens(conversaId: number, depoisDe?: number) {
     const cursor = depoisDe ? `?depoisDe=${depoisDe}` : "";
     return apiRequest<MensagemPrivada[]>(`/conversas/${conversaId}/mensagens${cursor}`, { autenticado: true });
+}
+
+export function buscarIdsMensagensLidas(conversaId: number) {
+    return apiRequest<{ ids: number[] }>(`/conversas/${conversaId}/leituras`, { autenticado: true });
 }
 
 export function enviarMensagem(conversaId: number, texto: string) {
@@ -48,6 +88,14 @@ export function enviarMensagem(conversaId: number, texto: string) {
         method: "POST",
         autenticado: true,
         body: JSON.stringify({ texto }),
+    });
+}
+
+export function compartilharMusica(conversaId: number, musicaId: number) {
+    return apiRequest<MensagemPrivada>(`/conversas/${conversaId}/mensagens`, {
+        method: "POST",
+        autenticado: true,
+        body: JSON.stringify({ musicaId }),
     });
 }
 

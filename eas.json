@@ -13,6 +13,12 @@
         "buildType": "apk"
       }
     },
+    "preview-ios": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
+    },
     "production": {
       "autoIncrement": true,
       "android": {

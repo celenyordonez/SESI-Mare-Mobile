@@ -8,7 +8,7 @@ export type MeuPerfil = {
     capa?: string | null; bio?: string | null; preferenciasConcluidas?: boolean;
     _count?: { seguidores: number; seguindo: number; posts: number; comentarios?: number; salvamentos?: number };
 };
-export type PerfilPublico = Omit<MeuPerfil, "_count"> & { _count: { seguidores: number; seguindo: number; posts: number }; seguindoPorMim: boolean; posts: Post[] };
+export type PerfilPublico = Omit<MeuPerfil, "_count"> & { _count: { seguidores: number; seguindo: number; posts: number }; seguindoPorMim: boolean; segueDeVolta: boolean; posts: Post[] };
 export type ArtistaFavorito = { artistaId: number };
 export type ComentarioPerfil = {
     id: number;
@@ -24,7 +24,11 @@ export type RelacaoUsuario = {
 export type DadosEdicaoPerfil = { nome: string; username: string; bio: string };
 export type Seguindo = { seguido: { id: number } };
 
-export function buscarUsuarios() { return apiRequest<UsuarioBusca[]>("/usuarios"); }
+export function buscarUsuarios(termo?: string) {
+    const busca = termo?.trim();
+    const consulta = busca ? `?search=${encodeURIComponent(busca)}` : "";
+    return apiRequest<UsuarioBusca[]>(`/usuarios${consulta}`);
+}
 export function buscarMeuPerfil() { return apiRequest<MeuPerfil>("/usuarios/me", { autenticado: true }); }
 export function buscarPerfilPublico(username: string) {
     return apiRequest<PerfilPublico>(`/usuarios/publico/${encodeURIComponent(username)}`, { autenticado: true });
@@ -66,5 +70,15 @@ export function excluirMinhaConta() {
     return apiRequest<{ message: string }>("/usuarios/me", {
         method: "DELETE",
         autenticado: true,
+    });
+}
+export function solicitarTrocaEmail(novoEmail: string, senhaAtual: string) {
+    return apiRequest<{ message: string }>("/usuarios/me/email", {
+        method: "PATCH", autenticado: true, body: JSON.stringify({ novoEmail, senhaAtual }),
+    });
+}
+export function alterarMinhaSenha(senhaAtual: string, novaSenha: string) {
+    return apiRequest<{ message: string }>("/usuarios/me/senha", {
+        method: "PATCH", autenticado: true, body: JSON.stringify({ senhaAtual, novaSenha }),
     });
 }

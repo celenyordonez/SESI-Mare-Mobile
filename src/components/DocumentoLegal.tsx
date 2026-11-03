@@ -39,25 +39,25 @@ export default function DocumentoLegal({ tipo }: { tipo: TipoDocumento }) {
     const Icone = documento.Icone;
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
             <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 24 }}>
-                <View className="rounded-2xl border border-[#252D3C] bg-[#111420] p-5 mb-4">
+                <View className="rounded-2xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420] p-5 mb-4">
                     <Icone size={26} color="#58AAF0" />
-                    <Text className="text-[#58AAF0] text-xs font-semibold uppercase tracking-widest mt-4">
+                    <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs font-semibold uppercase tracking-widest mt-4">
                         Maré · Documento demonstrativo
                     </Text>
-                    <Text className="text-white text-2xl font-serif mt-2">{documento.titulo}</Text>
-                    <Text className="text-[#9AA6BA] text-sm leading-6 mt-3">{documento.resumo}</Text>
-                    <Text className="text-[#C4CCDA] text-xs leading-5 border border-[#354052] rounded-lg p-3 mt-4">
+                    <Text className="text-[#142338] dark:text-white text-2xl font-serif mt-2">{documento.titulo}</Text>
+                    <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm leading-6 mt-3">{documento.resumo}</Text>
+                    <Text className="text-[#C4CCDA] text-xs leading-5 border border-[#C5D3E1] dark:border-[#354052] rounded-lg p-3 mt-4">
                         Este conteúdo é fictício e foi incluído como texto inicial para a interface. Ele precisa ser revisado antes de ser usado como documento oficial.
                     </Text>
                 </View>
 
                 {documento.secoes.map(([titulo, texto]) => (
-                    <View key={titulo} className="rounded-xl border border-[#252D3C] bg-[#111420] p-4 mb-3">
-                        <Text className="text-white text-base font-semibold">{titulo}</Text>
-                        <Text className="text-[#9AA6BA] text-sm leading-6 mt-2">{texto}</Text>
+                    <View key={titulo} className="rounded-xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420] p-4 mb-3">
+                        <Text className="text-[#142338] dark:text-white text-base font-semibold">{titulo}</Text>
+                        <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm leading-6 mt-2">{texto}</Text>
                     </View>
                 ))}
             </ScrollView>

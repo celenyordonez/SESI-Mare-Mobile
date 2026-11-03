@@ -275,13 +275,13 @@ export default function Descoberta() {
     });
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo={emOnboarding ? "simples" : "voltar"} />
             <View className="px-5 pb-3">
-                <Text className="text-white text-2xl font-serif">
+                <Text className="text-[#142338] dark:text-white text-2xl font-serif">
                     {emOnboarding ? "Vamos personalizar sua Maré" : "Descoberta"}
                 </Text>
-                <Text className="mt-1 text-sm text-[#8793A7]">
+                <Text className="mt-1 text-sm text-[#52677F] dark:text-[#8793A7]">
                     {emOnboarding
                         ? "Direita para gostei, esquerda para pular. Vamos usar suas escolhas nas recomendações."
                         : "Arraste para escolher o próximo som."}
@@ -291,7 +291,7 @@ export default function Descoberta() {
             {carregando ? (
                 <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#58AAF0" size="large" />
-                    <Text className="mt-3 text-sm text-[#718096]">Buscando recomendações...</Text>
+                    <Text className="mt-3 text-sm text-[#52677F] dark:text-[#718096]">Buscando recomendações...</Text>
                 </View>
             ) : erro ? (
                 <View className="flex-1 items-center justify-center px-8">
@@ -300,12 +300,12 @@ export default function Descoberta() {
                         <Text className="text-sm font-semibold text-[#07111E]">Tentar novamente</Text>
                     </Pressable>
                     <Pressable onPress={() => router.replace("/explorar")} className="mt-2 rounded-xl bg-[#1C314B] px-5 py-3">
-                        <Text className="text-sm text-white">Voltar para Explorar</Text>
+                        <Text className="text-sm text-[#142338] dark:text-white">Voltar para Explorar</Text>
                     </Pressable>
                 </View>
             ) : musicaAtual ? (
                 <View className="flex-1 px-5 pb-4">
-                    <Text className="mb-3 text-center text-xs text-[#718096]">
+                    <Text className="mb-3 text-center text-xs text-[#52677F] dark:text-[#718096]">
                         {indice + 1} de {musicas.length}
                         {emOnboarding ? ` · ${artistasEscolhidos.size} artistas escolhidos` : ""}
                     </Text>
@@ -313,7 +313,7 @@ export default function Descoberta() {
                         {musicas[indice + 2] && (
                             <View
                                 pointerEvents="none"
-                                className="absolute left-3 right-3 top-4 overflow-hidden rounded-3xl border border-[#354052] bg-[#151A26]"
+                                className="absolute left-3 right-3 top-4 overflow-hidden rounded-3xl border border-[#C5D3E1] dark:border-[#354052] bg-[#151A26]"
                                 style={{ bottom: -12, transform: [{ rotate: "3deg" }] }}
                             >
                                 <Image
@@ -381,9 +381,9 @@ export default function Descoberta() {
                                 shadowRadius: 22,
                                 elevation: 6,
                             }}
-                            className="flex-1 overflow-hidden rounded-3xl border border-[#354052] bg-[#111420]"
+                            className="flex-1 overflow-hidden rounded-3xl border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420]"
                         >
-                        <View style={{ height: alturaCapa }} className="relative w-full bg-[#171E2B]">
+                        <View style={{ height: alturaCapa }} className="relative w-full bg-[#F4F7FA] dark:bg-[#171E2B]">
                             <Image
                                 source={musicaAtual.capa ? { uri: musicaAtual.capa } : capaPadrao}
                                 className="h-full w-full"
@@ -409,7 +409,7 @@ export default function Descoberta() {
                         <View className="flex-1 justify-center px-5 pb-4 pt-4">
                             <View className="flex-row items-center">
                                 <View className="flex-1">
-                                    <Text className="text-white text-2xl font-serif" numberOfLines={2}>
+                                    <Text className="text-[#142338] dark:text-white text-2xl font-serif" numberOfLines={2}>
                                         {musicaAtual.titulo}
                                     </Text>
                                     <Text className="mt-2 text-base text-[#B5C0D1]" numberOfLines={1}>
@@ -431,7 +431,7 @@ export default function Descoberta() {
                                     </View>
                                 )}
                                 {(musicaAtual._count?.posts ?? musicaAtual.avaliacoes ?? 0) > 0 && (
-                                    <Text className="text-xs text-[#718096]">
+                                    <Text className="text-xs text-[#52677F] dark:text-[#718096]">
                                         {musicaAtual._count?.posts ?? musicaAtual.avaliacoes} avaliações na Maré
                                     </Text>
                                 )}
@@ -493,7 +493,7 @@ export default function Descoberta() {
                                 <Text className="mt-2 text-center text-xs text-red-400">{erroPreferencias}</Text>
                             ) : null}
                             <Pressable onPress={() => router.replace("/filtrar")} className="mt-1 items-center py-2">
-                                <Text className="text-xs text-[#8793A7]">Prefiro escolher gêneros e artistas</Text>
+                                <Text className="text-xs text-[#52677F] dark:text-[#8793A7]">Prefiro escolher gêneros e artistas</Text>
                             </Pressable>
                         </>
                     ) : null}
@@ -503,10 +503,10 @@ export default function Descoberta() {
                     <View className="h-14 w-14 items-center justify-center rounded-full bg-[#1C314B]">
                         <MusicNotesIcon size={27} color="#58AAF0" />
                     </View>
-                    <Text className="mt-4 text-center text-lg font-serif text-white">
+                    <Text className="mt-4 text-center text-lg font-serif text-[#142338] dark:text-white">
                         {emOnboarding ? "Ainda não há músicas para personalizar seu perfil" : "Não encontramos músicas novas para sugerir"}
                     </Text>
-                    <Text className="mt-2 text-center text-sm leading-5 text-[#8793A7]">
+                    <Text className="mt-2 text-center text-sm leading-5 text-[#52677F] dark:text-[#8793A7]">
                         {emOnboarding
                             ? "Você pode escolher gêneros e artistas manualmente para continuar."
                             : "Atualize as recomendações ou explore o catálogo para encontrar outra música."}
@@ -518,7 +518,7 @@ export default function Descoberta() {
                         <Text className="text-sm font-semibold text-[#07111E]">Tentar novamente</Text>
                     </Pressable>
                     <Pressable onPress={() => router.replace(emOnboarding ? "/filtrar" : "/explorar")} className="mt-2 rounded-xl bg-[#1C314B] px-5 py-3">
-                        <Text className="text-sm text-white">{emOnboarding ? "Escolher manualmente" : "Voltar para Explorar"}</Text>
+                        <Text className="text-sm text-[#142338] dark:text-white">{emOnboarding ? "Escolher manualmente" : "Voltar para Explorar"}</Text>
                     </Pressable>
                 </View>
             ) : (
@@ -526,14 +526,14 @@ export default function Descoberta() {
                     <View className="h-14 w-14 items-center justify-center rounded-full bg-[#1C314B]">
                         <MusicNotesIcon size={27} color="#58AAF0" />
                     </View>
-                    <Text className="mt-4 text-center text-lg font-serif text-white">
+                    <Text className="mt-4 text-center text-lg font-serif text-[#142338] dark:text-white">
                         {emOnboarding
                             ? artistasEscolhidos.size > 0 && generosEscolhidos.size > 0
                                 ? "Seu gosto musical já tem um começo"
                                 : "Vamos completar suas preferências"
                             : "Você chegou ao fim das recomendações"}
                     </Text>
-                    <Text className="mt-2 text-center text-sm leading-5 text-[#8793A7]">
+                    <Text className="mt-2 text-center text-sm leading-5 text-[#52677F] dark:text-[#8793A7]">
                         {emOnboarding
                             ? artistasEscolhidos.size > 0 && generosEscolhidos.size > 0
                                 ? `${artistasEscolhidos.size} artistas e ${generosEscolhidos.size} gêneros selecionados.`
@@ -557,7 +557,7 @@ export default function Descoberta() {
                                 </Pressable>
                             ) : null}
                             <Pressable onPress={() => router.replace("/filtrar")} className="mt-2 rounded-xl bg-[#1C314B] px-5 py-3">
-                                <Text className="text-sm text-white">Escolher manualmente</Text>
+                                <Text className="text-sm text-[#142338] dark:text-white">Escolher manualmente</Text>
                             </Pressable>
                         </>
                     ) : (
@@ -572,7 +572,7 @@ export default function Descoberta() {
                                 <Text className="text-sm font-semibold text-[#07111E]">Recomeçar a lista</Text>
                             </Pressable>
                             <Pressable onPress={() => router.replace("/explorar")} className="mt-2 rounded-xl bg-[#1C314B] px-5 py-3">
-                                <Text className="text-sm text-white">Voltar para Explorar</Text>
+                                <Text className="text-sm text-[#142338] dark:text-white">Voltar para Explorar</Text>
                             </Pressable>
                         </>
                     )}
@@ -628,15 +628,15 @@ export default function Descoberta() {
                 onRequestClose={() => void fecharTutorial()}
             >
                 <View className="flex-1 justify-center bg-black/75 px-6">
-                    <View className="rounded-3xl border border-[#354052] bg-[#111420] p-6">
-                        <Text className="font-serif text-2xl text-white">Como funciona</Text>
+                    <View className="rounded-3xl border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] p-6">
+                        <Text className="font-serif text-2xl text-[#142338] dark:text-white">Como funciona</Text>
                         <Text className="mt-3 text-sm leading-6 text-[#B5C0D1]">
                             Descubra músicas uma por vez e escolha o que fazer com cada cartão.
                         </Text>
-                        <View className="mt-5 rounded-2xl border border-[#263447] bg-[#0B1019] p-4">
+                        <View className="mt-5 rounded-2xl border border-[#263447] bg-[#F4F7FA] dark:bg-[#0B1019] p-4">
                             <Text className="text-sm font-semibold text-emerald-400">Arraste para a direita · SIM</Text>
                             <Text className="mt-2 text-sm font-semibold text-rose-400">Arraste para a esquerda · NÃO</Text>
-                            <Text className="mt-3 text-sm leading-5 text-[#8793A7]">
+                            <Text className="mt-3 text-sm leading-5 text-[#52677F] dark:text-[#8793A7]">
                                 “SIM” abre a criação de uma avaliação. “NÃO” pula para a próxima música. Você também pode usar os botões abaixo do cartão.
                             </Text>
                         </View>

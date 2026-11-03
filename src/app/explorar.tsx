@@ -9,7 +9,7 @@ import MusicCard from "../components/musicCard";
 import PostCard from "../components/postCard";
 import Searchbar from "../components/searchBar";
 import FotoArtista from "../components/FotoArtista";
-import { ClockCounterClockwiseIcon, XIcon } from "phosphor-react-native";
+import { ClockCounterClockwiseIcon, FunnelIcon, XIcon } from "phosphor-react-native";
 import { useBuscaGlobal } from "../hooks/useBuscaGlobal";
 import type { Musica } from "../services/musicaService";
 import { embaralharLista } from "../services/recomendacaoService";
@@ -30,6 +30,10 @@ export default function Explorar() {
     const termoDaRota = parametros.q?.trim() ?? "";
     const [termo, setTermo] = useState(termoDaRota);
     const [historico, setHistorico] = useState<string[]>([]);
+    const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+    const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([]);
+    const [artistasSelecionados, setArtistasSelecionados] = useState<number[]>([]);
+    const [ordemResultados, setOrdemResultados] = useState<"catalogo" | "nota" | "avaliacoes" | "titulo">("catalogo");
     const { musicas, artistas, posts, usuarios, generosFavoritos, artistasFavoritos,
         usuarioLogadoId, carregando, erro, buscando, resultados: resultadosBusca, recarregar } = useBuscaGlobal(termo);
 
@@ -76,20 +80,45 @@ export default function Explorar() {
         posts.forEach((post) => { const id = post.musica?.id; if (id != null) counts.set(id, (counts.get(id) ?? 0) + 1); });
         return counts;
     }, [posts]);
-    const emAlta = useMemo(() => [...musicas].sort((a, b) => (contagemPosts.get(b.id) ?? 0) - (contagemPosts.get(a.id) ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicas, contagemPosts]);
-    const bemAvaliadas = useMemo(() => [...musicas].filter((m) => (m.avaliacoes ?? 0) > 0).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicas]);
+    const generosDisponiveis = useMemo(() => [...new Set(musicas.map((musica) => musica.genero?.trim()).filter((genero): genero is string => Boolean(genero)))].sort((a, b) => a.localeCompare(b, "pt-BR")), [musicas]);
+    const musicasFiltradas = useMemo(() => {
+        const generos = new Set(generosSelecionados.map(normalizar));
+        const idsArtistas = new Set(artistasSelecionados);
+        const resultado = musicas.filter((musica) => {
+            const generoCorresponde = generos.size === 0 || generos.has(normalizar(musica.genero));
+            const artistaCorresponde = idsArtistas.size === 0 || idsArtistas.has(musica.artista?.id ?? -1);
+            return generoCorresponde && artistaCorresponde;
+        });
+
+        if (ordemResultados === "nota") return resultado.sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
+        if (ordemResultados === "avaliacoes") return resultado.sort((a, b) => (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0));
+        if (ordemResultados === "titulo") return resultado.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+        return resultado;
+    }, [musicas, generosSelecionados, artistasSelecionados, ordemResultados]);
+    const artistasFiltrados = useMemo(() => {
+        const idsArtistas = new Set(artistasSelecionados);
+        const generos = new Set(generosSelecionados.map(normalizar));
+        return artistas.filter((artista) => {
+            if (idsArtistas.size > 0 && !idsArtistas.has(artista.id)) return false;
+            const musicasDoArtista = musicas.filter((musica) => musica.artista?.id === artista.id);
+            return generos.size === 0 || musicasDoArtista.some((musica) => generos.has(normalizar(musica.genero)));
+        });
+    }, [artistas, musicas, generosSelecionados, artistasSelecionados]);
+    const quantidadeFiltrosAtivos = generosSelecionados.length + artistasSelecionados.length + Number(ordemResultados !== "catalogo");
+    const emAlta = useMemo(() => [...musicasFiltradas].sort((a, b) => (contagemPosts.get(b.id) ?? 0) - (contagemPosts.get(a.id) ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicasFiltradas, contagemPosts]);
+    const bemAvaliadas = useMemo(() => [...musicasFiltradas].filter((m) => (m.avaliacoes ?? 0) > 0).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicasFiltradas]);
     const imagensPersonalizadas = useMemo(() => {
         const generos = new Set(generosFavoritos.map(normalizar));
         const idsArtistas = new Set(artistasFavoritos.map((artista) => artista.artistaId));
-        const favoritas = musicas.filter((musica) =>
+        const favoritas = musicasFiltradas.filter((musica) =>
             (musica.genero && generos.has(normalizar(musica.genero))) ||
             (musica.artista?.id != null && idsArtistas.has(musica.artista.id)),
         );
         return embaralharLista(favoritas.filter((musica) => musica.capa));
-    }, [musicas, generosFavoritos, artistasFavoritos]);
+    }, [musicasFiltradas, generosFavoritos, artistasFavoritos]);
     const imagensCatalogoEmbaralhadas = useMemo(
-        () => embaralharLista(musicas.filter((musica) => musica.capa)),
-        [musicas],
+        () => embaralharLista(musicasFiltradas.filter((musica) => musica.capa)),
+        [musicasFiltradas],
     );
     const artistasPersonalizadosEmbaralhados = useMemo(() => {
         const idsArtistas = new Set(artistasFavoritos.map((artista) => artista.artistaId));
@@ -98,16 +127,76 @@ export default function Explorar() {
     const recomendadas = useMemo(() => {
         const generos = new Set(generosFavoritos.map(normalizar));
         const idsArtistas = new Set(artistasFavoritos.map((a) => a.artistaId));
-        return musicas.filter((m) => (m.genero && generos.has(normalizar(m.genero))) || (m.artista?.id != null && idsArtistas.has(m.artista.id))).slice(0, 8);
-    }, [musicas, generosFavoritos, artistasFavoritos]);
+        return musicasFiltradas.filter((m) => (m.genero && generos.has(normalizar(m.genero))) || (m.artista?.id != null && idsArtistas.has(m.artista.id))).slice(0, 8);
+    }, [musicasFiltradas, generosFavoritos, artistasFavoritos]);
     const postsRecentes = useMemo(() => posts.slice(0, 8), [posts]);
 
     function secaoMusicas(titulo: string, lista: Musica[], tipo: "banner" | "quadrado") {
         return <View className="mt-7">
-            <Text className="text-white text-lg font-serif mx-6 mb-3">{titulo}</Text>
+            <Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-3">{titulo}</Text>
             {lista.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
                 {lista.map((m) => <MusicCard key={m.id} id={m.id} tipo={tipo} larguraFixa={tipo === "quadrado"} titulo={m.titulo} artista={m.artista?.nome ?? "Artista desconhecido"} artistaId={m.artista?.id} capa={m.capa} nota={m.nota} avaliacoes={m.avaliacoes} duracaoSegundos={m.duracaoSegundos} />)}
-            </ScrollView> : <Text className="text-[#718096] text-sm mx-6">{carregando ? "Carregando músicas..." : "Nenhuma música encontrada."}</Text>}
+            </ScrollView> : <Text className="text-[#52677F] dark:text-[#718096] text-sm mx-6">{carregando ? "Carregando músicas..." : "Nenhuma música encontrada."}</Text>}
+        </View>;
+    }
+
+    function alternarGenero(genero: string) {
+        setGenerosSelecionados((selecionados) => selecionados.includes(genero)
+            ? selecionados.filter((item) => item !== genero)
+            : [...selecionados, genero]);
+    }
+
+    function alternarArtista(artistaId: number) {
+        setArtistasSelecionados((selecionados) => selecionados.includes(artistaId)
+            ? selecionados.filter((item) => item !== artistaId)
+            : [...selecionados, artistaId]);
+    }
+
+    function limparFiltros() {
+        setGenerosSelecionados([]);
+        setArtistasSelecionados([]);
+        setOrdemResultados("catalogo");
+    }
+
+    function renderizarFiltros() {
+        const artistasDisponiveis = artistas.filter((artista) =>
+            artistasSelecionados.includes(artista.id) || artistasFiltrados.some((item) => item.id === artista.id),
+        );
+
+        return <View className="mx-6 mt-2">
+            <Pressable onPress={() => setFiltrosAbertos((aberto) => !aberto)} accessibilityRole="button" accessibilityState={{ expanded: filtrosAbertos }} className="min-h-9 self-start flex-row items-center py-1">
+                <FunnelIcon size={15} color={quantidadeFiltrosAtivos ? "#58AAF0" : "#8793A7"} />
+                <Text className={`ml-1.5 text-xs ${quantidadeFiltrosAtivos ? "font-medium text-[#155B91] dark:text-[#8CC8FF]" : "text-[#52677F] dark:text-[#8793A7]"}`}>{filtrosAbertos ? "Fechar filtros" : "Filtros"}{quantidadeFiltrosAtivos > 0 ? ` · ${quantidadeFiltrosAtivos}` : ""}</Text>
+            </Pressable>
+
+            {filtrosAbertos && <View className="mt-2 pb-3 border-b border-[#D5E0EC] dark:border-[#252D3C]">
+                <Text className="mb-2 mt-4 text-xs font-medium text-[#52677F] dark:text-[#8793A7]">Gêneros</Text>
+                <View className="flex-row flex-wrap">
+                    {generosDisponiveis.map((genero) => {
+                        const selecionado = generosSelecionados.includes(genero);
+                        return <Pressable key={genero} onPress={() => alternarGenero(genero)} accessibilityRole="button" accessibilityState={{ selected: selecionado }} className={`mb-2 mr-2 rounded-full border px-3 py-2 ${selecionado ? "border-[#58AAF0] bg-[#58AAF0]/15" : "border-[#C5D3E1] dark:border-[#354052]"}`}><Text className={`text-xs ${selecionado ? "text-[#155B91] dark:text-[#8CC8FF]" : "text-[#52677F] dark:text-[#8793A7]"}`}>{genero}</Text></Pressable>;
+                    })}
+                    {!generosDisponiveis.length && <Text className="text-xs text-[#718096]">Nenhum gênero cadastrado.</Text>}
+                </View>
+
+                <Text className="mb-2 mt-2 text-xs font-medium text-[#52677F] dark:text-[#8793A7]">Artistas</Text>
+                {artistasDisponiveis.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}><View className="flex-row">
+                    {artistasDisponiveis.map((artista) => {
+                        const selecionado = artistasSelecionados.includes(artista.id);
+                        return <Pressable key={artista.id} onPress={() => alternarArtista(artista.id)} accessibilityRole="button" accessibilityState={{ selected: selecionado }} className={`mb-2 mr-2 rounded-full border px-3 py-2 ${selecionado ? "border-[#58AAF0] bg-[#58AAF0]/15" : "border-[#C5D3E1] dark:border-[#354052]"}`}><Text className={`text-xs ${selecionado ? "text-[#155B91] dark:text-[#8CC8FF]" : "text-[#52677F] dark:text-[#8793A7]"}`}>{artista.nome}</Text></Pressable>;
+                    })}
+                </View></ScrollView> : <Text className="text-xs text-[#718096]">Nenhum artista corresponde ao gênero selecionado.</Text>}
+
+                <Text className="mb-2 mt-2 text-xs font-medium text-[#52677F] dark:text-[#8793A7]">Ordenar músicas</Text>
+                <View className="flex-row flex-wrap">
+                    {([["catalogo", "Catálogo"], ["nota", "Melhor nota"], ["avaliacoes", "Mais avaliadas"], ["titulo", "A–Z"]] as const).map(([ordem, titulo]) => {
+                        const selecionada = ordemResultados === ordem;
+                        return <Pressable key={ordem} onPress={() => setOrdemResultados(ordem)} className={`mb-2 mr-2 rounded-full border px-3 py-2 ${selecionada ? "border-[#58AAF0] bg-[#58AAF0]/15" : "border-[#C5D3E1] dark:border-[#354052]"}`}><Text className={`text-xs ${selecionada ? "text-[#155B91] dark:text-[#8CC8FF]" : "text-[#52677F] dark:text-[#8793A7]"}`}>{titulo}</Text></Pressable>;
+                    })}
+                </View>
+
+                {quantidadeFiltrosAtivos > 0 && <Pressable onPress={limparFiltros} accessibilityRole="button" className="mt-1 self-start flex-row items-center py-2"><XIcon size={15} color="#8793A7" /><Text className="ml-1 text-xs text-[#52677F] dark:text-[#8793A7]">Limpar filtros</Text></Pressable>}
+            </View>}
         </View>;
     }
 
@@ -116,17 +205,17 @@ export default function Explorar() {
         if (!buscando) return null;
         if (carregando) return <View className="py-10"><ActivityIndicator color="#5EA7ED" /></View>;
         if (erro) return <Text className="text-red-400 text-sm text-center px-6 py-8">Não foi possível carregar os resultados. Tente novamente.</Text>;
-        if (!temResultado) return <Text className="text-[#718096] text-sm text-center px-6 py-8">Nenhum resultado encontrado para “{termo.trim()}”.</Text>;
+        if (!temResultado) return <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center px-6 py-8">Nenhum resultado encontrado para “{termo.trim()}”.</Text>;
         return <View className="px-5 pt-5">
-            <Text className="text-[#718096] text-xs mb-4">Resultados para “{termo.trim()}”</Text>
-            {!!resultadosBusca.musicas.length && <View className="mb-6"><Text className="text-white text-lg font-serif mb-3">Músicas ({resultadosBusca.musicas.length})</Text>{resultadosBusca.musicas.map((m) => <View key={m.id} className="mb-3"><MusicCard id={m.id} tipo="post" titulo={m.titulo} artista={m.artista?.nome ?? "Artista desconhecido"} artistaId={m.artista?.id} capa={m.capa} nota={m.nota} avaliacoes={m.avaliacoes} duracaoSegundos={m.duracaoSegundos} /></View>)}</View>}
-            {!!resultadosBusca.usuarios.length && <View className="mb-6"><Text className="text-white text-lg font-serif mb-3">Pessoas ({resultadosBusca.usuarios.length})</Text>{resultadosBusca.usuarios.map((u) => <Pressable key={u.id} onPress={() => router.push(`/u/${encodeURIComponent(u.username)}` as never)} className="flex-row items-center p-3 mb-2 rounded-xl border border-[#252D3C] bg-[#111420]"><Image source={u.foto ? { uri: u.foto } : require("../../assets/images/logo.png")} className="w-12 h-12 rounded-full" /><View className="ml-3"><Text className="text-white text-sm">{u.nome}</Text><Text className="text-[#718096] text-xs mt-1">@{u.username}</Text></View></Pressable>)}</View>}
-            {!!resultadosBusca.artistas.length && <View className="mb-6"><Text className="text-white text-lg font-serif mb-3">Artistas ({resultadosBusca.artistas.length})</Text>{resultadosBusca.artistas.map((a) => <Pressable key={a.id} onPress={() => router.push(`/artista/${a.id}` as never)} className="flex-row items-center p-3 mb-2 rounded-xl border border-[#252D3C] bg-[#111420]"><FotoArtista url={a.fotoURL} style={{ width: 48, height: 48, borderRadius: 24 }} /><Text className="text-white text-sm ml-3">{a.nome}</Text></Pressable>)}</View>}
-            {!!resultadosBusca.posts.length && <View className="mb-5"><Text className="text-white text-lg font-serif mb-2">Posts ({resultadosBusca.posts.length})</Text>{resultadosBusca.posts.map((p) => p.musica && <PostCard key={p.id} postId={p.id} name={p.usuario?.nome} username={p.usuario?.username} foto={p.usuario?.foto} time={p.dataCriacao} content={p.texto} nota={p.nota} editado={p.editado} musicId={p.musica.id} musicTitle={p.musica.titulo} artist={p.musica.artista?.nome} artistId={p.musica.artista?.id} musicCover={p.musica.capa} duracaoSegundos={p.musica.duracaoSegundos} likes={p._count?.curtidas} comments={p._count?.comentarios} curtidoPorMim={p.curtidoPorMim} ehMeuPost={p.usuario?.id === usuarioLogadoId} />)}</View>}
+            <Text className="text-[#52677F] dark:text-[#718096] text-xs mb-4">Resultados para “{termo.trim()}”</Text>
+            {!!resultadosBusca.musicas.length && <View className="mb-6"><Text className="text-[#142338] dark:text-white text-lg font-serif mb-3">Músicas ({resultadosBusca.musicas.length})</Text>{resultadosBusca.musicas.map((m) => <View key={m.id} className="mb-3"><MusicCard id={m.id} tipo="post" titulo={m.titulo} artista={m.artista?.nome ?? "Artista desconhecido"} artistaId={m.artista?.id} capa={m.capa} nota={m.nota} avaliacoes={m.avaliacoes} duracaoSegundos={m.duracaoSegundos} /></View>)}</View>}
+            {!!resultadosBusca.usuarios.length && <View className="mb-6"><Text className="text-[#142338] dark:text-white text-lg font-serif mb-3">Pessoas ({resultadosBusca.usuarios.length})</Text>{resultadosBusca.usuarios.map((u) => <Pressable key={u.id} onPress={() => router.push(`/u/${encodeURIComponent(u.username)}` as never)} className="flex-row items-center p-3 mb-2 rounded-xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420]"><Image source={u.foto ? { uri: u.foto } : require("../../assets/images/logo.png")} className="w-12 h-12 rounded-full" /><View className="ml-3"><Text className="text-[#142338] dark:text-white text-sm">{u.nome}</Text><Text className="text-[#52677F] dark:text-[#718096] text-xs mt-1">@{u.username}</Text></View></Pressable>)}</View>}
+            {!!resultadosBusca.artistas.length && <View className="mb-6"><Text className="text-[#142338] dark:text-white text-lg font-serif mb-3">Artistas ({resultadosBusca.artistas.length})</Text>{resultadosBusca.artistas.map((a) => <Pressable key={a.id} onPress={() => router.push(`/artista/${a.id}` as never)} className="flex-row items-center p-3 mb-2 rounded-xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420]"><FotoArtista url={a.fotoURL} style={{ width: 48, height: 48, borderRadius: 24 }} /><Text className="text-[#142338] dark:text-white text-sm ml-3">{a.nome}</Text></Pressable>)}</View>}
+            {!!resultadosBusca.posts.length && <View className="mb-5"><Text className="text-[#142338] dark:text-white text-lg font-serif mb-2">Posts ({resultadosBusca.posts.length})</Text>{resultadosBusca.posts.map((p) => p.musica && <PostCard key={p.id} postId={p.id} name={p.usuario?.nome} username={p.usuario?.username} foto={p.usuario?.foto} time={p.dataCriacao} content={p.texto} nota={p.nota} editado={p.editado} musicId={p.musica.id} musicTitle={p.musica.titulo} artist={p.musica.artista?.nome} artistId={p.musica.artista?.id} musicCover={p.musica.capa} duracaoSegundos={p.musica.duracaoSegundos} likes={p._count?.curtidas} comments={p._count?.comentarios} curtidoPorMim={p.curtidoPorMim} ehMeuPost={p.usuario?.id === usuarioLogadoId} />)}</View>}
         </View>;
     }
 
-    return <SafeAreaView className="flex-1 bg-[#080A10]">
+    return <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
         <Topbar titulo="Explorar" subtitulo="Encontre músicas, artistas e pessoas" />
         <Searchbar
             value={termo}
@@ -134,13 +223,14 @@ export default function Explorar() {
             onSubmitEditing={(valor) => void guardarPesquisa(valor)}
             onEndEditing={(valor) => void guardarPesquisa(valor)}
         />
+        {!buscando ? renderizarFiltros() : null}
         {buscando ? <ScrollView className="flex-1" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => void recarregar()} tintColor="#58AAF0" colors={["#58AAF0"]} />}>{resultadosPesquisa()}</ScrollView> : <ScrollView className="flex-1" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => void recarregar()} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
             {historico.length > 0 && (
                 <View className="mt-3">
                     <View className="mx-6 mb-3 flex-row items-center justify-between">
                         <View className="flex-row items-center">
                             <ClockCounterClockwiseIcon size={16} color="#8793A7" />
-                            <Text className="ml-2 text-sm font-medium text-white">Pesquisas recentes</Text>
+                            <Text className="ml-2 text-sm font-medium text-[#142338] dark:text-white">Pesquisas recentes</Text>
                         </View>
                         <Pressable onPress={() => void limparPesquisas()} accessibilityRole="button" accessibilityLabel="Limpar histórico de pesquisa">
                             <Text className="text-xs text-[#83C6FF]">Limpar</Text>
@@ -148,14 +238,14 @@ export default function Explorar() {
                     </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
                         {historico.map((pesquisa) => (
-                            <View key={pesquisa} className="mr-2 flex-row overflow-hidden rounded-full border border-[#252D3C] bg-[#111420]">
+                            <View key={pesquisa} className="mr-2 flex-row overflow-hidden rounded-full border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420]">
                                 <Pressable
                                     onPress={() => setTermo(pesquisa)}
                                     accessibilityRole="button"
                                     accessibilityLabel={`Pesquisar novamente: ${pesquisa}`}
                                     className="flex-row items-center py-2 pl-3 pr-2"
                                 >
-                                    <Text className="max-w-[160px] text-xs text-[#D0D0D5]" numberOfLines={1}>{pesquisa}</Text>
+                                    <Text className="max-w-[160px] text-xs text-[#405570] dark:text-[#D0D0D5]" numberOfLines={1}>{pesquisa}</Text>
                                 </Pressable>
                                 <Pressable
                                     onPress={() => void removerPesquisa(pesquisa)}
@@ -171,10 +261,17 @@ export default function Explorar() {
                 </View>
             )}
             {erro && <Text className="text-red-400 text-sm mx-6 mt-4">Não foi possível carregar o conteúdo.</Text>}
-            {carregando && musicas.length === 0 ? <View className="py-10"><ActivityIndicator color="#5EA7ED" /></View> : <>
+            {carregando && musicas.length === 0 ? <View className="py-10"><ActivityIndicator color="#5EA7ED" /></View> : quantidadeFiltrosAtivos > 0 ? (
+                <View className="mt-6 px-5">
+                    <Text className="mb-3 font-serif text-lg text-[#142338] dark:text-white">Músicas encontradas ({musicasFiltradas.length})</Text>
+                    {musicasFiltradas.length ? musicasFiltradas.map((musica) => <View key={musica.id} className="mb-3"><MusicCard id={musica.id} tipo="post" titulo={musica.titulo} artista={musica.artista?.nome ?? "Artista desconhecido"} artistaId={musica.artista?.id} capa={musica.capa} nota={musica.nota} avaliacoes={musica.avaliacoes} duracaoSegundos={musica.duracaoSegundos} /></View>) : <Text className="mb-4 text-sm text-[#52677F] dark:text-[#8793A7]">Nenhuma música corresponde aos filtros selecionados.</Text>}
+                    <Text className="mb-3 mt-4 font-serif text-lg text-[#142338] dark:text-white">Artistas ({artistasFiltrados.length})</Text>
+                    {artistasFiltrados.length ? artistasFiltrados.map((artista) => <Pressable key={artista.id} onPress={() => router.push(`/artista/${artista.id}` as never)} className="mb-2 flex-row items-center rounded-xl border border-[#D5E0EC] bg-white p-3 dark:border-[#252D3C] dark:bg-[#111420]"><FotoArtista url={artista.fotoURL} style={{ width: 48, height: 48, borderRadius: 24 }} /><Text className="ml-3 text-sm text-[#142338] dark:text-white">{artista.nome}</Text></Pressable>) : <Text className="text-sm text-[#52677F] dark:text-[#8793A7]">Nenhum artista corresponde aos filtros selecionados.</Text>}
+                </View>
+            ) : <>
                 {secaoMusicas("Em alta", emAlta, "banner")}
                 <View className="mt-7">
-                    <Text className="text-white text-lg font-serif mx-6 mb-3">Mais para explorar</Text>
+                    <Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-3">Mais para explorar</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
                         <AtalhoMusicalCard
                             tipo="descoberta"
@@ -204,10 +301,10 @@ export default function Explorar() {
                 </View>
                 {secaoMusicas("Mais bem avaliadas", bemAvaliadas, "quadrado")}
                 {secaoMusicas("Talvez você goste", recomendadas, "quadrado")}
-                <View className="mt-7"><Text className="text-white text-lg font-serif mx-6 mb-3">Artistas</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
-                    {artistas.slice(0, 12).map((a) => <Pressable key={a.id} onPress={() => router.push(`/artista/${a.id}` as never)} className="w-[104px] items-center mr-4"><FotoArtista url={a.fotoURL} style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: "#171E2B" }} /><Text className="text-white text-xs text-center mt-2" numberOfLines={1}>{a.nome}</Text></Pressable>)}
+                <View className="mt-7"><Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-3">Artistas</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
+                    {artistas.slice(0, 12).map((a) => <Pressable key={a.id} onPress={() => router.push(`/artista/${a.id}` as never)} className="w-[104px] items-center mr-4"><FotoArtista url={a.fotoURL} style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: "#171E2B" }} /><Text className="text-[#142338] dark:text-white text-xs text-center mt-2" numberOfLines={1}>{a.nome}</Text></Pressable>)}
                 </ScrollView></View>
-                <View className="mt-7"><Text className="text-white text-lg font-serif mx-6 mb-2">Publicações recentes</Text>{postsRecentes.length ? postsRecentes.map((p) => p.musica && <PostCard key={p.id} postId={p.id} name={p.usuario?.nome} username={p.usuario?.username} foto={p.usuario?.foto} time={p.dataCriacao} content={p.texto} nota={p.nota} editado={p.editado} musicId={p.musica.id} musicTitle={p.musica.titulo} artist={p.musica.artista?.nome} artistId={p.musica.artista?.id} musicCover={p.musica.capa} duracaoSegundos={p.musica.duracaoSegundos} likes={p._count?.curtidas} comments={p._count?.comentarios} curtidoPorMim={p.curtidoPorMim} ehMeuPost={p.usuario?.id === usuarioLogadoId} />) : <Text className="text-[#718096] text-sm mx-6">Nenhuma publicação encontrada.</Text>}</View>
+                <View className="mt-7"><Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-2">Publicações recentes</Text>{postsRecentes.length ? postsRecentes.map((p) => p.musica && <PostCard key={p.id} postId={p.id} name={p.usuario?.nome} username={p.usuario?.username} foto={p.usuario?.foto} time={p.dataCriacao} content={p.texto} nota={p.nota} editado={p.editado} musicId={p.musica.id} musicTitle={p.musica.titulo} artist={p.musica.artista?.nome} artistId={p.musica.artista?.id} musicCover={p.musica.capa} duracaoSegundos={p.musica.duracaoSegundos} likes={p._count?.curtidas} comments={p._count?.comentarios} curtidoPorMim={p.curtidoPorMim} ehMeuPost={p.usuario?.id === usuarioLogadoId} />) : <Text className="text-[#52677F] dark:text-[#718096] text-sm mx-6">Nenhuma publicação encontrada.</Text>}</View>
             </>}
             <View className="h-6" />
         </ScrollView>}

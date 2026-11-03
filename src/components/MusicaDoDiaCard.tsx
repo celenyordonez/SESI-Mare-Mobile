@@ -102,10 +102,10 @@ export default function MusicaDoDiaCard({ musica }: Props) {
                     className="ml-3 flex-1 justify-center"
                     style={({ pressed }) => ({ opacity: pressed ? 0.82 : 1 })}
                 >
-                    <Text className="text-base font-semibold text-white" numberOfLines={2}>
+                    <Text className="text-base font-semibold text-[#142338] dark:text-white" numberOfLines={2}>
                         {musica.titulo}
                     </Text>
-                    <Text className="mt-1 text-sm text-[#AAB4C5]" numberOfLines={1}>
+                    <Text className="mt-1 text-sm text-[#405570] dark:text-[#AAB4C5]" numberOfLines={1}>
                         {musica.artista?.nome ?? "Artista desconhecido"}
                     </Text>
                     {musica.genero ? (

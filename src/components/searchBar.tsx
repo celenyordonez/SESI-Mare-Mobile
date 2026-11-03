@@ -16,17 +16,17 @@ export default function Searchbar({ value, onChangeText, onPress, onSubmitEditin
                 onPress={onPress}
                 accessibilityRole="button"
                 accessibilityLabel="Buscar músicas, artistas e pessoas"
-                className="mx-5 mb-3 h-11 flex-row items-center rounded-xl border border-[#252D3C] bg-[#111420] px-3"
+                className="mx-5 mb-3 h-11 flex-row items-center rounded-xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420] px-3"
                 style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
             >
                 <MagnifyingGlassIcon size={18} color="#8495A9" />
-                <Text className="ml-2 text-sm text-[#718096]">Buscar músicas, artistas e pessoas</Text>
+                <Text className="ml-2 text-sm text-[#52677F] dark:text-[#718096]">Buscar músicas, artistas e pessoas</Text>
             </Pressable>
         );
     }
 
     return (
-        <View className="mx-5 mb-3 h-11 flex-row items-center rounded-xl border border-[#252D3C] bg-[#111420] px-3">
+        <View className="mx-5 mb-3 h-11 flex-row items-center rounded-xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420] px-3">
 
             <MagnifyingGlassIcon
                 size={18}
@@ -34,7 +34,7 @@ export default function Searchbar({ value, onChangeText, onPress, onSubmitEditin
             />
 
             <TextInput
-                className="flex-1 text-white text-xs ml-2"
+                className="flex-1 text-[#142338] dark:text-white text-xs ml-2"
                 value={value}
                 onChangeText={onChangeText}
                 placeholder="Buscar músicas, artistas..."

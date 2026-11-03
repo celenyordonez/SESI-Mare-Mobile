@@ -28,6 +28,7 @@ import PostCard from "../../components/postCard";
 import MusicCard from "../../components/musicCard";
 import PlataformaMusicalIcon from "../../components/PlataformaMusicalIcon";
 import FotoArtista from "../../components/FotoArtista";
+import CompartilharMusicaBotao from "../../components/CompartilharMusicaBotao";
 import { usePaletaCapa } from "../../hooks/usePaletaCapa";
 import { buscarMusicaPorId, buscarMusicas, buscarPostsDaMusica, type Musica } from "../../services/musicaService";
 import { buscarIdsSalvos, alternarSalvamentoMusica } from "../../services/salvamentoService";
@@ -143,13 +144,13 @@ export default function DetalheMusica() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
 
             {carregando ? (
                 <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#5EA7ED" />
-                    <Text className="text-[#718096] text-sm mt-3">Carregando música...</Text>
+                    <Text className="text-[#52677F] dark:text-[#718096] text-sm mt-3">Carregando música...</Text>
                 </View>
             ) : !musica ? (
                 <View className="flex-1 items-center justify-center px-8">
@@ -159,7 +160,7 @@ export default function DetalheMusica() {
                 <ScrollView className="flex-1" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => { setErro(""); setCarregando(true); setRevisao((valor) => valor + 1); }} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
                     {/* Capa ampla com imagem desfocada e informações sobrepostas, como no site. */}
                     <View
-                        className="relative mx-4 mt-4 h-[280px] overflow-hidden rounded-xl border bg-[#111420]"
+                        className="relative mx-4 mt-4 h-[280px] overflow-hidden rounded-xl border bg-white dark:bg-[#111420]"
                         style={{
                             borderColor: corComOpacidade(paleta?.acento ?? "#58AAF0", 0.68),
                             shadowColor: corDinamica,
@@ -209,18 +210,24 @@ export default function DetalheMusica() {
                                 }}
                             >
                                 <BookmarkSimpleIcon size={18} color={salva ? corDinamica : "#FFFFFF"} weight={salva ? "fill" : "regular"} />
-                                <Text className={`text-xs ml-2 ${salva ? "text-[#58AAF0]" : "text-white"}`}>
+                                <Text className={`text-xs ml-2 ${salva ? "text-[#155B91] dark:text-[#58AAF0]" : "text-[#142338] dark:text-white"}`}>
                                     {salvando ? "Salvando..." : salva ? "Salva" : "Salvar"}
                                 </Text>
                             </Pressable>
+                            <CompartilharMusicaBotao
+                                musicaId={musica.id}
+                                titulo={musica.titulo}
+                                artista={musica.artista?.nome ?? "Artista desconhecido"}
+                                classeBotao="mr-2 h-10 w-10 items-center justify-center rounded-lg border border-white/30 bg-black/60"
+                            />
                             <View className="flex-row items-center rounded-lg bg-black/60 px-3 py-2">
-                                <StarIcon size={18} color={corDinamica} weight="fill" />
-                                <Text className="text-white text-base ml-2">{Number(musica.nota ?? 0).toFixed(1)}</Text>
+                                <StarIcon size={18} color="#58AAF0" weight="fill" />
+                                <Text className="text-[#142338] dark:text-white text-base ml-2">{Number(musica.nota ?? 0).toFixed(1)}</Text>
                             </View>
                         </View>
 
                         <View className="absolute left-5 right-5 bottom-5">
-                            <Text className="text-white text-[27px] font-serif leading-8" numberOfLines={2}>
+                            <Text className="text-[#142338] dark:text-white text-[27px] font-serif leading-8" numberOfLines={2}>
                                 {musica.titulo}
                             </Text>
                             {musica.artista ? (
@@ -273,7 +280,7 @@ export default function DetalheMusica() {
                                         }}
                                     >
                                         <PlataformaMusicalIcon plataforma={nome as "Spotify" | "YouTube Music" | "Amazon Music" | "Apple Music"} tamanho={21} />
-                                        <Text className="flex-1 text-white text-xs ml-2" numberOfLines={1}>{nome}</Text>
+                                        <Text className="flex-1 text-[#142338] dark:text-white text-xs ml-2" numberOfLines={1}>{nome}</Text>
                                         <ArrowSquareOutIcon size={14} color={paleta?.acento ?? "#8495A9"} />
                                     </Pressable>
                                 ))}
@@ -282,7 +289,7 @@ export default function DetalheMusica() {
                     ) : null}
 
                     <View className="mt-8">
-                        <Text className="text-white text-2xl font-serif px-5 mb-3">Músicas relacionadas</Text>
+                        <Text className="text-[#142338] dark:text-white text-2xl font-serif px-5 mb-3">Músicas relacionadas</Text>
                         {musicasRelacionadas.length > 0 ? (
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
                                 {musicasRelacionadas.map((relacionada) => (
@@ -302,7 +309,7 @@ export default function DetalheMusica() {
                                 ))}
                             </ScrollView>
                         ) : (
-                            <Text className="text-[#718096] text-sm px-5">Nenhuma música relacionada encontrada.</Text>
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm px-5">Nenhuma música relacionada encontrada.</Text>
                         )}
                     </View>
 
@@ -322,7 +329,7 @@ export default function DetalheMusica() {
                     </Pressable>
 
                     <View className="mt-8 px-5">
-                        <Text className="text-white text-lg font-serif">Posts relacionados</Text>
+                        <Text className="text-[#142338] dark:text-white text-lg font-serif">Posts relacionados</Text>
                     </View>
                     {avaliacoes.length > 0 ? (
                         avaliacoes.map((avaliacao) => (
@@ -349,7 +356,7 @@ export default function DetalheMusica() {
                             />
                         ))
                     ) : (
-                        <Text className="text-[#718096] text-sm px-5 py-6">Nenhum post feito.</Text>
+                        <Text className="text-[#52677F] dark:text-[#718096] text-sm px-5 py-6">Nenhum post feito.</Text>
                     )}
                     <View className="h-6" />
                 </ScrollView>

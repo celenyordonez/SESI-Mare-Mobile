@@ -35,6 +35,7 @@ import Topbar from "../components/topbar";
 import PostCard from "../components/postCard";
 import MusicCard from "../components/musicCard";
 import ComentarioPerfilCard from "../components/ComentarioPerfilCard";
+import { ItemMenuAcao, MenuAcoes } from "../components/MenuAcoes";
 import { invalidarCacheFotoPerfil } from "../services/perfilCache";
 import { feedbackAcao } from "../services/feedbackTatil";
 import { alternarSalvamentoMusica } from "../services/salvamentoService";
@@ -300,7 +301,7 @@ export default function Perfil() {
     ];
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
 
             {carregando ? (
@@ -322,10 +323,10 @@ export default function Perfil() {
                         <Pressable
                             onPress={() => void escolherImagem("capa")}
                             disabled={alterandoImagem}
-                            className="absolute right-4 top-4 flex-row items-center rounded-lg border border-white/10 bg-[#080A10]/75 px-3 py-2"
+                            className="absolute right-4 top-4 flex-row items-center rounded-lg border border-white/10 bg-[#E8EEF5] dark:bg-[#080A10]/75 px-3 py-2"
                         >
                             <CameraIcon size={17} color="#FFFFFF" />
-                            <Text className="text-white text-xs ml-2">{alterandoImagem ? "Enviando..." : "Alterar capa"}</Text>
+                            <Text className="text-[#142338] dark:text-white text-xs ml-2">{alterandoImagem ? "Enviando..." : "Alterar capa"}</Text>
                         </Pressable>
                         <View className="absolute left-5 top-[95px] w-[88px] h-[88px] z-10">
                             <Pressable
@@ -356,38 +357,38 @@ export default function Perfil() {
                             <Pressable onPress={() => void compartilharPerfil()} accessibilityLabel="Compartilhar perfil" className="p-2 mr-1">
                                 <ShareNetworkIcon size={20} color="#FFFFFF" />
                             </Pressable>
-                            <Pressable onPress={() => setMenuAberto((aberto) => !aberto)} accessibilityLabel="Mais opções do perfil" className="p-2">
-                                <DotsThreeIcon size={23} color="#FFFFFF" weight="bold" />
+                            <Pressable onPress={() => setMenuAberto(true)} accessibilityRole="button" accessibilityLabel="Mais opções do perfil" className="h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/35">
+                                <DotsThreeIcon size={22} color="#FFFFFF" weight="bold" />
                             </Pressable>
                         </View>
-                        <Text className="text-white text-xl font-semibold">{perfil.nome}</Text>
-                        <Text className="text-[#697386] text-sm">@{perfil.username}</Text>
+                        <Text className="text-[#142338] dark:text-white text-xl font-semibold">{perfil.nome}</Text>
+                        <Text className="text-[#52677F] dark:text-[#697386] text-sm">@{perfil.username}</Text>
                         {perfil.bio ? (
                             <Text className="text-[#C4CCDA] text-sm mt-2 leading-5">{perfil.bio}</Text>
                         ) : (
-                            <Text className="text-[#718096] text-sm mt-2 italic">Adicione uma bio ao seu perfil.</Text>
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm mt-2 italic">Adicione uma bio ao seu perfil.</Text>
                         )}
 
                         <View className="flex-row flex-wrap mt-5">
                             <Pressable onPress={() => abrirListaRelacoes("seguidores")} className="mr-6">
-                                <Text className="text-white text-sm font-semibold">{perfil._count?.seguidores ?? 0}</Text>
-                                <Text className="text-[#697386] text-xs mt-1">Seguidores</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count?.seguidores ?? 0}</Text>
+                                <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Seguidores</Text>
                             </Pressable>
                             <Pressable onPress={() => abrirListaRelacoes("seguindo")} className="mr-6">
-                                <Text className="text-white text-sm font-semibold">{perfil._count?.seguindo ?? 0}</Text>
-                                <Text className="text-[#697386] text-xs mt-1">Seguindo</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count?.seguindo ?? 0}</Text>
+                                <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Seguindo</Text>
                             </Pressable>
                             <View>
-                                <Text className="text-white text-sm font-semibold">{perfil._count?.posts ?? avaliacoes.length}</Text>
-                                <Text className="text-[#697386] text-xs mt-1">Avaliações</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count?.posts ?? avaliacoes.length}</Text>
+                                <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Avaliações</Text>
                             </View>
                         </View>
                     </View>
 
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-8 border-b border-[#202633]">
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-8 border-b border-[#D5E0EC] dark:border-[#202633]">
                         {abas.map((item) => (
                             <Pressable key={item.id} onPress={() => setAbaAtiva(item.id)} className="items-center px-4">
-                                <Text numberOfLines={1} className={`${abaAtiva === item.id ? "text-white" : "text-[#697386]"} text-xs pb-3`}>
+                                <Text numberOfLines={1} className={`${abaAtiva === item.id ? "text-[#142338] dark:text-white" : "text-[#52677F] dark:text-[#697386]"} text-xs pb-3`}>
                                     {item.titulo}
                                 </Text>
                                 {abaAtiva === item.id ? <View className="h-[2px] w-full bg-[#58AAF0]" /> : null}
@@ -421,7 +422,7 @@ export default function Perfil() {
                                     onExcluir={() => setAvaliacoes((atuais) => atuais.filter((item) => item.id !== post.id))}
                                 />
                             ) : null) : (
-                                <Text className="text-[#718096] text-sm text-center py-8">Nenhuma avaliação feita.</Text>
+                                <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhuma avaliação feita.</Text>
                             )
                         ) : null}
 
@@ -429,7 +430,7 @@ export default function Perfil() {
                             <>
                                 <View className="flex-row items-center px-5 py-3">
                                     <ChatCircleIcon size={18} color="#58AAF0" />
-                                    <Text className="text-white text-base font-serif ml-2">Comentários</Text>
+                                    <Text className="text-[#142338] dark:text-white text-base font-serif ml-2">Comentários</Text>
                                 </View>
                                 {comentarios.length ? comentarios.map((comentario) => (
                                     <ComentarioPerfilCard
@@ -438,7 +439,7 @@ export default function Perfil() {
                                         usuarioLogadoId={perfil.id}
                                     />
                                 )) : (
-                                    <Text className="text-[#718096] text-sm text-center py-8">Nenhum comentário feito.</Text>
+                                    <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhum comentário feito.</Text>
                                 )}
                             </>
                         ) : null}
@@ -466,17 +467,17 @@ export default function Perfil() {
                                     onUnlike={() => void removerCurtida(post.id)}
                                 />
                             ) : null) : (
-                                <Text className="text-[#718096] text-sm text-center py-8">Você ainda não curtiu nenhuma publicação.</Text>
+                                <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Você ainda não curtiu nenhuma publicação.</Text>
                             )
                         ) : null}
 
                         {abaAtiva === "salvos" ? (
                             musicasSalvas.length ? (
                                 <>
-                                    <View className="mx-4 mb-2 flex-row items-center rounded-xl border border-[#29384B] bg-[#0D1520] px-3">
+                                    <View className="mx-4 mb-2 flex-row items-center rounded-xl border border-[#29384B] bg-[#EAF1F8] dark:bg-[#0D1520] px-3">
                                         <MagnifyingGlassIcon size={19} color="#8495A9" />
                                         <TextInput
-                                            className="flex-1 px-3 py-3 text-sm text-white"
+                                            className="flex-1 px-3 py-3 text-sm text-[#142338] dark:text-white"
                                             value={pesquisaSalvos}
                                             onChangeText={setPesquisaSalvos}
                                             placeholder="Buscar nas músicas salvas..."
@@ -507,11 +508,11 @@ export default function Perfil() {
                                             />
                                         </View>
                                     )) : (
-                                        <Text className="text-[#718096] text-sm text-center py-8">Nenhuma música salva corresponde à sua busca.</Text>
+                                        <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhuma música salva corresponde à sua busca.</Text>
                                     )}
                                 </>
                             ) : (
-                                <Text className="text-[#718096] text-sm text-center py-8">Nenhuma música salva.</Text>
+                                <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhuma música salva.</Text>
                             )
                         ) : null}
                     </View>
@@ -525,9 +526,9 @@ export default function Perfil() {
                 onRequestClose={() => setModalEdicaoAberto(false)}
             >
                 <View className="flex-1 justify-center bg-black/70 px-5">
-                    <View className="rounded-2xl border border-[#354052] bg-[#0D121C] p-5">
+                    <View className="rounded-2xl border border-[#C5D3E1] dark:border-[#354052] bg-[#0D121C] p-5">
                         <View className="flex-row items-center justify-between mb-5">
-                            <Text className="text-white text-lg font-serif">Editar perfil</Text>
+                            <Text className="text-[#142338] dark:text-white text-lg font-serif">Editar perfil</Text>
                             <Pressable onPress={() => setModalEdicaoAberto(false)} accessibilityLabel="Fechar edição">
                                 <XIcon size={21} color="#9AA6BA" />
                             </Pressable>
@@ -535,14 +536,14 @@ export default function Perfil() {
 
                         <Text className="text-[#C4CCDA] text-xs mb-2">Nome</Text>
                         <TextInput
-                            className="rounded-lg border border-[#354052] bg-[#080A10] px-3 py-3 text-white text-sm mb-4"
+                            className="rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-[#E8EEF5] dark:bg-[#080A10] px-3 py-3 text-[#142338] dark:text-white text-sm mb-4"
                             value={nomeEditado}
                             onChangeText={setNomeEditado}
                             maxLength={80}
                         />
                         <Text className="text-[#C4CCDA] text-xs mb-2">Usuário</Text>
                         <TextInput
-                            className="rounded-lg border border-[#354052] bg-[#080A10] px-3 py-3 text-white text-sm mb-4"
+                            className="rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-[#E8EEF5] dark:bg-[#080A10] px-3 py-3 text-[#142338] dark:text-white text-sm mb-4"
                             value={usuarioEditado}
                             onChangeText={setUsuarioEditado}
                             autoCapitalize="none"
@@ -550,7 +551,7 @@ export default function Perfil() {
                         />
                         <Text className="text-[#C4CCDA] text-xs mb-2">Bio</Text>
                         <TextInput
-                            className="min-h-[90px] rounded-lg border border-[#354052] bg-[#080A10] px-3 py-3 text-white text-sm"
+                            className="min-h-[90px] rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-[#E8EEF5] dark:bg-[#080A10] px-3 py-3 text-[#142338] dark:text-white text-sm"
                             value={bioEditada}
                             onChangeText={setBioEditada}
                             multiline
@@ -558,7 +559,7 @@ export default function Perfil() {
                         />
                         <View className="flex-row justify-end mt-5">
                             <Pressable onPress={() => setModalEdicaoAberto(false)} className="px-4 py-3 mr-2">
-                                <Text className="text-[#9AA6BA] text-sm">Cancelar</Text>
+                                <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm">Cancelar</Text>
                             </Pressable>
                             <Pressable
                                 onPress={() => void salvarEdicaoPerfil()}
@@ -572,32 +573,17 @@ export default function Perfil() {
                 </View>
             </Modal>
 
-            <Modal
-                visible={menuAberto}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setMenuAberto(false)}
-            >
-                <View className="flex-1 items-center justify-center bg-black/35 px-8">
-                    <Pressable
-                        className="absolute inset-0"
-                        onPress={() => setMenuAberto(false)}
-                        accessibilityLabel="Fechar menu do perfil"
-                    />
-                    <View className="w-full max-w-[300px] rounded-xl border border-[#354052] bg-[#111420] p-2 shadow-lg">
-                        <Pressable
-                            onPress={() => {
-                                setMenuAberto(false);
-                                setModalEdicaoAberto(true);
-                            }}
-                            className="flex-row items-center rounded-lg px-3 py-3"
-                        >
-                            <PencilSimpleIcon size={18} color="#58AAF0" />
-                            <Text className="text-white text-sm ml-3">Editar perfil</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            </Modal>
+            <MenuAcoes aberto={menuAberto} titulo="Opções do perfil" aoFechar={() => setMenuAberto(false)}>
+                <ItemMenuAcao
+                    titulo="Editar perfil"
+                    descricao="Atualizar nome, bio e fotos"
+                    icone={<PencilSimpleIcon size={19} color="#58AAF0" />}
+                    aoPressionar={() => {
+                        setMenuAberto(false);
+                        setModalEdicaoAberto(true);
+                    }}
+                />
+            </MenuAcoes>
 
             <Navbar />
         </SafeAreaView>

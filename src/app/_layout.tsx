@@ -2,11 +2,13 @@ import "../../global.css";
 
 import { useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import { mareToastConfig } from "../components/MareToast";
 import { configurarExibicaoDePush } from "../services/notificacaoPushService";
+import { ContadoresNavegacaoProvider } from "../components/ContadoresNavegacao";
+import { TemaProvider } from "../components/TemaProvider";
+import { enviarMensagem, marcarConversaComoLida } from "../services/mensagemPrivadaService";
 
 configurarExibicaoDePush();
 
@@ -15,9 +17,22 @@ export default function RootLayout() {
   const ultimaRespostaProcessada = useRef<string | null>(null);
 
   useEffect(() => {
-    if (Platform.OS !== "android") return;
+    void Notifications.setNotificationCategoryAsync("mare_mensagem", [
+      {
+        identifier: "responder",
+        buttonTitle: "Responder",
+        textInput: {
+          placeholder: "Escreva uma mensagem",
+          submitButtonTitle: "Enviar",
+        },
+      },
+      {
+        identifier: "marcar_como_lida",
+        buttonTitle: "Marcar como lida",
+      },
+    ]).catch((erro) => console.warn("Não foi possível preparar a resposta rápida:", erro));
 
-    function abrirDestinoPush(response: Notifications.NotificationResponse | null) {
+    async function abrirDestinoPush(response: Notifications.NotificationResponse | null) {
       if (!response) return;
       const identificador = response.notification.request.identifier;
       if (ultimaRespostaProcessada.current === identificador) return;
@@ -25,6 +40,22 @@ export default function RootLayout() {
 
       const dados = response.notification.request.content.data as Record<string, unknown>;
       if (dados.tipo === "mensagem" && dados.conversaId != null) {
+        if (response.actionIdentifier === "marcar_como_lida") {
+          try {
+            await marcarConversaComoLida(Number(dados.conversaId));
+          } catch (erro) {
+            console.warn("Não foi possível marcar a conversa como lida:", erro);
+            router.push({ pathname: "/mensagens/[id]", params: { id: String(dados.conversaId) } } as never);
+          }
+          return;
+        }
+        if (response.actionIdentifier === "responder" && response.userText?.trim()) {
+          try {
+            await enviarMensagem(Number(dados.conversaId), response.userText.trim());
+          } catch (erro) {
+            console.warn("Não foi possível responder pela notificação; abrindo a conversa:", erro);
+          }
+        }
         router.push({
           pathname: "/mensagens/[id]",
           params: {
@@ -51,22 +82,24 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: "slide_from_right",
-          gestureEnabled: true,
-          fullScreenGestureEnabled: true,
-        }}
-      />
-      <Toast
-        config={mareToastConfig}
-        position="top"
-        topOffset={56}
-        visibilityTime={3500}
-        swipeable
-      />
-    </>
+    <TemaProvider>
+      <ContadoresNavegacaoProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+          }}
+        />
+        <Toast
+          config={mareToastConfig}
+          position="top"
+          topOffset={56}
+          visibilityTime={3500}
+          swipeable
+        />
+      </ContadoresNavegacaoProvider>
+    </TemaProvider>
   );
 }

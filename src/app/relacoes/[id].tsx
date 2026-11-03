@@ -48,13 +48,13 @@ export default function ListaRelacoes() {
     }, [usuarioId, tipoLista]);
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
             <View className="px-5 pb-4">
-                <Text className="text-white text-xl font-serif">
+                <Text className="text-[#142338] dark:text-white text-xl font-serif">
                     {tipoLista === "seguidores" ? "Seguidores" : "Seguindo"}
                 </Text>
-                <Text className="text-[#718096] text-sm mt-1">
+                <Text className="text-[#52677F] dark:text-[#718096] text-sm mt-1">
                     {relacoes.length} {tipoLista === "seguidores" ? "pessoas seguem este perfil" : "perfis seguidos"}
                 </Text>
             </View>
@@ -70,7 +70,7 @@ export default function ListaRelacoes() {
             ) : (
                 <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                     {relacoes.length === 0 ? (
-                        <Text className="text-[#718096] text-sm text-center py-10">
+                        <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-10">
                             {tipoLista === "seguidores" ? "Ainda não há seguidores." : "Este perfil ainda não segue ninguém."}
                         </Text>
                     ) : relacoes.map((relacao, indice) => {
@@ -81,18 +81,18 @@ export default function ListaRelacoes() {
                             <Pressable
                                 key={usuario.id ?? indice}
                                 onPress={() => usuario.username && roteador.push(`/u/${encodeURIComponent(usuario.username)}` as never)}
-                                className="flex-row items-center px-5 py-3 border-b border-[#202633]"
+                                className="flex-row items-center px-5 py-3 border-b border-[#D5E0EC] dark:border-[#202633]"
                             >
                                 {usuario.foto ? (
-                                    <Image source={{ uri: usuario.foto }} className="w-12 h-12 rounded-full border border-[#354052]" />
+                                    <Image source={{ uri: usuario.foto }} className="w-12 h-12 rounded-full border border-[#C5D3E1] dark:border-[#354052]" />
                                 ) : (
-                                    <View className="w-12 h-12 rounded-full bg-[#171E2B] items-center justify-center">
+                                    <View className="w-12 h-12 rounded-full bg-[#F4F7FA] dark:bg-[#171E2B] items-center justify-center">
                                         <UserIcon size={23} color="#9AA6BA" />
                                     </View>
                                 )}
                                 <View className="ml-3">
-                                    <Text className="text-white text-sm font-semibold">{usuario.nome ?? "Usuário"}</Text>
-                                    {usuario.username ? <Text className="text-[#718096] text-xs mt-1">@{usuario.username}</Text> : null}
+                                    <Text className="text-[#142338] dark:text-white text-sm font-semibold">{usuario.nome ?? "Usuário"}</Text>
+                                    {usuario.username ? <Text className="text-[#52677F] dark:text-[#718096] text-xs mt-1">@{usuario.username}</Text> : null}
                                 </View>
                             </Pressable>
                         );

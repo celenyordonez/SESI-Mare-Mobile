@@ -3,6 +3,7 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    Keyboard,
     Pressable,
     ScrollView,
     Text,
@@ -31,7 +32,7 @@ import {
     type Comentario,
 } from "../../services/comentarioService";
 import { buscarPostPorId, type Post } from "../../services/postService";
-import { buscarMeuPerfil } from "../../services/usuarioService";
+import { buscarMeuPerfil, buscarUsuarios, type UsuarioBusca } from "../../services/usuarioService";
 
 type UsuarioLogado = { id: number; foto?: string | null };
 type ComentarioComProfundidade = { comentario: Comentario; profundidade: number };
@@ -56,6 +57,9 @@ export default function DetalhePublicacao() {
     const [comentarios, setComentarios] = useState<Comentario[]>([]);
     const [usuarioLogado, setUsuarioLogado] = useState<UsuarioLogado | null>(null);
     const [textoComentario, setTextoComentario] = useState("");
+    const [termoMencao, setTermoMencao] = useState<string | null>(null);
+    const [usuariosSugeridos, setUsuariosSugeridos] = useState<UsuarioBusca[]>([]);
+    const [carregandoMencoes, setCarregandoMencoes] = useState(false);
     const [respondendoAId, setRespondendoAId] = useState<number | null>(null);
     const [comentarioEmEdicaoId, setComentarioEmEdicaoId] = useState<number | null>(null);
     const [textoEmEdicao, setTextoEmEdicao] = useState("");
@@ -66,6 +70,28 @@ export default function DetalhePublicacao() {
     const [carregando, setCarregando] = useState(true);
     const [enviandoComentario, setEnviandoComentario] = useState(false);
     const [erro, setErro] = useState("");
+
+    useEffect(() => {
+        if (!termoMencao) {
+            setUsuariosSugeridos([]);
+            setCarregandoMencoes(false);
+            return;
+        }
+
+        let ativo = true;
+        const temporizador = setTimeout(() => {
+            setCarregandoMencoes(true);
+            void buscarUsuarios(termoMencao)
+                .then((usuarios) => { if (ativo) setUsuariosSugeridos(usuarios); })
+                .catch(() => { if (ativo) setUsuariosSugeridos([]); })
+                .finally(() => { if (ativo) setCarregandoMencoes(false); });
+        }, 250);
+
+        return () => {
+            ativo = false;
+            clearTimeout(temporizador);
+        };
+    }, [termoMencao]);
 
     // Busca a publicação, os comentários e o perfil em paralelo.
     useEffect(() => {
@@ -118,6 +144,44 @@ export default function DetalhePublicacao() {
         [comentarios],
     );
 
+    function buscarComentarioNaArvore(id: number, lista = comentarios): Comentario | undefined {
+        for (const comentario of lista) {
+            if (comentario.id === id) return comentario;
+            const resposta = buscarComentarioNaArvore(id, comentario.respostas ?? []);
+            if (resposta) return resposta;
+        }
+        return undefined;
+    }
+
+    function atualizarTextoComMencao(texto: string) {
+        setTextoComentario(texto);
+        const ocorrencia = texto.match(/(?:^|\s)@([A-Za-z0-9._]{1,30})$/);
+        setTermoMencao(ocorrencia?.[1] ?? null);
+    }
+
+    function selecionarMencao(usuario: UsuarioBusca) {
+        setTextoComentario((atual) => atual.replace(/(^|\s)@[A-Za-z0-9._]*$/, (_correspondencia, espaco: string) => `${espaco}@${usuario.username} `));
+        setTermoMencao(null);
+        setUsuariosSugeridos([]);
+    }
+
+    function renderizarTextoComMencoes(texto: string) {
+        return texto.split(/(@[A-Za-z0-9._]+)/g).map((parte, indice) => {
+            if (!parte.startsWith("@")) return <Text key={indice}>{parte}</Text>;
+            const username = parte.slice(1);
+            return (
+                <Text
+                    key={indice}
+                    className="font-medium text-[#155B91] dark:text-[#8CC8FF]"
+                    onPress={() => roteador.push(`/u/${encodeURIComponent(username)}` as never)}
+                    accessibilityRole="link"
+                >
+                    {parte}
+                </Text>
+            );
+        });
+    }
+
     function inserirComentarioNaLista(
         comentarioPaiId: number | null,
         novoComentario: Comentario,
@@ -160,8 +224,10 @@ export default function DetalhePublicacao() {
                 respondendoAId ?? undefined,
             );
 
+            const pai = respondendoAId === null ? undefined : buscarComentarioNaArvore(respondendoAId);
             inserirComentarioNaLista(respondendoAId, {
                 ...novoComentario,
+                respondendoA: pai ? { nome: pai.usuario.nome, username: pai.usuario.username } : undefined,
                 respostas: [],
             });
             setPublicacao((atual) =>
@@ -177,7 +243,10 @@ export default function DetalhePublicacao() {
                     : atual,
             );
             setTextoComentario("");
+            setTermoMencao(null);
+            setUsuariosSugeridos([]);
             setRespondendoAId(null);
+            Keyboard.dismiss();
         } catch (erroEnvio) {
             Alert.alert(
                 "Não foi possível enviar o comentário",
@@ -324,41 +393,56 @@ export default function DetalhePublicacao() {
         }
     }
 
-    function renderizarComentario(comentario: Comentario, profundidade: number) {
+    function renderizarComentario(comentario: Comentario, profundidade: number, comentarioPai?: Comentario) {
+        const usernamePai = comentarioPai?.usuario.username || comentarioPai?.usuario.nome;
+        const dataComentario = new Date(comentario.dataCriacao);
+        const horaComentario = Number.isNaN(dataComentario.getTime())
+            ? ""
+            : dataComentario.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
         return (
             <View
                 key={comentario.id}
-                className="border-b border-[#202633] py-4"
+                className="border-b border-[#D5E0EC] dark:border-[#202633] py-4"
                 style={{ marginLeft: Math.min(profundidade, 3) * 16 }}
             >
                 <View className="flex-row items-start">
                     {comentario.usuario.foto ? (
+                        <Pressable
+                            accessibilityRole="link"
+                            accessibilityLabel={`Abrir perfil de ${comentario.usuario.nome}`}
+                            onPress={() => comentario.usuario.username && roteador.push(`/u/${encodeURIComponent(comentario.usuario.username)}` as never)}
+                        >
                         <Image
                             source={{ uri: comentario.usuario.foto }}
                             className="w-9 h-9 rounded-full"
                         />
+                        </Pressable>
                     ) : (
-                        <View className="w-9 h-9 rounded-full bg-[#171E2B] items-center justify-center">
+                        <View className="w-9 h-9 rounded-full bg-[#F4F7FA] dark:bg-[#171E2B] items-center justify-center">
                             <UserIcon size={19} color="#9AA6BA" />
                         </View>
                     )}
 
                     <View className="flex-1 ml-3">
-                        <View className="flex-row items-center">
-                            <Text className="text-white text-sm font-semibold">
+                        <View className="flex-row items-center flex-wrap">
+                            <Text className="text-[#142338] dark:text-white text-sm font-semibold">
                                 {comentario.usuario.nome}
                             </Text>
                             {comentario.usuario.username ? (
-                                <Text className="text-[#718096] text-xs ml-2">
+                                <Text
+                                    className="ml-2 text-xs text-[#52677F] dark:text-[#718096]"
+                                    onPress={() => roteador.push(`/u/${encodeURIComponent(comentario.usuario.username!)}` as never)}
+                                >
                                     @{comentario.usuario.username}
                                 </Text>
                             ) : null}
+                            <Text className="ml-2 text-[10px] text-[#52677F] dark:text-[#718096]">· {horaComentario}{comentario.editado ? " · editado" : ""}</Text>
                         </View>
 
                         {comentarioEmEdicaoId === comentario.id ? (
                             <>
                                 <TextInput
-                                    className="text-white text-sm border border-[#354052] rounded-lg p-3 mt-2"
+                                    className="text-[#142338] dark:text-white text-sm border border-[#C5D3E1] dark:border-[#354052] rounded-lg p-3 mt-2"
                                     value={textoEmEdicao}
                                     onChangeText={setTextoEmEdicao}
                                     multiline
@@ -369,7 +453,7 @@ export default function DetalhePublicacao() {
                                         onPress={() => setComentarioEmEdicaoId(null)}
                                         className="mr-4"
                                     >
-                                        <Text className="text-[#9AA6BA] text-xs">
+                                        <Text className="text-[#52677F] dark:text-[#9AA6BA] text-xs">
                                             Cancelar
                                         </Text>
                                     </Pressable>
@@ -378,16 +462,16 @@ export default function DetalhePublicacao() {
                                             void salvarEdicaoComentario(comentario.id)
                                         }
                                     >
-                                        <Text className="text-[#58AAF0] text-xs">
+                                        <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs">
                                             Salvar
                                         </Text>
                                     </Pressable>
                                 </View>
                             </>
                         ) : (
-                            <Text className="text-[#D0D0D5] text-sm leading-5 mt-1">
-                                {comentario.texto}
-                                {comentario.editado ? " · editado" : ""}
+                            <Text className="mt-1 text-sm leading-5 text-[#405570] dark:text-[#D0D0D5]">
+                                {usernamePai ? <Text className="font-medium text-[#155B91] dark:text-[#58AAF0]">@{usernamePai} </Text> : null}
+                                {renderizarTextoComMencoes(comentario.texto)}
                             </Text>
                         )}
 
@@ -417,9 +501,10 @@ export default function DetalhePublicacao() {
                                 onPress={() => {
                                     setRespondendoAId(comentario.id);
                                     setTextoComentario("");
+                                    setTermoMencao(null);
                                 }}
                             >
-                                <Text className="text-[#58AAF0] text-xs">
+                                <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs">
                                     Responder
                                 </Text>
                             </Pressable>
@@ -449,14 +534,14 @@ export default function DetalhePublicacao() {
                 </View>
 
                 {(comentario.respostas ?? []).map((resposta) =>
-                    renderizarComentario(resposta, profundidade + 1),
+                    renderizarComentario(resposta, profundidade + 1, comentario),
                 )}
             </View>
         );
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar
                 titulo="Publicação"
                 subtitulo={
@@ -477,7 +562,7 @@ export default function DetalhePublicacao() {
                         {erro || "Publicação não encontrada."}
                     </Text>
                     <Pressable onPress={() => roteador.back()} className="mt-4">
-                        <Text className="text-[#58AAF0]">Voltar</Text>
+                        <Text className="text-[#155B91] dark:text-[#58AAF0]">Voltar</Text>
                     </Pressable>
                 </View>
             ) : (
@@ -511,17 +596,20 @@ export default function DetalhePublicacao() {
                     ) : null}
 
                     <View className="px-5 mt-3">
-                        <Text className="text-white text-base font-semibold">
+                        <Text className="text-[#142338] dark:text-white text-base font-semibold">
                             Comentários ({totalComentarios})
                         </Text>
 
                         {respondendoAId !== null ? (
                             <View className="flex-row items-center mt-3">
-                                <Text className="text-[#58AAF0] text-xs flex-1">
-                                    Respondendo a um comentário
+                                <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs flex-1">
+                                    {(() => {
+                                        const pai = buscarComentarioNaArvore(respondendoAId);
+                                        return pai ? `Respondendo a @${pai.usuario.username || pai.usuario.nome}` : "Respondendo a um comentário";
+                                    })()}
                                 </Text>
                                 <Pressable onPress={() => setRespondendoAId(null)}>
-                                    <Text className="text-[#9AA6BA] text-xs">
+                                    <Text className="text-[#52677F] dark:text-[#9AA6BA] text-xs">
                                         Cancelar
                                     </Text>
                                 </Pressable>
@@ -530,9 +618,9 @@ export default function DetalhePublicacao() {
 
                         <View className="flex-row items-end mt-3 mb-2">
                             <TextInput
-                                className="flex-1 min-h-[46px] max-h-[120px] bg-[#111420] border border-[#354052] rounded-xl px-3 py-3 text-white text-sm"
+                                className="flex-1 min-h-[46px] max-h-[120px] bg-white dark:bg-[#111420] border border-[#C5D3E1] dark:border-[#354052] rounded-xl px-3 py-3 text-[#142338] dark:text-white text-sm"
                                 value={textoComentario}
-                                onChangeText={setTextoComentario}
+                                onChangeText={atualizarTextoComMencao}
                                 placeholder={
                                     respondendoAId === null
                                         ? "Escreva um comentário..."
@@ -553,12 +641,36 @@ export default function DetalhePublicacao() {
                             </Pressable>
                         </View>
 
+                        {termoMencao ? (
+                            <View className="mb-3 overflow-hidden rounded-xl border border-[#C5D3E1] bg-white dark:border-[#354052] dark:bg-white dark:bg-[#111420]">
+                                {carregandoMencoes ? (
+                                    <ActivityIndicator className="py-3" color="#58AAF0" />
+                                ) : usuariosSugeridos.map((usuario) => (
+                                    <Pressable
+                                        key={usuario.id}
+                                        onPress={() => selecionarMencao(usuario)}
+                                        className="flex-row items-center border-b border-[#E3EBF3] px-3 py-2.5 last:border-b-0 dark:border-[#202633]"
+                                    >
+                                        {usuario.foto ? (
+                                            <Image source={{ uri: usuario.foto }} className="h-9 w-9 rounded-full" />
+                                        ) : (
+                                            <View className="h-9 w-9 items-center justify-center rounded-full bg-[#DFEAF5] dark:bg-[#171E2B]"><UserIcon size={18} color="#718096" /></View>
+                                        )}
+                                        <View className="ml-3 flex-1">
+                                            <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{usuario.nome}</Text>
+                                            <Text className="text-xs text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>@{usuario.username}</Text>
+                                        </View>
+                                    </Pressable>
+                                ))}
+                            </View>
+                        ) : null}
+
                         {comentarios.length > 0 ? (
                             comentarios.map((comentario) =>
                                 renderizarComentario(comentario, 0),
                             )
                         ) : (
-                            <Text className="text-[#718096] text-sm text-center py-8">
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">
                                 Ainda não há comentários.
                             </Text>
                         )}

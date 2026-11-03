@@ -46,8 +46,8 @@ export default function FeedTabs({
                     <Text
                         className={`text-sm font-serif ${
                             abaAtiva === "paraVoce"
-                                ? "text-[#58AAF0]"
-                                : "text-[#D0D0D5]"
+                                ? "text-[#155B91] dark:text-[#58AAF0]"
+                                : "text-[#405570] dark:text-[#D0D0D5]"
                         }`}
                     >
                         Para você
@@ -61,8 +61,8 @@ export default function FeedTabs({
                     <Text
                         className={`text-sm font-serif ${
                             abaAtiva === "seguindo"
-                                ? "text-[#58AAF0]"
-                                : "text-[#D0D0D5]"
+                                ? "text-[#155B91] dark:text-[#58AAF0]"
+                                : "text-[#405570] dark:text-[#D0D0D5]"
                         }`}
                     >
                         Seguindo
@@ -70,7 +70,7 @@ export default function FeedTabs({
                 </Pressable>
             </View>
 
-            <View className="h-[1px] bg-[#171E2B]">
+            <View className="h-[1px] bg-[#F4F7FA] dark:bg-[#171E2B]">
                 <Animated.View
                     className="h-[2px] w-1/2 bg-[#58AAF0]"
                     style={{

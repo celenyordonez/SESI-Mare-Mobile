@@ -1,6 +1,8 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { usePaletaCapa } from "../hooks/usePaletaCapa";
+import { corComOpacidade } from "../services/paletaCapaService";
 import {
     ArrowRightIcon,
     ArrowsLeftRightIcon,
@@ -19,6 +21,7 @@ type Props = {
 /** Atalho em formato de vitrine horizontal para as funções musicais da Maré. */
 export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
     const router = useRouter();
+    const paleta = usePaletaCapa(imagem);
     const descoberta = tipo === "descoberta";
     const universo = tipo === "universo";
     const roleta = tipo === "roleta";
@@ -63,9 +66,9 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
             className="relative mr-3 h-[184px] w-[274px] overflow-hidden rounded-2xl border"
             style={({ pressed }) => ({
                 opacity: pressed ? 0.9 : 1,
-                borderColor: descoberta ? "rgba(140,200,255,0.72)" : universo ? "rgba(131,217,201,0.72)" : "rgba(245,200,121,0.78)",
+                borderColor: corComOpacidade(paleta?.acento ?? cor, 0.72),
                 borderWidth: 1.5,
-                shadowColor: cor,
+                shadowColor: paleta?.dominante ?? cor,
                 shadowOffset: { width: 0, height: 6 },
                 shadowOpacity: 0.36,
                 shadowRadius: 21,
@@ -87,6 +90,13 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
                 end={{ x: 0.5, y: 1 }}
                 style={StyleSheet.absoluteFill}
             />
+            {paleta ? (
+                <View
+                    pointerEvents="none"
+                    className="absolute left-5 right-5 top-0 h-[2px]"
+                    style={{ backgroundColor: corComOpacidade(paleta.acento, 0.82) }}
+                />
+            ) : null}
             <View className="flex-1 justify-between p-4">
                 <View className="flex-row items-start justify-between">
                     <View
@@ -114,10 +124,10 @@ export default function AtalhoMusicalCard({ tipo, imagem }: Props) {
                 </View>
                 <View className="flex-row items-end justify-between">
                     <View className="mr-3 flex-1">
-                        <Text style={momento ? { fontSize: 18, lineHeight: 24 } : undefined} className="font-serif text-[22px] leading-7 text-white" numberOfLines={1}>
+                        <Text style={momento ? { fontSize: 18, lineHeight: 24 } : undefined} className="font-serif text-[22px] leading-7 text-[#142338] dark:text-white" numberOfLines={1}>
                             {titulo}
                         </Text>
-                        <Text className="mt-1 text-xs leading-4 text-[#D0D8E4]" numberOfLines={1}>
+                        <Text className="mt-1 text-xs leading-4 text-[#405570] dark:text-[#D0D8E4]" numberOfLines={1}>
                             {descricao}
                         </Text>
                     </View>

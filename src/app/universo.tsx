@@ -209,7 +209,7 @@ export default function Universo() {
                             <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.4px]">SUA RETROSPECTIVA</Text>
                         </View>
                         <View className="rounded-2xl border border-white/10 bg-black/75 p-5">
-                            <Text className="font-serif text-[38px] leading-[44px] text-white">
+                            <Text className="font-serif text-[38px] leading-[44px] text-[#142338] dark:text-white">
                                 Sua Maré, faixa a faixa.
                             </Text>
                             <Text className="mt-3 text-sm leading-5 text-[#E0E5ED]">
@@ -233,24 +233,24 @@ export default function Universo() {
                         <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.4px]">SEU RETRATO MUSICAL</Text>
                     </View>
                     <View className="rounded-2xl border border-white/10 bg-black/45 p-4">
-                        <Text className="font-serif text-[30px] leading-9 text-white">Cada nota conta um pedaço da sua história.</Text>
-                        <Text className="mt-5 text-[64px] font-semibold leading-[70px] text-white">{dados?.totalAvaliacoes ?? 0}</Text>
-                        <Text className="text-sm text-[#B7C1D0]">{formatarQuantidade(dados?.totalAvaliacoes ?? 0, "música avaliada", "músicas avaliadas")}</Text>
+                        <Text className="font-serif text-[30px] leading-9 text-[#142338] dark:text-white">Cada nota conta um pedaço da sua história.</Text>
+                        <Text className="mt-5 text-[64px] font-semibold leading-[70px] text-[#142338] dark:text-white">{dados?.totalAvaliacoes ?? 0}</Text>
+                        <Text className="text-sm text-[#405570] dark:text-[#B7C1D0]">{formatarQuantidade(dados?.totalAvaliacoes ?? 0, "música avaliada", "músicas avaliadas")}</Text>
                     </View>
                     <View className="flex-row rounded-2xl border border-white/10 bg-black/60 p-4">
                         <View className="flex-1">
-                            <Text className="text-[10px] uppercase tracking-wider text-[#AAB4C5]">Sua nota média</Text>
+                            <Text className="text-[10px] uppercase tracking-wider text-[#405570] dark:text-[#AAB4C5]">Sua nota média</Text>
                             <View className="mt-2 flex-row items-center">
-                                <StarIcon size={18} color={corAcento} weight="fill" />
-                                <Text className="ml-2 text-2xl font-semibold text-white">
+                                <StarIcon size={18} color="#58AAF0" weight="fill" />
+                                <Text className="ml-2 text-2xl font-semibold text-[#142338] dark:text-white">
                                     {dados?.totalAvaliacoes ? formatarNota(dados.mediaGeral) : "—"}
                                 </Text>
                             </View>
                         </View>
                         <View className="mx-4 w-px bg-white/10" />
                         <View className="flex-1">
-                            <Text className="text-[10px] uppercase tracking-wider text-[#AAB4C5]">Artistas avaliados</Text>
-                            <Text className="mt-2 text-2xl font-semibold text-white">{dados?.artistas.length ?? 0}</Text>
+                            <Text className="text-[10px] uppercase tracking-wider text-[#405570] dark:text-[#AAB4C5]">Artistas avaliados</Text>
+                            <Text className="mt-2 text-2xl font-semibold text-[#142338] dark:text-white">{dados?.artistas.length ?? 0}</Text>
                         </View>
                     </View>
                     {dados?.totalAvaliacoes === 0 ? (
@@ -270,12 +270,12 @@ export default function Universo() {
                         <MusicNotesIcon size={17} color={corAcento} />
                         <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.4px]">SEUS GÊNEROS</Text>
                     </View>
-                    <Text className="mt-7 rounded-xl bg-black/60 px-3 py-2 font-serif text-[28px] leading-9 text-white">O som que mais aparece no seu universo</Text>
+                    <Text className="mt-7 rounded-xl bg-black/60 px-3 py-2 font-serif text-[28px] leading-9 text-[#142338] dark:text-white">O som que mais aparece no seu universo</Text>
                     {generoPrincipal ? (
                         <View className="mt-5 rounded-2xl border border-white/10 bg-black/60 p-4">
-                            <Text className="text-xs text-[#AAB4C5]">Seu gênero principal</Text>
+                            <Text className="text-xs text-[#405570] dark:text-[#AAB4C5]">Seu gênero principal</Text>
                             <Text style={{ color: corAcento }} className="mt-2 font-serif text-3xl">{generoPrincipal.nome}</Text>
-                            <Text className="mt-1 text-xs text-[#B7C1D0]">
+                            <Text className="mt-1 text-xs text-[#405570] dark:text-[#B7C1D0]">
                                 {formatarQuantidade(generoPrincipal.quantidade, "avaliação", "avaliações")}
                             </Text>
                         </View>
@@ -286,8 +286,8 @@ export default function Universo() {
                             return (
                                 <View key={genero.nome} className="mb-4">
                                     <View className="mb-2 flex-row items-center justify-between">
-                                        <Text className="text-sm text-white">{genero.nome}</Text>
-                                        <Text className="text-xs text-[#AAB4C5]">{genero.quantidade}</Text>
+                                        <Text className="text-sm text-[#142338] dark:text-white">{genero.nome}</Text>
+                                        <Text className="text-xs text-[#405570] dark:text-[#AAB4C5]">{genero.quantidade}</Text>
                                     </View>
                                     <View className="h-1.5 overflow-hidden rounded-full bg-white/10">
                                         <View
@@ -302,7 +302,7 @@ export default function Universo() {
                             );
                         })}
                     </View>
-                    <Text className="text-xs text-[#AAB4C5]">Distribuição baseada nas suas avaliações.</Text>
+                    <Text className="text-xs text-[#405570] dark:text-[#AAB4C5]">Distribuição baseada nas suas avaliações.</Text>
                 </View>
             );
         }
@@ -323,8 +323,8 @@ export default function Universo() {
                             <Text style={{ color: corAcento }} className="text-[10px] font-bold tracking-[1.4px]">ARTISTA EM DESTAQUE</Text>
                         </View>
                         <View className="rounded-2xl border border-white/10 bg-black/75 p-5">
-                            <Text className="text-sm font-semibold text-white/80">Nº 1 NO SEU UNIVERSO</Text>
-                            <Text className="mt-2 font-serif text-[36px] leading-[42px] text-white" numberOfLines={2}>
+                            <Text className="text-sm font-semibold text-[#142338] dark:text-white/80">Nº 1 NO SEU UNIVERSO</Text>
+                            <Text className="mt-2 font-serif text-[36px] leading-[42px] text-[#142338] dark:text-white" numberOfLines={2}>
                                 {artistaPrincipal?.nome ?? "Seus artistas"}
                             </Text>
                             <Text className="mt-2 text-sm text-[#D1D7E0]">
@@ -334,7 +334,7 @@ export default function Universo() {
                                 <View className="mt-5 flex-row flex-wrap">
                                     {artistasEmDestaque.slice(1, 4).map((artista) => (
                                         <View key={artista.id} className="mr-2 mt-2 rounded-full border border-white/15 bg-black/25 px-3 py-2">
-                                            <Text className="text-xs text-white">{artista.nome}</Text>
+                                            <Text className="text-xs text-[#142338] dark:text-white">{artista.nome}</Text>
                                         </View>
                                     ))}
                                 </View>
@@ -353,8 +353,8 @@ export default function Universo() {
                         <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.4px]">SUA TRAJETÓRIA</Text>
                     </View>
                     <View className="rounded-2xl border border-white/10 bg-black/65 p-4">
-                        <Text className="font-serif text-[30px] leading-9 text-white">Seu ritmo de avaliações nos últimos meses.</Text>
-                        <Text className="mt-2 text-sm text-[#B7C1D0]">Cada barra representa avaliações registradas naquele mês.</Text>
+                        <Text className="font-serif text-[30px] leading-9 text-[#142338] dark:text-white">Seu ritmo de avaliações nos últimos meses.</Text>
+                        <Text className="mt-2 text-sm text-[#405570] dark:text-[#B7C1D0]">Cada barra representa avaliações registradas naquele mês.</Text>
                     </View>
                     <View className="h-[190px] flex-row items-end rounded-2xl border border-white/10 bg-black/60 px-3 pt-4">
                         {mesesTrajetoria.map((mes) => (
@@ -371,11 +371,11 @@ export default function Universo() {
                                         elevation: mes.quantidade > 0 ? 4 : 0,
                                     }}
                                 />
-                                <Text className="mb-3 mt-2 text-[10px] capitalize text-[#AAB4C5]">{mes.nome}</Text>
+                                <Text className="mb-3 mt-2 text-[10px] capitalize text-[#405570] dark:text-[#AAB4C5]">{mes.nome}</Text>
                             </View>
                         ))}
                     </View>
-                    <Text className="text-xs text-[#AAB4C5]">{formatarQuantidade(mesesComAvaliacoes, "mês com avaliações", "meses com avaliações")}</Text>
+                    <Text className="text-xs text-[#405570] dark:text-[#AAB4C5]">{formatarQuantidade(mesesComAvaliacoes, "mês com avaliações", "meses com avaliações")}</Text>
                 </View>
             );
         }
@@ -383,19 +383,19 @@ export default function Universo() {
         return (
             <View className="flex-1 p-5">
                 <View className="flex-row items-center">
-                    <StarIcon size={17} color={corAcento} weight="fill" />
+                    <StarIcon size={17} color="#58AAF0" weight="fill" />
                     <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.4px]">SUA COLEÇÃO</Text>
                 </View>
                 <View className="mt-4 rounded-2xl border border-white/10 bg-black/65 p-4">
-                    <Text className="font-serif text-[26px] leading-8 text-white" numberOfLines={2}>
+                    <Text className="font-serif text-[26px] leading-8 text-[#142338] dark:text-white" numberOfLines={2}>
                         Músicas que você guardou para voltar.
                     </Text>
-                    <Text className="mt-2 text-sm text-[#B7C1D0]">
+                    <Text className="mt-2 text-sm text-[#405570] dark:text-[#B7C1D0]">
                         {formatarQuantidade(musicasSalvas.length, "música salva", "músicas salvas")}
                     </Text>
                 </View>
                 {erroColecao ? (
-                    <Text className="text-sm text-[#B7C1D0]">{erroColecao}</Text>
+                    <Text className="text-sm text-[#405570] dark:text-[#B7C1D0]">{erroColecao}</Text>
                 ) : (
                     <View className="mt-5 flex-row items-start justify-center pb-4">
                         {musicasSalvas.slice(0, 3).map(({ musica }, posicao) => (
@@ -409,13 +409,13 @@ export default function Universo() {
                             >
                                 <Image
                                     source={musica.capa ? { uri: musica.capa } : imagemPadrao}
-                                    className="aspect-square w-full rounded-2xl border border-white/15 bg-[#171E2B]"
+                                    className="aspect-square w-full rounded-2xl border border-white/15 bg-[#F4F7FA] dark:bg-[#171E2B]"
                                     resizeMode="cover"
                                 />
-                                <Text className="mt-2 text-xs leading-4 font-semibold text-white" numberOfLines={1} ellipsizeMode="tail">
+                                <Text className="mt-2 text-xs leading-4 font-semibold text-[#142338] dark:text-white" numberOfLines={1} ellipsizeMode="tail">
                                     {musica.titulo}
                                 </Text>
-                                <Text className="mt-1 text-[10px] leading-4 text-[#AAB4C5]" numberOfLines={1} ellipsizeMode="tail">
+                                <Text className="mt-1 text-[10px] leading-4 text-[#405570] dark:text-[#AAB4C5]" numberOfLines={1} ellipsizeMode="tail">
                                     {musica.artista?.nome ?? "Artista desconhecido"}
                                 </Text>
                             </Pressable>
@@ -427,7 +427,7 @@ export default function Universo() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
             <ScrollView
                 className="flex-1"
@@ -445,23 +445,23 @@ export default function Universo() {
                 {carregando ? (
                     <View className="py-14 items-center">
                         <ActivityIndicator color="#58AAF0" size="large" />
-                        <Text className="mt-3 text-sm text-[#718096]">Preparando sua retrospectiva...</Text>
+                        <Text className="mt-3 text-sm text-[#52677F] dark:text-[#718096]">Preparando sua retrospectiva...</Text>
                     </View>
                 ) : erro ? (
-                    <View className="mx-5 mt-6 rounded-2xl border border-[#354052] bg-[#111420] p-5">
+                    <View className="mx-5 mt-6 rounded-2xl border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] p-5">
                         <Text className="text-center text-sm text-red-400">{erro}</Text>
                         <Pressable onPress={() => void carregar()} className="mt-4 items-center rounded-xl bg-[#1C314B] py-3">
-                            <Text className="text-sm text-white">Tentar novamente</Text>
+                            <Text className="text-sm text-[#142338] dark:text-white">Tentar novamente</Text>
                         </Pressable>
                     </View>
                 ) : dados ? (
                     <>
                         <View className="mx-5 mt-2 flex-row items-center justify-between">
                             <View>
-                                <Text className="font-serif text-2xl text-white">Minha Maré</Text>
-                                <Text className="mt-1 text-xs text-[#8793A7]">Uma retrospectiva do seu gosto.</Text>
+                                <Text className="font-serif text-2xl text-[#142338] dark:text-white">Minha Maré</Text>
+                                <Text className="mt-1 text-xs text-[#52677F] dark:text-[#8793A7]">Uma retrospectiva do seu gosto.</Text>
                             </View>
-                            <Text className="text-xs font-medium text-[#8793A7]">{indiceSeguro + 1} / {slides.length}</Text>
+                            <Text className="text-xs font-medium text-[#52677F] dark:text-[#8793A7]">{indiceSeguro + 1} / {slides.length}</Text>
                         </View>
 
                         <View className="mx-5 mt-5 flex-row">
@@ -528,12 +528,12 @@ export default function Universo() {
                                 disabled={indiceSeguro === 0}
                                 accessibilityRole="button"
                                 accessibilityLabel="Voltar uma parte"
-                                className="h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#111420]"
+                                className="h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white dark:bg-[#111420]"
                                 style={{ opacity: indiceSeguro === 0 ? 0.38 : 1 }}
                             >
                                 <ArrowLeftIcon size={19} color="#D0D7E2" />
                             </Pressable>
-                            <Text className="text-xs text-[#8793A7]">
+                            <Text className="text-xs text-[#52677F] dark:text-[#8793A7]">
                                 {indiceSeguro < slides.length - 1 ? "Deslize para continuar" : "Sua retrospectiva está pronta"}
                             </Text>
                             <Pressable
@@ -564,7 +564,7 @@ export default function Universo() {
                     showsVerticalScrollIndicator={false}
                 >
                     <View className="w-full items-center">
-                        <Text className="mb-4 text-base font-semibold text-white">Prévia da retrospectiva</Text>
+                        <Text className="mb-4 text-base font-semibold text-[#142338] dark:text-white">Prévia da retrospectiva</Text>
                         <View
                             ref={cartaoCompartilhamentoRef}
                             collapsable={false}
@@ -593,27 +593,27 @@ export default function Universo() {
                                     <Text style={{ color: corAcento }} className="ml-2 text-[10px] font-bold tracking-[1.5px]">MARÉ · RETROSPECTIVA</Text>
                                 </View>
                                 <View>
-                                    <Text className="font-serif text-[30px] leading-9 text-white">Minha Maré</Text>
+                                    <Text className="font-serif text-[30px] leading-9 text-[#142338] dark:text-white">Minha Maré</Text>
                                     <Text className="mt-2 text-sm text-[#E0E5ED]">Um retrato feito pelas músicas que avaliei.</Text>
                                     <View className="mt-6 rounded-2xl border border-white/10 bg-black/60 p-4">
-                                        <Text className="text-[64px] font-semibold leading-[70px] text-white">{dados?.totalAvaliacoes ?? 0}</Text>
+                                        <Text className="text-[64px] font-semibold leading-[70px] text-[#142338] dark:text-white">{dados?.totalAvaliacoes ?? 0}</Text>
                                         <Text className="text-sm text-[#D1D7E0]">
                                             {formatarQuantidade(dados?.totalAvaliacoes ?? 0, "música avaliada", "músicas avaliadas")}
                                         </Text>
                                     </View>
                                     <View className="mt-3 flex-row">
                                         <View className="flex-1 rounded-xl border border-white/10 bg-black/55 p-3">
-                                            <Text className="text-[10px] uppercase tracking-wider text-[#AAB4C5]">Nota média</Text>
+                                            <Text className="text-[10px] uppercase tracking-wider text-[#405570] dark:text-[#AAB4C5]">Nota média</Text>
                                             <View className="mt-1.5 flex-row items-center">
-                                                <StarIcon size={15} color={corAcento} weight="fill" />
-                                                <Text className="ml-1.5 text-xl font-semibold text-white">
+                                                <StarIcon size={15} color="#58AAF0" weight="fill" />
+                                                <Text className="ml-1.5 text-xl font-semibold text-[#142338] dark:text-white">
                                                     {dados?.totalAvaliacoes ? formatarNota(dados.mediaGeral) : "—"}
                                                 </Text>
                                             </View>
                                         </View>
                                         <View className="ml-3 flex-1 rounded-xl border border-white/10 bg-black/55 p-3">
-                                            <Text className="text-[10px] uppercase tracking-wider text-[#AAB4C5]">Artistas</Text>
-                                            <Text className="mt-1.5 text-xl font-semibold text-white">{dados?.artistas.length ?? 0}</Text>
+                                            <Text className="text-[10px] uppercase tracking-wider text-[#405570] dark:text-[#AAB4C5]">Artistas</Text>
+                                            <Text className="mt-1.5 text-xl font-semibold text-[#142338] dark:text-white">{dados?.artistas.length ?? 0}</Text>
                                         </View>
                                     </View>
                                     {(generosEmDestaque[0] || artistasEmDestaque[0]) ? (
@@ -652,7 +652,7 @@ export default function Universo() {
                             accessibilityRole="button"
                             className="mt-2 py-3"
                         >
-                            <Text className="text-sm text-[#AAB4C5]">Voltar à retrospectiva</Text>
+                            <Text className="text-sm text-[#405570] dark:text-[#AAB4C5]">Voltar à retrospectiva</Text>
                         </Pressable>
                     </View>
                 </ScrollView>

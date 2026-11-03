@@ -141,7 +141,7 @@ export default function PerfilPublico() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
 
             {carregando ? (
@@ -174,20 +174,21 @@ export default function PerfilPublico() {
                                 <View className="flex-row items-center">
                                     <Pressable
                                         onPress={() => void iniciarConversa()}
-                                        disabled={abrindoConversa}
+                                        disabled={abrindoConversa || !seguindo || !perfil.segueDeVolta}
                                         accessibilityRole="button"
                                         accessibilityLabel="Enviar mensagem privada"
-                                        className="mr-2 flex-row items-center rounded-lg border border-[#354052] bg-[#111420] px-3 py-2"
+                                        accessibilityHint={seguindo && perfil.segueDeVolta ? "Abre uma conversa privada." : "Vocês precisam seguir um ao outro para conversar."}
+                                        className={`mr-2 flex-row items-center rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] px-3 py-2 ${seguindo && perfil.segueDeVolta ? "" : "opacity-50"}`}
                                     >
                                         <ChatCircleIcon size={16} color="#D0D8E4" />
-                                        <Text className="ml-1.5 text-xs font-semibold text-white">{abrindoConversa ? "Abrindo..." : "Mensagem"}</Text>
+                                        <Text className="ml-1.5 text-xs font-semibold text-[#142338] dark:text-white">{abrindoConversa ? "Abrindo..." : seguindo && perfil.segueDeVolta ? "Mensagem" : "Sigam-se"}</Text>
                                     </Pressable>
                                     <Pressable
                                         onPress={() => void alternarSeguir()}
                                         disabled={salvandoSeguir}
-                                        className={`px-4 py-2 rounded-lg ${seguindo ? "border border-[#354052] bg-[#111420]" : "bg-[#58AAF0]"}`}
+                                        className={`px-4 py-2 rounded-lg ${seguindo ? "border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420]" : "bg-[#58AAF0]"}`}
                                     >
-                                        <Text className="text-white text-xs font-semibold">
+                                        <Text className="text-[#142338] dark:text-white text-xs font-semibold">
                                             {salvandoSeguir ? "Aguarde..." : seguindo ? "Seguindo" : "Seguir"}
                                         </Text>
                                     </Pressable>
@@ -195,30 +196,30 @@ export default function PerfilPublico() {
                             ) : null}
                         </View>
 
-                        <Text className="text-white text-xl font-semibold">{perfil.nome}</Text>
-                        <Text className="text-[#697386] text-sm">@{perfil.username}</Text>
+                        <Text className="text-[#142338] dark:text-white text-xl font-semibold">{perfil.nome}</Text>
+                        <Text className="text-[#52677F] dark:text-[#697386] text-sm">@{perfil.username}</Text>
                         {perfil.bio ? <Text className="text-[#C4CCDA] text-sm mt-2 leading-5">{perfil.bio}</Text> : null}
 
                         <View className="flex-row flex-wrap mt-5">
                             <Pressable onPress={() => abrirListaRelacoes("seguidores")} className="mr-6">
-                                <Text className="text-white text-sm font-semibold">{perfil._count.seguidores}</Text>
-                                <Text className="text-[#697386] text-xs mt-1">Seguidores</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count.seguidores}</Text>
+                                <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Seguidores</Text>
                             </Pressable>
                             <Pressable onPress={() => abrirListaRelacoes("seguindo")} className="mr-6">
-                                <Text className="text-white text-sm font-semibold">{perfil._count.seguindo}</Text>
-                                <Text className="text-[#697386] text-xs mt-1">Seguindo</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count.seguindo}</Text>
+                                <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Seguindo</Text>
                             </Pressable>
                             <View>
-                                <Text className="text-white text-sm font-semibold">{perfil._count.posts}</Text>
-                                <Text className="text-[#697386] text-xs mt-1">Avaliações</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count.posts}</Text>
+                                <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Avaliações</Text>
                             </View>
                         </View>
                     </View>
 
-                    <View className="flex-row mt-8 border-b border-[#202633]">
+                    <View className="flex-row mt-8 border-b border-[#D5E0EC] dark:border-[#202633]">
                         {(["avaliacoes", "comentarios"] as const).map((aba) => (
                             <Pressable key={aba} onPress={() => setAbaAtiva(aba)} className="flex-1 items-center">
-                                <Text className={`${abaAtiva === aba ? "text-white" : "text-[#697386]"} text-xs pb-3`}>
+                                <Text className={`${abaAtiva === aba ? "text-[#142338] dark:text-white" : "text-[#52677F] dark:text-[#697386]"} text-xs pb-3`}>
                                     {aba === "avaliacoes" ? "Avaliações" : "Comentários"}
                                 </Text>
                                 {abaAtiva === aba ? <View className="h-[2px] w-4/5 bg-[#58AAF0]" /> : null}
@@ -250,7 +251,7 @@ export default function PerfilPublico() {
                                 ehMeuPost={meuId === perfil.id}
                             />
                         ) : null) : (
-                            <Text className="text-[#718096] text-sm text-center py-8">Nenhuma avaliação publicada.</Text>
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhuma avaliação publicada.</Text>
                         )
                     ) : comentarios.length ? comentarios.map((comentario) => (
                         <ComentarioPerfilCard
@@ -259,7 +260,7 @@ export default function PerfilPublico() {
                             usuarioLogadoId={meuId}
                         />
                     )) : (
-                        <Text className="text-[#718096] text-sm text-center py-8">Nenhum comentário publicado.</Text>
+                        <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhum comentário publicado.</Text>
                     )}
                 </ScrollView>
             )}

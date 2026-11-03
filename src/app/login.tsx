@@ -21,6 +21,7 @@ import {
     reenviarVerificacao,
 } from "../services/authService";
 import Toast from "react-native-toast-message";
+import { ativarPushPadraoNoLogin } from "../services/notificacaoPushService";
 
 export default function Login() {
     const router = useRouter();
@@ -47,6 +48,11 @@ export default function Login() {
             setEmailPendente(false);
 
             const resposta = await fazerLogin(usuario.trim(), senha);
+
+            // Solicita a permissão do Android no primeiro login e registra este aparelho.
+            void ativarPushPadraoNoLogin().catch((erroPush) => {
+                console.warn("Não foi possível ativar as notificações push neste aparelho:", erroPush);
+            });
 
             Toast.show({
                 type: "success",
@@ -114,7 +120,7 @@ export default function Login() {
 
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <LinearGradient
                 colors={["#080A10", "#1C2E48"]}
                 style={{ flex: 1 }}
@@ -140,11 +146,11 @@ export default function Login() {
                     </View>
 
                     {/* Título */}
-                    <Text className="text-white text-2xl text-center font-serif">
+                    <Text className="text-[#142338] dark:text-white text-2xl text-center font-serif">
                         Login
                     </Text>
 
-                    <Text className="text-[#D0D0D5] text-xs text-center font-serif mt-1 mb-6">
+                    <Text className="text-[#405570] dark:text-[#D0D0D5] text-xs text-center font-serif mt-1 mb-6">
                         Bem-vindo de volta! Continue de onde você parou.
                     </Text>
 
@@ -155,7 +161,7 @@ export default function Login() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#354052] rounded-[9px] px-3 text-white text-[13px] mb-5"
+                            className="w-full h-12 bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] px-3 text-[#142338] dark:text-white text-[13px] mb-5"
                             value={usuario}
                             onChangeText={setUsuario}
                             placeholder="E-mail ou usuário"
@@ -168,9 +174,9 @@ export default function Login() {
                             Senha
                         </Text>
 
-                        <View className="w-full h-12 flex-row items-center bg-[#0C121D] border border-[#354052] rounded-[9px] mb-5">
+                        <View className="w-full h-12 flex-row items-center bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] mb-5">
                             <TextInput
-                                className="flex-1 h-full px-3 text-white text-[13px]"
+                                className="flex-1 h-full px-3 text-[#142338] dark:text-white text-[13px]"
                                 value={senha}
                                 onChangeText={setSenha}
                                 placeholder="Senha"
@@ -193,7 +199,7 @@ export default function Login() {
 
                     {/* Redefinir senha */}
                     <View className="w-full flex-row mb-6">
-                        <Text className="text-[#D0D0D5] text-[13px] font-serif">
+                        <Text className="text-[#405570] dark:text-[#D0D0D5] text-[13px] font-serif">
                             Esqueceu a senha?{" "}
                         </Text>
 
@@ -213,7 +219,7 @@ export default function Login() {
                         {carregando ? (
                             <ActivityIndicator color="#FFFFFF" />
                         ) : (
-                            <Text className="text-white text-[18px] font-serif">
+                            <Text className="text-[#142338] dark:text-white text-[18px] font-serif">
                                 Entrar
                             </Text>
                         )}
@@ -239,7 +245,7 @@ export default function Login() {
 
                     {/* Cadastro */}
                     <View className="w-full flex-row items-center justify-center mb-4">
-                        <Text className="text-[#D0D0D5] text-[13px] font-serif">
+                        <Text className="text-[#405570] dark:text-[#D0D0D5] text-[13px] font-serif">
                             Não tem uma conta?{" "}
                         </Text>
 

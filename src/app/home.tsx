@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Pressable,
     RefreshControl,
     ScrollView,
     Text,
@@ -22,6 +23,7 @@ import { buscarMeuPerfil } from "../services/usuarioService";
 import { atualizarWidgetMusicaDoDia } from "../services/widgetMusicaDoDiaService";
 
 type AbaFeed = "paraVoce" | "seguindo";
+const TAMANHO_PAGINA = 12;
 
 export default function Home() {
     const router = useRouter();
@@ -34,7 +36,12 @@ export default function Home() {
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState("");
+    const [maisDisponiveis, setMaisDisponiveis] = useState<Record<AbaFeed, boolean>>({ paraVoce: false, seguindo: false });
+    const [carregandoMais, setCarregandoMais] = useState(false);
     const idSolicitacao = useRef(0);
+    const deslocamentos = useRef<Record<AbaFeed, number>>({ paraVoce: 0, seguindo: 0 });
+    const maisDisponiveisRef = useRef<Record<AbaFeed, boolean>>({ paraVoce: false, seguindo: false });
+    const carregandoMaisRef = useRef(false);
 
     useEffect(() => {
         let ativo = true;
@@ -73,27 +80,45 @@ export default function Home() {
 
     // Carrega a lista certa e ignora respostas antigas se a aba mudar no meio da busca.
     const carregarPublicacoes = useCallback(
-        async (aba: AbaFeed, atualizacaoManual = false) => {
+        async (aba: AbaFeed, atualizacaoManual = false, carregarMais = false) => {
+            if (carregarMais && (!maisDisponiveisRef.current[aba] || carregandoMaisRef.current)) return;
             const solicitacaoAtual = ++idSolicitacao.current;
+            const deslocamento = carregarMais ? deslocamentos.current[aba] : 0;
 
             if (atualizacaoManual) {
                 setAtualizando(true);
+            } else if (carregarMais) {
+                carregandoMaisRef.current = true;
+                setCarregandoMais(true);
             } else {
                 setCarregando(true);
             }
             setErro("");
 
             try {
-                const publicacoes = await buscarPublicacoes(
-                    aba === "seguindo" ? "/posts?seguindo=true" : "/posts",
+                const rotaBase = aba === "seguindo" ? "/posts?seguindo=true" : "/posts";
+                const separador = rotaBase.includes("?") ? "&" : "?";
+                const resultados = await buscarPublicacoes(
+                    `${rotaBase}${separador}limit=${TAMANHO_PAGINA + 1}&offset=${deslocamento}`,
                 );
 
                 if (solicitacaoAtual !== idSolicitacao.current) return;
+                const publicacoes = resultados.slice(0, TAMANHO_PAGINA);
+                deslocamentos.current[aba] = deslocamento + publicacoes.length;
+                maisDisponiveisRef.current[aba] = resultados.length > TAMANHO_PAGINA;
+                setMaisDisponiveis((atuais) => ({
+                    ...atuais,
+                    [aba]: maisDisponiveisRef.current[aba],
+                }));
 
                 if (aba === "seguindo") {
-                    setPublicacoesSeguindo(publicacoes);
+                    setPublicacoesSeguindo((atuais) => carregarMais
+                        ? [...atuais, ...publicacoes.filter((post) => !atuais.some((item) => item.id === post.id))]
+                        : publicacoes);
                 } else {
-                    setPublicacoesRecomendadas(publicacoes);
+                    setPublicacoesRecomendadas((atuais) => carregarMais
+                        ? [...atuais, ...publicacoes.filter((post) => !atuais.some((item) => item.id === post.id))]
+                        : publicacoes);
                 }
             } catch (erroCarregamento) {
                 if (solicitacaoAtual !== idSolicitacao.current) return;
@@ -108,6 +133,8 @@ export default function Home() {
                 if (solicitacaoAtual === idSolicitacao.current) {
                     setCarregando(false);
                     setAtualizando(false);
+                    carregandoMaisRef.current = false;
+                    setCarregandoMais(false);
                 }
             }
         },
@@ -143,7 +170,7 @@ export default function Home() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar />
             <Searchbar value={termoBusca} onChangeText={setTermoBusca} onSubmitEditing={pesquisar} />
 
@@ -167,11 +194,11 @@ export default function Home() {
             >
                 {musicaDoDia ? (
                     <>
-                        <Text className="mx-5 mb-2 mt-4 font-serif text-lg text-white">Música do dia</Text>
+                        <Text className="mx-5 mb-2 mt-4 font-serif text-lg text-[#142338] dark:text-white">Música do dia</Text>
                         <MusicaDoDiaCard musica={musicaDoDia} />
                         <View className="mx-5 mb-4 mt-1 flex-row items-center">
                             <View className="h-px flex-1 bg-[#252D3C]" />
-                            <Text className="mx-3 text-[10px] font-semibold uppercase tracking-[1.4px] text-[#718096]">
+                            <Text className="mx-3 text-[10px] font-semibold uppercase tracking-[1.4px] text-[#52677F] dark:text-[#718096]">
                                 Publicações
                             </Text>
                             <View className="h-px flex-1 bg-[#252D3C]" />
@@ -183,7 +210,7 @@ export default function Home() {
                     {carregando ? (
                         <View className="py-12 items-center">
                             <ActivityIndicator size="large" color="#5EA7ED" />
-                            <Text className="text-[#718096] text-sm mt-3">
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm mt-3">
                                 Carregando publicações...
                             </Text>
                         </View>
@@ -230,17 +257,29 @@ export default function Home() {
                         ))
                     ) : (
                         <View className="px-6 py-12 items-center">
-                            <Text className="text-white text-base font-semibold text-center">
+                            <Text className="text-[#142338] dark:text-white text-base font-semibold text-center">
                                 {abaAtiva === "seguindo"
                                     ? "Nenhuma publicação de quem você segue."
                                     : "Nenhuma publicação por enquanto."}
                             </Text>
-                            <Text className="text-[#718096] text-sm text-center mt-2">
+                            <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center mt-2">
                                 Volte mais tarde para descobrir novas avaliações musicais.
                             </Text>
                         </View>
                     )}
                 </View>
+
+                {!carregando && !erro && maisDisponiveis[abaAtiva] ? (
+                    <Pressable
+                        onPress={() => void carregarPublicacoes(abaAtiva, false, true)}
+                        disabled={carregandoMais}
+                        className="mx-5 mb-4 mt-2 min-h-11 items-center justify-center rounded-full border border-[#C5D3E1] bg-white px-5 py-3 dark:border-[#354052] dark:bg-[#111420]"
+                    >
+                        {carregandoMais ? <ActivityIndicator color="#58AAF0" /> : (
+                            <Text className="text-sm font-medium text-[#155B91] dark:text-[#8CC8FF]">Carregar mais posts</Text>
+                        )}
+                    </Pressable>
+                ) : null}
 
                 <View className="h-8" />
             </ScrollView>

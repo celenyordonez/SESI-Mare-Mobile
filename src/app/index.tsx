@@ -39,7 +39,7 @@ export default function Index() {
     }, [router]);
 
     return (
-        <View className="flex-1 bg-[#080A10] items-center justify-center">
+        <View className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10] items-center justify-center">
             <ActivityIndicator size="large" color="#5EA7ED" />
         </View>
     );

@@ -17,7 +17,7 @@ export async function fazerLogin(
 ) {
     const dados = await apiRequest<LoginResponse>("/login", {
         method: "POST",
-        body: JSON.stringify({ login, senha }),
+        body: JSON.stringify({ login, senha, cliente: "mobile" }),
     });
 
     await AsyncStorage.setItem("token", dados.token);

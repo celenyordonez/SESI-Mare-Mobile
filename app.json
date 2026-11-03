@@ -8,11 +8,13 @@
     "scheme": "mare",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/logo.png"
+      "icon": "./assets/images/logo.png",
+      "bundleIdentifier": "com.mare.musical"
     },
     "android": {
       "package": "com.mare.musical",
       "googleServicesFile": "./google-services.json",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#080A10",
           "foregroundImage": "./assets/images/logo-adaptive.png"
@@ -46,6 +48,7 @@
         "expo-notifications",
         {
           "color": "#58AAF0",
+          "largeIcon": "./assets/images/logo-adaptive.png",
           "defaultChannel": "mare-atividade"
         }
       ],

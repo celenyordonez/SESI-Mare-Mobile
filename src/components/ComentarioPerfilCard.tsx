@@ -57,8 +57,8 @@ export default function ComentarioPerfilCard({
                     ehMeuPost={publicacao.usuario?.id === usuarioLogadoId}
                 />
             ) : (
-                <View className="rounded-xl border border-[#354052] bg-[#111420] p-4">
-                    <Text className="text-[#9AA6BA] text-sm">
+                <View className="rounded-xl border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] p-4">
+                    <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm">
                         A publicação original não está disponível.
                     </Text>
                     {publicacao?.id ? (
@@ -66,7 +66,7 @@ export default function ComentarioPerfilCard({
                             onPress={() => roteador.push(`/post/${publicacao.id}` as never)}
                             className="flex-row items-center mt-3"
                         >
-                            <Text className="text-[#58AAF0] text-xs mr-1">Ver publicação</Text>
+                            <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs mr-1">Ver publicação</Text>
                             <ArrowUpRightIcon size={15} color="#58AAF0" />
                         </Pressable>
                     ) : null}
@@ -75,9 +75,9 @@ export default function ComentarioPerfilCard({
 
             <View className="flex-row items-center ml-8 py-3">
                 <View className="w-px h-8 bg-[#354052] mr-4" />
-                <View className="flex-row items-center rounded-full border border-[#293342] bg-[#0D1520] px-3 py-2">
+                <View className="flex-row items-center rounded-full border border-[#293342] bg-[#EAF1F8] dark:bg-[#0D1520] px-3 py-2">
                     <ChatCircleIcon size={15} color="#58AAF0" />
-                    <Text className="text-[#9AA6BA] text-xs ml-2">Comentário</Text>
+                    <Text className="text-[#52677F] dark:text-[#9AA6BA] text-xs ml-2">Comentário</Text>
                 </View>
             </View>
 
@@ -85,25 +85,25 @@ export default function ComentarioPerfilCard({
                 {comentario.usuario?.foto ? (
                     <Image
                         source={{ uri: comentario.usuario.foto }}
-                        className="w-10 h-10 rounded-full border border-[#354052]"
+                        className="w-10 h-10 rounded-full border border-[#C5D3E1] dark:border-[#354052]"
                     />
                 ) : (
-                    <View className="w-10 h-10 rounded-full border border-[#354052] bg-[#171E2B] items-center justify-center">
+                    <View className="w-10 h-10 rounded-full border border-[#C5D3E1] dark:border-[#354052] bg-[#F4F7FA] dark:bg-[#171E2B] items-center justify-center">
                         <UserIcon size={20} color="#9AA6BA" />
                     </View>
                 )}
 
                 <View className="flex-1 ml-3">
                     <View className="flex-row flex-wrap items-center">
-                        <Text className="text-white text-sm font-semibold">
+                        <Text className="text-[#142338] dark:text-white text-sm font-semibold">
                             {comentario.usuario?.nome ?? "Usuário"}
                         </Text>
                         {comentario.usuario?.username ? (
-                            <Text className="text-[#718096] text-xs ml-2">
+                            <Text className="text-[#52677F] dark:text-[#718096] text-xs ml-2">
                                 @{comentario.usuario.username}
                             </Text>
                         ) : null}
-                        <Text className="text-[#718096] text-xs ml-2">
+                        <Text className="text-[#52677F] dark:text-[#718096] text-xs ml-2">
                             · {tempoRelativo(comentario.dataCriacao)}
                         </Text>
                     </View>
@@ -118,7 +118,7 @@ export default function ComentarioPerfilCard({
                             className="self-start flex-row items-center mt-3 px-3 py-2 rounded-full"
                         >
                             <ChatCircleIcon size={15} color="#9AA6BA" />
-                            <Text className="text-[#9AA6BA] text-xs ml-2">Ver conversa</Text>
+                            <Text className="text-[#52677F] dark:text-[#9AA6BA] text-xs ml-2">Ver conversa</Text>
                         </Pressable>
                     ) : null}
                 </View>

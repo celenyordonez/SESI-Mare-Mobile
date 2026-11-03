@@ -127,7 +127,7 @@ export default function Cadastro() {
 
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <LinearGradient
                 colors={["#080A10", "#1C2E48"]}
                 style={{ flex: 1 }}
@@ -151,11 +151,11 @@ export default function Cadastro() {
                         />
                     </View>
 
-                    <Text className="text-white text-2xl text-center font-serif">
+                    <Text className="text-[#142338] dark:text-white text-2xl text-center font-serif">
                         Cadastro
                     </Text>
 
-                    <Text className="text-[#D0D0D5] text-xs text-center font-serif mt-1 mb-6">
+                    <Text className="text-[#405570] dark:text-[#D0D0D5] text-xs text-center font-serif mt-1 mb-6">
                         Crie sua conta e descubra novas músicas.
                     </Text>
 
@@ -165,7 +165,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#354052] rounded-[9px] px-3 text-white text-[13px] mb-4"
+                            className="w-full h-12 bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] px-3 text-[#142338] dark:text-white text-[13px] mb-4"
                             value={usuario}
                             onChangeText={setUsuario}
                             placeholder="Usuário"
@@ -179,7 +179,7 @@ export default function Cadastro() {
                         </Text>
 
                         <TextInput
-                            className="w-full h-12 bg-[#0C121D] border border-[#354052] rounded-[9px] px-3 text-white text-[13px] mb-4"
+                            className="w-full h-12 bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] px-3 text-[#142338] dark:text-white text-[13px] mb-4"
                             value={email}
                             onChangeText={setEmail}
                             placeholder="E-mail"
@@ -193,9 +193,9 @@ export default function Cadastro() {
                             Senha
                         </Text>
 
-                        <View className="w-full h-12 flex-row items-center bg-[#0C121D] border border-[#354052] rounded-[9px] mb-4">
+                        <View className="w-full h-12 flex-row items-center bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] mb-4">
                             <TextInput
-                                className="flex-1 h-full px-3 text-white text-[13px]"
+                                className="flex-1 h-full px-3 text-[#142338] dark:text-white text-[13px]"
                                 value={senha}
                                 onChangeText={setSenha}
                                 placeholder="Senha"
@@ -219,9 +219,9 @@ export default function Cadastro() {
                             Confirmar senha
                         </Text>
 
-                        <View className="w-full h-12 flex-row items-center bg-[#0C121D] border border-[#354052] rounded-[9px] mb-5">
+                        <View className="w-full h-12 flex-row items-center bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] mb-5">
                             <TextInput
-                                className="flex-1 h-full px-3 text-white text-[13px]"
+                                className="flex-1 h-full px-3 text-[#142338] dark:text-white text-[13px]"
                                 value={confirmarSenha}
                                 onChangeText={setConfirmarSenha}
                                 placeholder="Confirmar senha"
@@ -233,13 +233,13 @@ export default function Cadastro() {
                     </View>
 
                     <View className="w-full px-1 mb-5">
-                        <Text className="text-[#D0D0D5] text-xs leading-[18px] font-serif">
+                        <Text className="text-[#405570] dark:text-[#D0D0D5] text-xs leading-[18px] font-serif">
                             Ao criar sua conta, você concorda com nossos{" "}
-                            <Text className="text-white underline">
+                            <Text className="text-[#142338] dark:text-white underline">
                                 Termos de Uso
                             </Text>
                             {" "}e{" "}
-                            <Text className="text-white underline">
+                            <Text className="text-[#142338] dark:text-white underline">
                                 Política de Privacidade.
                             </Text>
                         </Text>
@@ -254,14 +254,14 @@ export default function Cadastro() {
                         {carregando ? (
                             <ActivityIndicator color="#FFFFFF" />
                         ) : (
-                            <Text className="text-white text-[18px] font-serif">
+                            <Text className="text-[#142338] dark:text-white text-[18px] font-serif">
                                 Criar conta
                             </Text>
                         )}
                     </Pressable>
 
                     <View className="w-full flex-row items-center justify-center mb-4">
-                        <Text className="text-[#D0D0D5] text-[13px] font-serif">
+                        <Text className="text-[#405570] dark:text-[#D0D0D5] text-[13px] font-serif">
                             Já tem uma conta?{" "}
                         </Text>
 

@@ -220,7 +220,7 @@ export default function EscolherPreferencias() {
     const alterarPesquisa = etapaArtistas ? setPesquisaArtista : setPesquisaGenero;
 
     return (
-        <SafeAreaView className="flex-1 bg-[#080A10]">
+        <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar
                 titulo={editandoGeneros ? "Gêneros favoritos" : "Suas preferências"}
                 subtitulo={
@@ -238,10 +238,10 @@ export default function EscolherPreferencias() {
                     {[1, 2].map((numero) => (
                         <View key={numero} className="flex-row items-center">
                             <View
-                                className={`w-8 h-8 rounded-full items-center justify-center ${etapa >= numero ? "bg-[#58AAF0]" : "bg-[#171E2B] border border-[#354052]"}`}
+                                className={`w-8 h-8 rounded-full items-center justify-center ${etapa >= numero ? "bg-[#58AAF0]" : "bg-[#F4F7FA] dark:bg-[#171E2B] border border-[#C5D3E1] dark:border-[#354052]"}`}
                             >
                                 <Text
-                                    className={`text-xs font-semibold ${etapa >= numero ? "text-[#080A10]" : "text-[#9AA6BA]"}`}
+                                    className={`text-xs font-semibold ${etapa >= numero ? "text-[#080A10]" : "text-[#52677F] dark:text-[#9AA6BA]"}`}
                                 >
                                     {etapa > numero ? "✓" : numero}
                                 </Text>
@@ -254,10 +254,10 @@ export default function EscolherPreferencias() {
                 </View>
             ) : null}
 
-            <View className="mx-5 mb-4 flex-row items-center rounded-xl border border-[#29384B] bg-[#0D1520] px-3">
+            <View className="mx-5 mb-4 flex-row items-center rounded-xl border border-[#29384B] bg-[#EAF1F8] dark:bg-[#0D1520] px-3">
                 <MagnifyingGlassIcon size={19} color="#8495A9" />
                 <TextInput
-                    className="flex-1 py-3 px-3 text-sm text-white"
+                    className="flex-1 py-3 px-3 text-sm text-[#142338] dark:text-white"
                     value={pesquisaAtual}
                     onChangeText={alterarPesquisa}
                     placeholder={etapaArtistas ? "Buscar artista..." : "Buscar gênero musical..."}
@@ -274,7 +274,7 @@ export default function EscolherPreferencias() {
             {carregando || (etapaArtistas && carregandoArtistas) ? (
                 <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#58AAF0" />
-                    <Text className="text-[#9AA6BA] text-sm mt-3">
+                    <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm mt-3">
                         {etapaArtistas ? "Carregando artistas..." : "Carregando catálogo..."}
                     </Text>
                 </View>
@@ -293,7 +293,7 @@ export default function EscolherPreferencias() {
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View className="flex-1 items-center justify-center py-10">
-                            <Text className="text-[#9AA6BA] text-sm text-center">
+                            <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm text-center">
                                 {erroArtistas
                                     ? erroArtistas
                                     : artistasDisponiveis.length === 0
@@ -303,9 +303,9 @@ export default function EscolherPreferencias() {
                             {erroArtistas ? (
                                 <Pressable
                                     onPress={() => setRevisaoArtistas((revisao) => revisao + 1)}
-                                    className="mt-3 rounded-lg border border-[#354052] px-4 py-2"
+                                    className="mt-3 rounded-lg border border-[#C5D3E1] dark:border-[#354052] px-4 py-2"
                                 >
-                                    <Text className="text-[#58AAF0] text-sm">Tentar novamente</Text>
+                                    <Text className="text-[#155B91] dark:text-[#58AAF0] text-sm">Tentar novamente</Text>
                                 </Pressable>
                             ) : null}
                         </View>
@@ -324,7 +324,7 @@ export default function EscolherPreferencias() {
                                     style={{ width: "100%", aspectRatio: 1, borderRadius: 8, marginBottom: 12, backgroundColor: "#1B2A3B" }}
                                 />
                                 <View className="w-full flex-row items-center justify-between">
-                                    <Text className="flex-1 text-white text-sm" numberOfLines={1}>
+                                    <Text className="flex-1 text-[#142338] dark:text-white text-sm" numberOfLines={1}>
                                         {artista.nome}
                                     </Text>
                                     {selecionado ? <CheckIcon size={18} color="#58AAF0" weight="bold" /> : null}
@@ -348,7 +348,7 @@ export default function EscolherPreferencias() {
                                         className={`mr-2 mb-2 px-4 py-3 rounded-full border flex-row items-center ${selecionado ? "border-[#58AAF0] bg-[#142438]" : "border-[#293342] bg-[#101722]"}`}
                                     >
                                         <MusicNotesIcon size={16} color={selecionado ? "#58AAF0" : "#9AA6BA"} />
-                                        <Text className="text-white text-sm ml-2">{genero}</Text>
+                                        <Text className="text-[#142338] dark:text-white text-sm ml-2">{genero}</Text>
                                         {selecionado ? (
                                             <View className="ml-2">
                                                 <CheckIcon size={15} color="#58AAF0" weight="bold" />
@@ -359,7 +359,7 @@ export default function EscolherPreferencias() {
                             })}
                         </View>
                     ) : (
-                        <Text className="text-[#9AA6BA] text-sm text-center py-10">
+                        <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm text-center py-10">
                             {generosDisponiveis.length === 0
                                 ? "Ainda não há gêneros no catálogo."
                                 : "Nenhum gênero corresponde à pesquisa."}
@@ -368,11 +368,11 @@ export default function EscolherPreferencias() {
                 </ScrollView>
             )}
 
-            <View className="px-5 pt-4 pb-3 border-t border-[#202633]">
+            <View className="px-5 pt-4 pb-3 border-t border-[#D5E0EC] dark:border-[#202633]">
                 {erro ? (
                     <Text className="text-red-400 text-sm mb-3 text-center">{erro}</Text>
                 ) : null}
-                <Text className="text-[#9AA6BA] text-xs text-center mb-3">
+                <Text className="text-[#52677F] dark:text-[#9AA6BA] text-xs text-center mb-3">
                     {etapaArtistas
                         ? `${artistasSelecionados.length} artista(s) selecionado(s)`
                         : `${generosSelecionados.length} gênero(s) selecionado(s)`}
@@ -385,10 +385,10 @@ export default function EscolherPreferencias() {
                                 setEtapa(1);
                                 setErro("");
                             }}
-                            className="flex-row items-center px-4 py-3 rounded-full border border-[#354052]"
+                            className="flex-row items-center px-4 py-3 rounded-full border border-[#C5D3E1] dark:border-[#354052]"
                         >
                             <ArrowLeftIcon size={18} color="#D0D0D5" />
-                            <Text className="text-white text-sm ml-2">Voltar</Text>
+                            <Text className="text-[#142338] dark:text-white text-sm ml-2">Voltar</Text>
                         </Pressable>
                     ) : <View />}
                     <Pressable

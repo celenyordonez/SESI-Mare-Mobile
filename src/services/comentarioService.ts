@@ -4,6 +4,8 @@ export type Comentario = {
     id: number; texto: string; dataCriacao: string; editado?: boolean;
     respostaAId?: number | null; curtidoPorMim?: boolean;
     _count?: { curtidas?: number };
+    profundidade?: number;
+    respondendoA?: { nome: string; username?: string };
     usuario: { id: number; nome: string; username?: string; foto?: string | null };
     respostas?: Comentario[];
 };
