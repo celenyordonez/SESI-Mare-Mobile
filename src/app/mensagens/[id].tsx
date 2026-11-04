@@ -370,7 +370,7 @@ export default function ConversaPrivada() {
                 />
             </MenuAcoes>
 
-            <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
                 {carregando ? (
                     <View className="flex-1 items-center justify-center"><ActivityIndicator color="#58AAF0" /></View>
                 ) : erro ? (
