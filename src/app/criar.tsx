@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Text, TextInput, View, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CheckIcon, MagnifyingGlassIcon, StarIcon, XIcon } from "phosphor-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -15,6 +15,7 @@ import type { ArtistaFavorito } from "../services/usuarioService";
 
 export default function Criar() {
     const router = useRouter();
+    const scrollRef = useRef<ScrollViewInstance | null>(null);
     const { musica: musicaIdParam } = useLocalSearchParams<{ musica?: string }>();
     const [musicas, setMusicas] = useState<Musica[]>([]);
     const [generosFavoritos, setGenerosFavoritos] = useState<string[]>([]);
@@ -91,7 +92,8 @@ export default function Criar() {
     return (
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar titulo="Criar avaliação" subtitulo="O que você achou dessa música?" tipo="voltar" />
-            <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView className="flex-1" behavior="padding">
+            <ScrollView ref={scrollRef} className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} showsVerticalScrollIndicator={false}>
                 <Text className="mb-2 font-serif text-lg text-[#142338] dark:text-white">Escolha uma música</Text>
                 <Text className="mb-3 text-xs text-[#52677F] dark:text-[#8793A7]">Sugestões com base nos artistas e gêneros que você curte.</Text>
                 {carregando ? (
@@ -204,6 +206,7 @@ export default function Criar() {
                         multiline
                         textAlignVertical="top"
                         maxLength={500}
+                        onFocus={() => requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }))}
                     />
                     <View className="mt-2 flex-row items-center justify-between">
                         <Text className="flex-1 text-[11px] text-[#52677F] dark:text-[#718096]">Sua avaliação aparecerá no seu perfil.</Text>
@@ -224,6 +227,7 @@ export default function Criar() {
                     </>}
                 </Pressable>
             </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

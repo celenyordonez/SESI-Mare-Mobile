@@ -3,6 +3,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    Keyboard,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -13,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { BellIcon, BellSlashIcon, DotsThreeIcon, LockKeyIcon, MusicNoteIcon, PaperPlaneTiltIcon, ProhibitIcon, UserCircleIcon, XIcon } from "phosphor-react-native";
+import { BellIcon, BellSlashIcon, DotsThreeIcon, LockKeyIcon, MusicNoteIcon, PaperPlaneTiltIcon, ProhibitIcon, XIcon } from "phosphor-react-native";
 import Toast from "react-native-toast-message";
 
 import Topbar from "../../components/topbar";
@@ -35,6 +36,8 @@ import { feedbackAcao } from "../../services/feedbackTatil";
 import { useContadoresNavegacao } from "../../components/ContadoresNavegacao";
 import { ApiError } from "../../services/api";
 import { ItemMenuAcao, MenuAcoes } from "../../components/MenuAcoes";
+import CartaoMusicaChat from "../../components/CartaoMusicaChat";
+import CartaoPlaylistChat from "../../components/CartaoPlaylistChat";
 
 const imagemPadrao = require("../../../assets/images/logo.png");
 
@@ -223,6 +226,15 @@ export default function ConversaPrivada() {
         }
     }, [mensagens.length]);
 
+    // Ao abrir o teclado, mantém a conversa posicionada na mensagem mais recente.
+    useEffect(() => {
+        if (Platform.OS !== "android") return;
+        const aoAbrir = Keyboard.addListener("keyboardDidShow", () => {
+            requestAnimationFrame(() => listaRef.current?.scrollToEnd({ animated: true }));
+        });
+        return () => aoAbrir.remove();
+    }, []);
+
     async function enviar() {
         const mensagem = texto.trim();
         if (!mensagem || enviando || !Number.isInteger(conversaId)) return;
@@ -332,7 +344,6 @@ export default function ConversaPrivada() {
                         </Text>
                         {usernameDoPerfil ? <Text className="mt-0.5 text-xs text-[#52677F] dark:text-[#8793A7]">@{usernameDoPerfil}</Text> : null}
                     </View>
-                    {usernameDoPerfil ? <UserCircleIcon size={20} color="#58AAF0" weight="regular" /> : null}
                 </Pressable>
                 <Pressable
                     onPress={abrirOpcoes}
@@ -370,7 +381,10 @@ export default function ConversaPrivada() {
                 />
             </MenuAcoes>
 
-            <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+            <KeyboardAvoidingView
+                className="flex-1"
+                behavior="padding"
+            >
                 {carregando ? (
                     <View className="flex-1 items-center justify-center"><ActivityIndicator color="#58AAF0" /></View>
                 ) : erro ? (
@@ -402,32 +416,11 @@ export default function ConversaPrivada() {
                                             <View className="h-px flex-1 bg-[#202633]" />
                                         </View>
                                     ) : null}
-                                    <View className={`max-w-[84%] rounded-2xl px-3.5 py-2.5 ${minha ? "self-end rounded-br-md bg-[#1C4770]" : "self-start rounded-bl-md bg-[#F4F7FA] dark:bg-[#171E2B]"}`}>
+                                    <View className={`max-w-[84%] rounded-2xl ${item.playlist ? "w-[300px] p-2" : "px-3.5 py-2.5"} ${minha ? "self-end rounded-br-md bg-[#1C4770]" : "self-start rounded-bl-md bg-[#F4F7FA] dark:bg-[#171E2B]"}`}>
                                         {item.playlist ? (
-                                            <Pressable onPress={() => router.push(`/u/${encodeURIComponent(item.playlist!.usuario.username)}` as never)} className="w-60 rounded-xl border border-[#34506D] bg-[#101F31] p-3" accessibilityRole="link" accessibilityLabel={`Abrir playlist ${item.playlist.nome}`}>
-                                                <Text className="text-[10px] font-bold tracking-widest text-[#9BD3FF]">PLAYLIST PÚBLICA</Text>
-                                                <Text className="mt-1 text-sm font-semibold text-white" numberOfLines={2}>{item.playlist.nome}</Text>
-                                                <Text className="mt-1 text-xs text-[#D2DFEC]">por @{item.playlist.usuario.username} · {item.playlist.musicas.length} músicas</Text>
-                                                {item.playlist.musicas.slice(0, 2).map(({ musica }) => <Text key={musica.id} className="mt-2 text-xs text-[#F3F7FC]" numberOfLines={1}>♪ {musica.titulo} · {musica.artista.nome}</Text>)}
-                                                <Text className="mt-2 text-[10px] text-[#A9D8FF]">Ver perfil ›</Text>
-                                            </Pressable>
+                                            <CartaoPlaylistChat playlist={item.playlist} meuId={meuId} />
                                         ) : item.musica ? (
-                                            <Pressable
-                                                onPress={() => router.push(`/musica/${item.musica!.id}` as never)}
-                                                className="w-60 max-w-full flex-row items-center"
-                                                accessibilityRole="link"
-                                                accessibilityLabel={`Abrir música ${item.musica.titulo}, de ${item.musica.artista.nome}`}
-                                            >
-                                                <Image
-                                                    source={item.musica.capa ? { uri: item.musica.capa } : imagemPadrao}
-                                                    className="h-12 w-12 rounded-lg bg-[#202636]"
-                                                />
-                                                <View className="ml-2 min-w-0 flex-1">
-                                                    <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={2}>{item.musica.titulo}</Text>
-                                                    <Text className="mt-1 text-xs text-[#405570] dark:text-[#D0D8E4]" numberOfLines={1}>{item.musica.artista.nome}</Text>
-                                                    <Text className="mt-1 text-[10px] text-[#B9DDF9]">Ver música ›</Text>
-                                                </View>
-                                            </Pressable>
+                                            <CartaoMusicaChat musica={item.musica} />
                                         ) : (
                                             <Text className="text-sm leading-5 text-[#142338] dark:text-white">
                                                 {item.texto.startsWith("[[mare-musica:") ? "Música removida do catálogo." : item.texto.startsWith("[[mare-playlist:") ? "Playlist indisponível ou privada." : item.texto}
@@ -472,6 +465,7 @@ export default function ConversaPrivada() {
                             placeholderTextColor="#718096"
                             multiline
                             maxLength={2000}
+                            onFocus={() => requestAnimationFrame(() => listaRef.current?.scrollToEnd({ animated: true }))}
                             editable={!carregando && !erro && !enviando}
                             className="max-h-28 min-h-11 flex-1 rounded-2xl border border-[#C5D3E1] dark:border-[#293143] bg-[#151A25] px-4 py-3 text-sm text-[#142338] dark:text-white"
                             accessibilityLabel="Mensagem"
@@ -495,8 +489,12 @@ export default function ConversaPrivada() {
                 transparent
                 onRequestClose={() => setSeletorMusicaAberto(false)}
             >
-                <SafeAreaView className="flex-1 justify-end bg-black/60">
-                    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="max-h-[82%] rounded-t-3xl border-t border-[#C5D3E1] dark:border-[#293143] bg-[#F4F7FA] dark:bg-[#0D111A] px-4 pb-3 pt-5">
+                <SafeAreaView className="flex-1 bg-black/60">
+                    <KeyboardAvoidingView
+                        behavior="padding"
+                        className="flex-1 justify-end"
+                    >
+                    <View className="h-[78%] max-h-[680px] min-h-[300px] flex-1 rounded-t-3xl border-t border-[#C5D3E1] dark:border-[#293143] bg-[#F4F7FA] dark:bg-[#0D111A] px-4 pb-3 pt-5">
                         <View className="mb-4 flex-row items-center justify-between">
                             <View>
                                 <Text className="font-serif text-xl text-[#142338] dark:text-white">Compartilhar</Text>
@@ -511,7 +509,22 @@ export default function ConversaPrivada() {
                             <Pressable onPress={() => { setSelecionandoPlaylist(true); void buscarMinhasPlaylists().then(setPlaylistsDoChat).catch((erro) => Toast.show({ type: "error", text1: "Não foi possível carregar playlists", text2: erro instanceof Error ? erro.message : undefined })); }} className={`flex-1 items-center rounded-lg py-2 ${selecionandoPlaylist ? "bg-[#29435F]" : ""}`}><Text className="text-xs font-semibold text-white">Playlists</Text></Pressable>
                         </View>
                         {selecionandoPlaylist ? (
-                            <FlatList data={playlistsDoChat.filter((playlist) => playlist.publica)} keyExtractor={(playlist) => String(playlist.id)} className="max-h-[65%]" ListEmptyComponent={<Text className="py-7 text-center text-sm text-[#8793A7]">Você não tem playlists públicas. Torne uma pública no seu perfil para compartilhar.</Text>} renderItem={({ item }) => <Pressable onPress={() => void enviarPlaylist(item)} disabled={enviando} className="mb-2 rounded-xl border border-[#34506D] bg-[#101F31] p-3"><Text className="font-semibold text-white">{item.nome}</Text><Text className="mt-1 text-xs text-[#A9D8FF]">{item.musicas.length} músicas · Toque para enviar</Text></Pressable>} />
+                            <FlatList
+                                data={playlistsDoChat.filter((playlist) => playlist.publica)}
+                                keyExtractor={(playlist) => String(playlist.id)}
+                                className="flex-1"
+                                keyboardShouldPersistTaps="handled"
+                                ItemSeparatorComponent={() => <View className="h-3" />}
+                                ListEmptyComponent={<Text className="py-7 text-center text-sm text-[#8793A7]">Você não tem playlists públicas. Torne uma pública no seu perfil para compartilhar.</Text>}
+                                renderItem={({ item }) => (
+                                    <CartaoPlaylistChat
+                                        playlist={item}
+                                        meuId={meuId}
+                                        aoEnviar={() => void enviarPlaylist(item)}
+                                        enviando={enviando}
+                                    />
+                                )}
+                            />
                         ) : (
                         <>
                         <TextInput
@@ -526,32 +539,30 @@ export default function ConversaPrivada() {
                         />
                         {buscandoMusica ? <ActivityIndicator className="my-5" color="#58AAF0" /> : null}
                         <FlatList
+                            horizontal
                             data={resultadosMusica}
                             keyExtractor={(musica) => String(musica.id)}
                             keyboardShouldPersistTaps="handled"
-                            className="max-h-[56%]"
+                            showsHorizontalScrollIndicator={false}
+                            className="flex-1"
+                            contentContainerStyle={{ gap: 10, paddingRight: 4 }}
                             ListEmptyComponent={(
                                 <Text className="px-4 py-8 text-center text-sm leading-5 text-[#52677F] dark:text-[#8793A7]">
                                     {buscandoMusica ? "" : erroBuscaMusica || (termoMusica.trim().length < 2 ? "Digite pelo menos duas letras para pesquisar." : "Nenhuma música encontrada.")}
                                 </Text>
                             )}
                             renderItem={({ item }) => (
-                                <Pressable
-                                    onPress={() => void enviarMusica(item)}
-                                    disabled={enviando}
-                                    className="mb-2 flex-row items-center rounded-xl border border-[#D5E0EC] dark:border-[#252D3C] bg-[#111722] p-2.5"
-                                >
-                                    <Image source={item.capa ? { uri: item.capa } : imagemPadrao} className="h-12 w-12 rounded-lg bg-[#202636]" />
-                                    <View className="ml-3 min-w-0 flex-1">
-                                        <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{item.titulo}</Text>
-                                        <Text className="mt-1 text-xs text-[#52677F] dark:text-[#9AA5B5]" numberOfLines={1}>{item.artista?.nome ?? "Artista desconhecido"}</Text>
-                                    </View>
-                                    {enviando ? <ActivityIndicator color="#58AAF0" /> : <MusicNoteIcon size={18} color="#58AAF0" />}
-                                </Pressable>
+                                <CartaoMusicaChat
+                                    musica={item}
+                                    aoPressionar={() => void enviarMusica(item)}
+                                    carregando={enviando}
+                                    acao="enviar"
+                                />
                             )}
                         />
                         </>
                         )}
+                    </View>
                     </KeyboardAvoidingView>
                 </SafeAreaView>
             </Modal>

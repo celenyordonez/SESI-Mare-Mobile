@@ -25,6 +25,7 @@ import { buscarPosts, type Post } from "../../services/postService";
 import { buscarMeuPerfil } from "../../services/usuarioService";
 import { usePaletaCapa } from "../../hooks/usePaletaCapa";
 import { corComOpacidade } from "../../services/paletaCapaService";
+import { linkArtista } from "../../services/linksCompartilhamento";
 
 export default function DetalheArtista() {
     const { id: idParametro } = useLocalSearchParams<{ id: string }>();
@@ -89,7 +90,7 @@ export default function DetalheArtista() {
     async function compartilharArtista() {
         if (!artista) return;
         try {
-            await Share.share({ message: `Conheça ${artista.nome} na Maré.` });
+            await Share.share({ message: `Conheça ${artista.nome} na Maré:\n${linkArtista(artista.id)}` });
         } catch (erroCompartilhamento) {
             console.error("Erro ao compartilhar artista:", erroCompartilhamento);
         }

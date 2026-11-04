@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    findNodeHandle,
     Image,
     Keyboard,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     Text,
     TextInput,
     View,
+    type ScrollViewInstance,
+    type TextInputInstance,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -48,9 +53,31 @@ function achatarComentarios(
     ]);
 }
 
+function formatarDataComentario(dataIso: string) {
+    const data = new Date(dataIso);
+    if (Number.isNaN(data.getTime())) return "";
+    const hoje = new Date();
+    const ontem = new Date(hoje);
+    ontem.setDate(hoje.getDate() - 1);
+    const mesmaData = (a: Date, b: Date) => a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth()
+        && a.getDate() === b.getDate();
+    const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    if (mesmaData(data, hoje)) return `Hoje às ${hora}`;
+    if (mesmaData(data, ontem)) return `Ontem às ${hora}`;
+    const dia = data.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        ...(data.getFullYear() !== hoje.getFullYear() ? { year: "numeric" as const } : {}),
+    });
+    return `${dia} às ${hora}`;
+}
+
 export default function DetalhePublicacao() {
     const { id: idParametro } = useLocalSearchParams<{ id: string }>();
     const roteador = useRouter();
+    const scrollRef = useRef<ScrollViewInstance | null>(null);
+    const campoComentarioRef = useRef<TextInputInstance | null>(null);
     const idPublicacao = Number(idParametro);
 
     const [publicacao, setPublicacao] = useState<Post | null>(null);
@@ -70,6 +97,28 @@ export default function DetalhePublicacao() {
     const [carregando, setCarregando] = useState(true);
     const [enviandoComentario, setEnviandoComentario] = useState(false);
     const [erro, setErro] = useState("");
+
+    const rolarCampoComentarioParaVisivel = useCallback(() => {
+        requestAnimationFrame(() => {
+            const identificador = findNodeHandle(campoComentarioRef.current);
+            if (identificador != null) {
+                scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(
+                    identificador,
+                    100,
+                    true,
+                );
+            }
+        });
+    }, []);
+
+    // Ao iniciar uma resposta, abre o campo junto ao comentário selecionado.
+    useEffect(() => {
+        if (respondendoAId === null) return;
+        requestAnimationFrame(() => {
+            campoComentarioRef.current?.focus();
+            rolarCampoComentarioParaVisivel();
+        });
+    }, [respondendoAId, rolarCampoComentarioParaVisivel]);
 
     useEffect(() => {
         if (!termoMencao) {
@@ -163,6 +212,83 @@ export default function DetalhePublicacao() {
         setTextoComentario((atual) => atual.replace(/(^|\s)@[A-Za-z0-9._]*$/, (_correspondencia, espaco: string) => `${espaco}@${usuario.username} `));
         setTermoMencao(null);
         setUsuariosSugeridos([]);
+    }
+
+    function renderizarCampoComentario() {
+        const comentarioPai = respondendoAId === null
+            ? undefined
+            : buscarComentarioNaArvore(respondendoAId);
+
+        return (
+            <View className="mt-3 mb-2">
+                {comentarioPai ? (
+                    <View className="mb-2 flex-row items-center">
+                        <Text className="flex-1 text-xs text-[#155B91] dark:text-[#58AAF0]">
+                            Respondendo a @{comentarioPai.usuario.username || comentarioPai.usuario.nome}
+                        </Text>
+                        <Pressable
+                            onPress={() => {
+                                setRespondendoAId(null);
+                                setTextoComentario("");
+                                setTermoMencao(null);
+                                Keyboard.dismiss();
+                            }}
+                            accessibilityRole="button"
+                        >
+                            <Text className="px-2 py-1 text-xs text-[#52677F] dark:text-[#9AA6BA]">Cancelar</Text>
+                        </Pressable>
+                    </View>
+                ) : null}
+
+                <View className="flex-row items-end">
+                    <TextInput
+                        ref={campoComentarioRef}
+                        className="min-h-[46px] max-h-[120px] flex-1 rounded-xl border border-[#C5D3E1] bg-white px-3 py-3 text-sm text-[#142338] dark:border-[#354052] dark:bg-[#111420] dark:text-white"
+                        value={textoComentario}
+                        onChangeText={atualizarTextoComMencao}
+                        onFocus={rolarCampoComentarioParaVisivel}
+                        placeholder={comentarioPai ? "Escreva sua resposta..." : "Escreva um comentário..."}
+                        placeholderTextColor="#718096"
+                        multiline
+                        maxLength={500}
+                    />
+                    <Pressable
+                        onPress={() => void enviarComentario()}
+                        disabled={enviandoComentario || !textoComentario.trim()}
+                        accessibilityRole="button"
+                        accessibilityLabel={comentarioPai ? "Enviar resposta" : "Enviar comentário"}
+                        className="ml-2 h-11 w-11 items-center justify-center rounded-xl bg-[#58AAF0]"
+                        style={{ opacity: enviandoComentario || !textoComentario.trim() ? 0.45 : 1 }}
+                    >
+                        <PaperPlaneTiltIcon size={20} color="#FFFFFF" />
+                    </Pressable>
+                </View>
+
+                {termoMencao ? (
+                    <View className="mt-2 overflow-hidden rounded-xl border border-[#C5D3E1] bg-white dark:border-[#354052] dark:bg-[#111420]">
+                        {carregandoMencoes ? (
+                            <ActivityIndicator className="py-3" color="#58AAF0" />
+                        ) : usuariosSugeridos.map((usuario) => (
+                            <Pressable
+                                key={usuario.id}
+                                onPress={() => selecionarMencao(usuario)}
+                                className="flex-row items-center border-b border-[#E3EBF3] px-3 py-2.5 last:border-b-0 dark:border-[#202633]"
+                            >
+                                {usuario.foto ? (
+                                    <Image source={{ uri: usuario.foto }} className="h-9 w-9 rounded-full" />
+                                ) : (
+                                    <View className="h-9 w-9 items-center justify-center rounded-full bg-[#DFEAF5] dark:bg-[#171E2B]"><UserIcon size={18} color="#718096" /></View>
+                                )}
+                                <View className="ml-3 flex-1">
+                                    <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{usuario.nome}</Text>
+                                    <Text className="text-xs text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>@{usuario.username}</Text>
+                                </View>
+                            </Pressable>
+                        ))}
+                    </View>
+                ) : null}
+            </View>
+        );
     }
 
     function renderizarTextoComMencoes(texto: string) {
@@ -395,10 +521,7 @@ export default function DetalhePublicacao() {
 
     function renderizarComentario(comentario: Comentario, profundidade: number, comentarioPai?: Comentario) {
         const usernamePai = comentarioPai?.usuario.username || comentarioPai?.usuario.nome;
-        const dataComentario = new Date(comentario.dataCriacao);
-        const horaComentario = Number.isNaN(dataComentario.getTime())
-            ? ""
-            : dataComentario.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        const dataFormatada = formatarDataComentario(comentario.dataCriacao);
         return (
             <View
                 key={comentario.id}
@@ -436,7 +559,7 @@ export default function DetalhePublicacao() {
                                     @{comentario.usuario.username}
                                 </Text>
                             ) : null}
-                            <Text className="ml-2 text-[10px] text-[#52677F] dark:text-[#718096]">· {horaComentario}{comentario.editado ? " · editado" : ""}</Text>
+                            <Text className="ml-2 text-[10px] text-[#52677F] dark:text-[#718096]">{dataFormatada ? `· ${dataFormatada}` : ""}{comentario.editado ? " · editado" : ""}</Text>
                         </View>
 
                         {comentarioEmEdicaoId === comentario.id ? (
@@ -533,6 +656,8 @@ export default function DetalhePublicacao() {
                     </View>
                 </View>
 
+                {respondendoAId === comentario.id ? renderizarCampoComentario() : null}
+
                 {(comentario.respostas ?? []).map((resposta) =>
                     renderizarComentario(resposta, profundidade + 1, comentario),
                 )}
@@ -551,6 +676,7 @@ export default function DetalhePublicacao() {
                 }
                 tipo="voltar"
             />
+            <KeyboardAvoidingView className="flex-1" behavior="padding">
 
             {carregando ? (
                 <View className="flex-1 items-center justify-center">
@@ -567,8 +693,10 @@ export default function DetalhePublicacao() {
                 </View>
             ) : (
                 <ScrollView
+                    ref={scrollRef}
                     className="flex-1"
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
                     showsVerticalScrollIndicator={false}
                 >
                     {publicacao.musica ? (
@@ -600,70 +728,7 @@ export default function DetalhePublicacao() {
                             Comentários ({totalComentarios})
                         </Text>
 
-                        {respondendoAId !== null ? (
-                            <View className="flex-row items-center mt-3">
-                                <Text className="text-[#155B91] dark:text-[#58AAF0] text-xs flex-1">
-                                    {(() => {
-                                        const pai = buscarComentarioNaArvore(respondendoAId);
-                                        return pai ? `Respondendo a @${pai.usuario.username || pai.usuario.nome}` : "Respondendo a um comentário";
-                                    })()}
-                                </Text>
-                                <Pressable onPress={() => setRespondendoAId(null)}>
-                                    <Text className="text-[#52677F] dark:text-[#9AA6BA] text-xs">
-                                        Cancelar
-                                    </Text>
-                                </Pressable>
-                            </View>
-                        ) : null}
-
-                        <View className="flex-row items-end mt-3 mb-2">
-                            <TextInput
-                                className="flex-1 min-h-[46px] max-h-[120px] bg-white dark:bg-[#111420] border border-[#C5D3E1] dark:border-[#354052] rounded-xl px-3 py-3 text-[#142338] dark:text-white text-sm"
-                                value={textoComentario}
-                                onChangeText={atualizarTextoComMencao}
-                                placeholder={
-                                    respondendoAId === null
-                                        ? "Escreva um comentário..."
-                                        : "Escreva sua resposta..."
-                                }
-                                placeholderTextColor="#718096"
-                                multiline
-                                maxLength={500}
-                            />
-                            <Pressable
-                                onPress={() => void enviarComentario()}
-                                disabled={
-                                    enviandoComentario || !textoComentario.trim()
-                                }
-                                className="ml-2 w-11 h-11 rounded-xl bg-[#58AAF0] items-center justify-center"
-                            >
-                                <PaperPlaneTiltIcon size={20} color="#FFFFFF" />
-                            </Pressable>
-                        </View>
-
-                        {termoMencao ? (
-                            <View className="mb-3 overflow-hidden rounded-xl border border-[#C5D3E1] bg-white dark:border-[#354052] dark:bg-white dark:bg-[#111420]">
-                                {carregandoMencoes ? (
-                                    <ActivityIndicator className="py-3" color="#58AAF0" />
-                                ) : usuariosSugeridos.map((usuario) => (
-                                    <Pressable
-                                        key={usuario.id}
-                                        onPress={() => selecionarMencao(usuario)}
-                                        className="flex-row items-center border-b border-[#E3EBF3] px-3 py-2.5 last:border-b-0 dark:border-[#202633]"
-                                    >
-                                        {usuario.foto ? (
-                                            <Image source={{ uri: usuario.foto }} className="h-9 w-9 rounded-full" />
-                                        ) : (
-                                            <View className="h-9 w-9 items-center justify-center rounded-full bg-[#DFEAF5] dark:bg-[#171E2B]"><UserIcon size={18} color="#718096" /></View>
-                                        )}
-                                        <View className="ml-3 flex-1">
-                                            <Text className="text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{usuario.nome}</Text>
-                                            <Text className="text-xs text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>@{usuario.username}</Text>
-                                        </View>
-                                    </Pressable>
-                                ))}
-                            </View>
-                        ) : null}
+                        {respondendoAId === null ? renderizarCampoComentario() : null}
 
                         {comentarios.length > 0 ? (
                             comentarios.map((comentario) =>
@@ -677,6 +742,7 @@ export default function DetalhePublicacao() {
                     </View>
                 </ScrollView>
             )}
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

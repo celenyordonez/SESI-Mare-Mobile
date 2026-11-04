@@ -3,7 +3,9 @@ import { useState } from "react";
 import {
     ActivityIndicator,
     Image,
+    KeyboardAvoidingView,
     Pressable,
+    Platform,
     ScrollView,
     Text,
     TextInput,
@@ -121,6 +123,7 @@ export default function Login() {
 
     return (
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
+            <KeyboardAvoidingView className="flex-1" behavior="padding">
             <LinearGradient
                 colors={["#080A10", "#1C2E48"]}
                 style={{ flex: 1 }}
@@ -129,12 +132,15 @@ export default function Login() {
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         flexGrow: 1,
+                        justifyContent: "center",
                         paddingHorizontal: 32,
                         paddingTop: 12,
-                        paddingBottom: 24,
+                        // Um pouco mais de espaço embaixo deixa o formulário acima do centro exato.
+                        paddingBottom: 80,
                     }}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
                 >
                     {/* Logo */}
                     <View className="items-center justify-center mb-2">
@@ -257,6 +263,7 @@ export default function Login() {
                     </View>
                 </ScrollView>
             </LinearGradient>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

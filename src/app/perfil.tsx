@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     DeviceEventEmitter,
+    FlatList,
     Image,
+    KeyboardAvoidingView,
     Modal,
     Platform,
     Pressable,
@@ -24,8 +26,10 @@ import {
     DotsThreeIcon,
     MagnifyingGlassIcon,
     MusicNoteIcon,
+    PlusIcon,
     PencilSimpleIcon,
     ShareNetworkIcon,
+    TrashIcon,
     UserIcon,
     XIcon,
 } from "phosphor-react-native";
@@ -38,6 +42,7 @@ import ComentarioPerfilCard from "../components/ComentarioPerfilCard";
 import { ItemMenuAcao, MenuAcoes } from "../components/MenuAcoes";
 import { invalidarCacheFotoPerfil } from "../services/perfilCache";
 import { feedbackAcao } from "../services/feedbackTatil";
+import { linkPerfil } from "../services/linksCompartilhamento";
 import { alternarSalvamentoMusica } from "../services/salvamentoService";
 import { alternarCurtidaPost } from "../services/postService";
 import {
@@ -48,11 +53,12 @@ import {
     buscarPostsCurtidos,
     buscarPostsDoUsuario,
     enviarImagemDoPerfil,
+    removerImagemDoPerfil,
     type ComentarioPerfil,
     type DadosEdicaoPerfil,
     type MeuPerfil,
 } from "../services/usuarioService";
-import type { Musica } from "../services/musicaService";
+import { buscarMusicas, type Musica } from "../services/musicaService";
 import type { Post } from "../services/postService";
 import { adicionarMusicaPlaylist, atualizarPlaylist, buscarMinhasPlaylists, criarPlaylist, excluirPlaylist, type Playlist } from "../services/playlistService";
 
@@ -76,6 +82,7 @@ export default function Perfil() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [menuAberto, setMenuAberto] = useState(false);
+    const [tipoImagemMenu, setTipoImagemMenu] = useState<TipoImagemPerfil | null>(null);
     const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
     const [salvandoPerfil, setSalvandoPerfil] = useState(false);
     const [alterandoImagem, setAlterandoImagem] = useState(false);
@@ -86,11 +93,45 @@ export default function Perfil() {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [nomePlaylist, setNomePlaylist] = useState("");
     const [criandoPlaylist, setCriandoPlaylist] = useState(false);
-    const [playlistSelecionada, setPlaylistSelecionada] = useState<number | null>(null);
+    const [playlistParaAdicionar, setPlaylistParaAdicionar] = useState<number | null>(null);
+    const [buscaCatalogo, setBuscaCatalogo] = useState("");
+    const [musicasCatalogo, setMusicasCatalogo] = useState<Musica[]>([]);
+    const [carregandoCatalogo, setCarregandoCatalogo] = useState(false);
+    const [erroCatalogo, setErroCatalogo] = useState("");
+    const [musicaAdicionandoId, setMusicaAdicionandoId] = useState<number | null>(null);
+
+    async function compartilharPerfil() {
+        if (!perfil) return;
+        try {
+            feedbackAcao();
+            await Share.share({ message: `Confira o perfil de @${perfil.username} no Maré:\n${linkPerfil(perfil.username)}` });
+        } catch (erroCompartilhamento) {
+            console.error("Erro ao compartilhar perfil:", erroCompartilhamento);
+        }
+    }
 
     useEffect(() => {
         if (parametros.aba === "salvos") setAbaAtiva("salvos");
     }, [parametros.aba]);
+
+    // Busca músicas do catálogo para adicionar à playlist; não usa a biblioteca salva.
+    useEffect(() => {
+        if (playlistParaAdicionar === null) return;
+        let ativo = true;
+        const temporizador = setTimeout(() => {
+            setCarregandoCatalogo(true);
+            setErroCatalogo("");
+            void buscarMusicas(buscaCatalogo.trim() || undefined)
+                .then((resultado) => { if (ativo) setMusicasCatalogo(resultado); })
+                .catch((erroBusca) => {
+                    if (!ativo) return;
+                    setMusicasCatalogo([]);
+                    setErroCatalogo(erroBusca instanceof Error ? erroBusca.message : "Não foi possível buscar no catálogo.");
+                })
+                .finally(() => { if (ativo) setCarregandoCatalogo(false); });
+        }, buscaCatalogo.trim() ? 250 : 0);
+        return () => { ativo = false; clearTimeout(temporizador); };
+    }, [playlistParaAdicionar, buscaCatalogo]);
 
     useEffect(() => {
         let ativo = true;
@@ -141,16 +182,6 @@ export default function Perfil() {
         );
     }, [musicasSalvas, pesquisaSalvos]);
 
-    async function compartilharPerfil() {
-        if (!perfil) return;
-        try {
-            feedbackAcao();
-            await Share.share({ message: `Confira o perfil de @${perfil.username} no Maré.` });
-        } catch (erroCompartilhamento) {
-            console.error("Erro ao compartilhar perfil:", erroCompartilhamento);
-        }
-    }
-
     async function salvarEdicaoPerfil() {
         if (!perfil || salvandoPerfil) return;
 
@@ -162,6 +193,14 @@ export default function Perfil() {
 
         if (!dados.nome || !dados.username) {
             Toast.show({ type: "error", text1: "Preencha o nome e o usuário." });
+            return;
+        }
+        if (dados.nome.length > 50) {
+            Toast.show({ type: "error", text1: "Nome muito longo", text2: "O nome pode ter no máximo 50 caracteres." });
+            return;
+        }
+        if (!/^[a-z0-9_]{3,15}$/.test(dados.username) && dados.username !== perfil.username) {
+            Toast.show({ type: "error", text1: "Usuário inválido", text2: "Use de 3 a 15 letras, números ou _, sem espaços." });
             return;
         }
 
@@ -269,6 +308,23 @@ export default function Perfil() {
         }
     }
 
+    async function removerImagem(tipo: TipoImagemPerfil) {
+        if (!perfil || alterandoImagem) return;
+        setTipoImagemMenu(null);
+        setAlterandoImagem(true);
+        try {
+            const atualizado = await removerImagemDoPerfil(tipo);
+            setPerfil((atual) => atual ? { ...atual, foto: atualizado.foto, capa: atualizado.capa } : atual);
+            invalidarCacheFotoPerfil();
+            DeviceEventEmitter.emit("usuarioAtualizado");
+            Toast.show({ type: "success", text1: tipo === "foto" ? "Foto de perfil removida." : "Capa removida." });
+        } catch (erroRemocao) {
+            Toast.show({ type: "error", text1: "Não foi possível remover a imagem", text2: erroRemocao instanceof Error ? erroRemocao.message : "Tente novamente." });
+        } finally {
+            setAlterandoImagem(false);
+        }
+    }
+
     async function removerCurtida(postId: number) {
         try {
             await alternarCurtidaPost(postId, true);
@@ -330,6 +386,24 @@ export default function Perfil() {
         }
     }
 
+    async function adicionarMusicaDoCatalogo(musica: Musica) {
+        if (playlistParaAdicionar === null || musicaAdicionandoId !== null) return;
+        const playlistId = playlistParaAdicionar;
+        const playlist = playlists.find((item) => item.id === playlistId);
+        if (!playlist || playlist.musicas.length >= 15) return;
+        setMusicaAdicionandoId(musica.id);
+        try {
+            const atualizada = await adicionarMusicaPlaylist(playlistId, musica.id);
+            setPlaylists((lista) => lista.map((item) => item.id === playlistId ? atualizada : item));
+            Toast.show({ type: "success", text1: "Música adicionada à playlist", text2: musica.titulo });
+            if (atualizada.musicas.length >= 15) setPlaylistParaAdicionar(null);
+        } catch (erro) {
+            Toast.show({ type: "error", text1: "Não foi possível adicionar a música", text2: erro instanceof Error ? erro.message : undefined });
+        } finally {
+            setMusicaAdicionandoId(null);
+        }
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
@@ -351,16 +425,16 @@ export default function Perfil() {
                             <View className="h-[150px] bg-[#1C314B]" />
                         )}
                         <Pressable
-                            onPress={() => void escolherImagem("capa")}
+                            onPress={() => setTipoImagemMenu("capa")}
                             disabled={alterandoImagem}
                             className="absolute right-4 top-4 flex-row items-center rounded-lg border border-white/10 bg-[#E8EEF5] dark:bg-[#080A10]/75 px-3 py-2"
                         >
                             <CameraIcon size={17} color="#FFFFFF" />
-                            <Text className="text-[#142338] dark:text-white text-xs ml-2">{alterandoImagem ? "Enviando..." : "Alterar capa"}</Text>
+                            <Text className="text-[#142338] dark:text-white text-xs ml-2">{alterandoImagem ? "Atualizando..." : "Editar capa"}</Text>
                         </Pressable>
                         <View className="absolute left-5 top-[95px] w-[88px] h-[88px] z-10">
                             <Pressable
-                                onPress={() => void escolherImagem("foto")}
+                                onPress={() => setTipoImagemMenu("foto")}
                                 disabled={alterandoImagem}
                                 accessibilityLabel="Alterar foto de perfil"
                                 className="w-full h-full rounded-full bg-[#505A70] items-center justify-center overflow-hidden border-2 border-[#080A10]"
@@ -372,7 +446,7 @@ export default function Perfil() {
                                 )}
                             </Pressable>
                             <Pressable
-                                onPress={() => void escolherImagem("foto")}
+                                onPress={() => setTipoImagemMenu("foto")}
                                 disabled={alterandoImagem}
                                 accessibilityLabel="Trocar foto de perfil"
                                 className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-8 h-8 rounded-full bg-[#58AAF0] border-2 border-[#080A10] items-center justify-center"
@@ -552,15 +626,45 @@ export default function Perfil() {
                                     <TextInput value={nomePlaylist} onChangeText={setNomePlaylist} maxLength={80} placeholder="Nome da playlist" placeholderTextColor="#8793A7" className="h-11 flex-1 rounded-xl border border-[#354052] bg-[#111420] px-3 text-sm text-white" />
                                     <Pressable onPress={() => void criarNovaPlaylist()} disabled={!nomePlaylist.trim() || criandoPlaylist} className="items-center justify-center rounded-xl bg-[#58AAF0] px-4"><Text className="font-semibold text-[#081321]">Criar</Text></Pressable>
                                 </View>
-                                {!playlists.length ? <Text className="py-6 text-center text-sm text-[#8793A7]">Crie sua primeira playlist com músicas salvas.</Text> : playlists.map((playlist) => (
+                                {!playlists.length ? <Text className="py-6 text-center text-sm text-[#8793A7]">Crie sua primeira playlist e escolha músicas do catálogo.</Text> : playlists.map((playlist) => (
                                     <View key={playlist.id} className="mb-4 overflow-hidden rounded-2xl border border-[#2A3C52] bg-[#101A29] p-4">
                                         <View className="flex-row items-center justify-between">
-                                            <View className="flex-1"><Text className="text-base font-semibold text-white">{playlist.nome}</Text><Text className="mt-1 text-xs text-[#C3D0DE]">{playlist.musicas.length} músicas · {playlist.publica ? "Pública no perfil" : "Privada"}</Text></View>
+                                            <View className="flex-1"><Text className="text-base font-semibold text-white">{playlist.nome}</Text><Text className="mt-1 text-xs text-[#C3D0DE]">{playlist.musicas.length}/15 músicas · {playlist.publica ? "Pública no perfil" : "Privada"}</Text></View>
                                             <Pressable onPress={() => void alternarVisibilidadePlaylist(playlist)} className="rounded-full border border-[#53718F] px-3 py-2"><Text className="text-xs font-medium text-[#A9D8FF]">{playlist.publica ? "Tornar privada" : "Tornar pública"}</Text></Pressable>
                                         </View>
-                                        <Pressable onPress={() => setPlaylistSelecionada(playlistSelecionada === playlist.id ? null : playlist.id)} className="mt-3 self-start rounded-lg bg-[#20364F] px-3 py-2"><Text className="text-xs font-semibold text-white">{playlistSelecionada === playlist.id ? "Fechar músicas salvas" : "Adicionar das músicas salvas"}</Text></Pressable>
-                                        {playlist.musicas.map(({ musica }) => <Text key={musica.id} className="mt-3 text-xs text-[#E8F0F8]">♪ {musica.titulo} · {musica.artista.nome}</Text>)}
-                                        {playlistSelecionada === playlist.id && musicasSalvas.map(({ musica }) => <Pressable key={musica.id} onPress={async () => { try { const atualizada = await adicionarMusicaPlaylist(playlist.id, musica.id); setPlaylists((lista) => lista.map((item) => item.id === playlist.id ? atualizada : item)); } catch (erro) { Toast.show({ type: "error", text1: "Não foi possível adicionar a música", text2: erro instanceof Error ? erro.message : undefined }); } }} className="mt-2 rounded-lg border border-[#354052] p-2"><Text className="text-xs text-[#A9D8FF]">+ {musica.titulo} · {musica.artista?.nome}</Text></Pressable>)}
+                                        {playlist.musicas.length ? (
+                                            <ScrollView
+                                                horizontal
+                                                showsHorizontalScrollIndicator={false}
+                                                className="mt-4"
+                                                contentContainerStyle={{ paddingRight: 4 }}
+                                            >
+                                                {playlist.musicas.slice(0, 15).map(({ musica }) => (
+                                                    <MusicCard
+                                                        key={musica.id}
+                                                        id={musica.id}
+                                                        tipo="quadrado"
+                                                        larguraFixa
+                                                        titulo={musica.titulo}
+                                                        artista={musica.artista.nome}
+                                                        artistaId={musica.artista.id}
+                                                        capa={musica.capa}
+                                                    />
+                                                ))}
+                                            </ScrollView>
+                                        ) : (
+                                            <Text className="mt-4 text-xs text-[#8793A7]">Escolha músicas do catálogo para montar esta playlist.</Text>
+                                        )}
+                                        <Pressable
+                                            onPress={() => { setBuscaCatalogo(""); setPlaylistParaAdicionar(playlist.id); }}
+                                            disabled={playlist.musicas.length >= 15}
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`Adicionar música à playlist ${playlist.nome}`}
+                                            className="mt-4 h-10 flex-row items-center justify-center gap-2 rounded-xl border border-[#53718F] bg-[#20364F] px-4 disabled:opacity-50"
+                                        >
+                                            <PlusIcon size={18} color="#A9D8FF" weight="bold" />
+                                            <Text className="text-xs font-semibold text-white">{playlist.musicas.length >= 15 ? "Limite de 15 músicas" : "Adicionar música"}</Text>
+                                        </Pressable>
                                     </View>
                                 ))}
                             </View>
@@ -589,16 +693,18 @@ export default function Perfil() {
                             className="rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-[#E8EEF5] dark:bg-[#080A10] px-3 py-3 text-[#142338] dark:text-white text-sm mb-4"
                             value={nomeEditado}
                             onChangeText={setNomeEditado}
-                            maxLength={80}
+                            maxLength={50}
                         />
                         <Text className="text-[#C4CCDA] text-xs mb-2">Usuário</Text>
                         <TextInput
                             className="rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-[#E8EEF5] dark:bg-[#080A10] px-3 py-3 text-[#142338] dark:text-white text-sm mb-4"
                             value={usuarioEditado}
-                            onChangeText={setUsuarioEditado}
+                            onChangeText={(valor) => setUsuarioEditado(valor.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 15))}
                             autoCapitalize="none"
-                            maxLength={30}
+                            autoCorrect={false}
+                            maxLength={15}
                         />
+                        <Text className="-mt-2 mb-4 text-[11px] leading-4 text-[#52677F] dark:text-[#8793A7]">3 a 15 caracteres: letras, números e _; sem espaços.</Text>
                         <Text className="text-[#C4CCDA] text-xs mb-2">Bio</Text>
                         <TextInput
                             className="min-h-[90px] rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-[#E8EEF5] dark:bg-[#080A10] px-3 py-3 text-[#142338] dark:text-white text-sm"
@@ -623,6 +729,61 @@ export default function Perfil() {
                 </View>
             </Modal>
 
+            <Modal
+                visible={playlistParaAdicionar !== null}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setPlaylistParaAdicionar(null)}
+            >
+                <View className="flex-1 justify-end bg-black/70">
+                    <KeyboardAvoidingView className="flex-1 justify-end" behavior="padding">
+                    <View className="h-[82%] rounded-t-3xl border border-[#263143] bg-[#0D121C] px-4 pb-5 pt-4">
+                        <View className="mb-4 flex-row items-center justify-between">
+                            <View className="flex-1">
+                                <Text className="text-lg font-semibold text-white">Adicionar músicas</Text>
+                                <Text className="mt-1 text-xs text-[#9AA6BA]">Pesquise no catálogo da Maré · até 15 faixas</Text>
+                            </View>
+                            <Pressable onPress={() => setPlaylistParaAdicionar(null)} accessibilityLabel="Fechar catálogo" className="h-10 w-10 items-center justify-center rounded-full bg-[#171E2B]"><XIcon size={20} color="#AEB8C8" /></Pressable>
+                        </View>
+                        <TextInput
+                            value={buscaCatalogo}
+                            onChangeText={setBuscaCatalogo}
+                            placeholder="Buscar música ou artista"
+                            placeholderTextColor="#718096"
+                            returnKeyType="search"
+                            className="mb-3 h-11 rounded-xl border border-[#354052] bg-[#111A27] px-3 text-sm text-white"
+                            accessibilityLabel="Buscar músicas no catálogo"
+                        />
+                        {carregandoCatalogo ? <ActivityIndicator className="py-5" color="#58AAF0" /> : null}
+                        {erroCatalogo ? <Text className="py-4 text-center text-sm text-[#E8A0A7]">{erroCatalogo}</Text> : null}
+                        {!carregandoCatalogo && !erroCatalogo && musicasCatalogo.length === 0 ? <Text className="py-6 text-center text-sm text-[#8793A7]">Nenhuma música encontrada no catálogo.</Text> : null}
+                        <FlatList
+                            data={musicasCatalogo.filter((musica) => !playlists.find((item) => item.id === playlistParaAdicionar)?.musicas.some(({ musica: faixa }) => faixa.id === musica.id))}
+                            keyExtractor={(musica) => String(musica.id)}
+                            keyboardShouldPersistTaps="handled"
+                            contentContainerStyle={{ paddingBottom: 16, gap: 8 }}
+                            renderItem={({ item: musica }) => (
+                                <View className="min-h-[66px] flex-row items-center rounded-xl border border-[#263143] bg-[#111A27] p-2">
+                                    {musica.capa ? <Image source={{ uri: musica.capa }} className="h-12 w-12 rounded-lg bg-[#202A39]" /> : <View className="h-12 w-12 items-center justify-center rounded-lg bg-[#202A39]"><MusicNoteIcon size={21} color="#8793A7" /></View>}
+                                    <View className="ml-3 flex-1">
+                                        <Text numberOfLines={1} className="text-sm font-medium text-white">{musica.titulo}</Text>
+                                        <Text numberOfLines={1} className="mt-1 text-xs text-[#9AA6BA]">{musica.artista?.nome ?? "Artista desconhecido"}</Text>
+                                    </View>
+                                    <Pressable
+                                        onPress={() => void adicionarMusicaDoCatalogo(musica)}
+                                        disabled={musicaAdicionandoId !== null}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Adicionar ${musica.titulo}`}
+                                        className="ml-2 h-10 w-10 items-center justify-center rounded-full bg-[#58AAF0] disabled:opacity-50"
+                                    >{musicaAdicionandoId === musica.id ? <ActivityIndicator size="small" color="#081321" /> : <PlusIcon size={20} color="#081321" weight="bold" />}</Pressable>
+                                </View>
+                            )}
+                        />
+                    </View>
+                    </KeyboardAvoidingView>
+                </View>
+            </Modal>
+
             <MenuAcoes aberto={menuAberto} titulo="Opções do perfil" aoFechar={() => setMenuAberto(false)}>
                 <ItemMenuAcao
                     titulo="Editar perfil"
@@ -633,6 +794,38 @@ export default function Perfil() {
                         setModalEdicaoAberto(true);
                     }}
                 />
+            </MenuAcoes>
+
+            <MenuAcoes
+                aberto={tipoImagemMenu !== null}
+                titulo={tipoImagemMenu === "foto" ? "Foto de perfil" : "Foto de capa"}
+                aoFechar={() => setTipoImagemMenu(null)}
+            >
+                {tipoImagemMenu ? (
+                    <>
+                        <ItemMenuAcao
+                            titulo={tipoImagemMenu === "foto" ? "Escolher nova foto" : "Escolher nova capa"}
+                            descricao="Abrir a galeria do celular"
+                            icone={<CameraIcon size={19} color="#58AAF0" />}
+                            desabilitado={alterandoImagem}
+                            aoPressionar={() => {
+                                const tipo = tipoImagemMenu;
+                                setTipoImagemMenu(null);
+                                void escolherImagem(tipo);
+                            }}
+                        />
+                        {((tipoImagemMenu === "foto" && perfil?.foto) || (tipoImagemMenu === "capa" && perfil?.capa)) ? (
+                            <ItemMenuAcao
+                                titulo={tipoImagemMenu === "foto" ? "Remover foto de perfil" : "Remover foto de capa"}
+                                descricao="Voltar para a imagem padrão"
+                                icone={<TrashIcon size={19} color="#E2717C" />}
+                                destrutivo
+                                desabilitado={alterandoImagem}
+                                aoPressionar={() => void removerImagem(tipoImagemMenu)}
+                            />
+                        ) : null}
+                    </>
+                ) : null}
             </MenuAcoes>
 
             <Navbar />

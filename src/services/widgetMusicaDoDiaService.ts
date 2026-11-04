@@ -8,7 +8,7 @@ import type { MusicaDoDia } from "./recomendacaoService";
 const CHAVE_URL_CAPA_WIDGET = "mare:widget:capa-musica-do-dia";
 
 type DadosWidgetMusicaDoDia = {
-    indice: number;
+    musicaId: number;
     titulo: string;
     artista: string;
     genero: string;
@@ -81,21 +81,10 @@ export async function atualizarWidgetMusicaDoDia(musica: MusicaDoDia["musica"]) 
     const capaLocal = capa.startsWith("file://") ? capa : "";
 
     moduloWidget.widget.updateSnapshot({
-        indice: 0,
+        musicaId: musica?.id ?? 0,
         titulo: musica?.titulo ?? "Abra a Maré",
         artista: musica?.artista?.nome ?? "Conheça a música de hoje",
         genero: musica?.genero ?? "",
         capa: capaLocal,
     });
-}
-
-/** Deixa o widget de jogos com a primeira experiência em destaque. */
-export function atualizarWidgetJogosMusicais(indice = 0) {
-    if (Platform.OS !== "android" || !requireOptionalNativeModule("ExpoWidgets")) return;
-    try {
-        const widget = require("../widgets/JogosMusicaisWidget") as { default: { updateSnapshot: (dados: { indice: number }) => void } };
-        widget.default.updateSnapshot({ indice: Math.max(0, indice) });
-    } catch (erro) {
-        console.warn("Não foi possível atualizar o widget de jogos musicais:", erro);
-    }
 }

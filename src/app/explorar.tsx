@@ -19,10 +19,47 @@ import {
     registrarPesquisa,
     removerPesquisaDoHistorico,
 } from "../services/historicoPesquisaService";
-import { atualizarWidgetJogosMusicais } from "../services/widgetMusicaDoDiaService";
 
 function normalizar(value: unknown) {
     return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+}
+
+type SecaoMusicasProps = {
+    titulo: string;
+    lista: Musica[];
+    tipo: "banner" | "quadrado";
+    carregando: boolean;
+};
+
+function SecaoMusicas({ titulo, lista, tipo, carregando }: SecaoMusicasProps) {
+    return (
+        <View className="mt-7">
+            <Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-3">{titulo}</Text>
+            {lista.length ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
+                    {lista.map((musica) => (
+                        <MusicCard
+                            key={musica.id}
+                            id={musica.id}
+                            tipo={tipo}
+                            larguraFixa={tipo === "quadrado"}
+                            titulo={musica.titulo}
+                            artista={musica.artista?.nome ?? "Artista desconhecido"}
+                            artistaId={musica.artista?.id}
+                            capa={musica.capa}
+                            nota={musica.nota}
+                            avaliacoes={musica.avaliacoes}
+                            duracaoSegundos={musica.duracaoSegundos}
+                        />
+                    ))}
+                </ScrollView>
+            ) : (
+                <Text className="text-[#52677F] dark:text-[#718096] text-sm mx-6">
+                    {carregando ? "Carregando músicas..." : "Nenhuma música encontrada."}
+                </Text>
+            )}
+        </View>
+    );
 }
 
 export default function Explorar() {
@@ -33,7 +70,6 @@ export default function Explorar() {
     const [historico, setHistorico] = useState<string[]>([]);
     const [filtrosAbertos, setFiltrosAbertos] = useState(false);
     const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([]);
-    const [artistasSelecionados, setArtistasSelecionados] = useState<number[]>([]);
     const [ordemResultados, setOrdemResultados] = useState<"catalogo" | "nota" | "avaliacoes" | "titulo">("catalogo");
     const { musicas, artistas, posts, usuarios, generosFavoritos, artistasFavoritos,
         usuarioLogadoId, carregando, erro, buscando, resultados: resultadosBusca, recarregar } = useBuscaGlobal(termo);
@@ -50,7 +86,6 @@ export default function Explorar() {
         setTermo(termoDaRota);
     }, [termoDaRota]);
 
-    useEffect(() => { atualizarWidgetJogosMusicais(0); }, []);
 
     async function guardarPesquisa(valor: string) {
         if (!valor.trim()) return;
@@ -86,36 +121,28 @@ export default function Explorar() {
     const generosDisponiveis = useMemo(() => [...new Set(musicas.map((musica) => musica.genero?.trim()).filter((genero): genero is string => Boolean(genero)))].sort((a, b) => a.localeCompare(b, "pt-BR")), [musicas]);
     const musicasFiltradas = useMemo(() => {
         const generos = new Set(generosSelecionados.map(normalizar));
-        const idsArtistas = new Set(artistasSelecionados);
         const resultado = musicas.filter((musica) => {
             const generoCorresponde = generos.size === 0 || generos.has(normalizar(musica.genero));
-            const artistaCorresponde = idsArtistas.size === 0 || idsArtistas.has(musica.artista?.id ?? -1);
-            return generoCorresponde && artistaCorresponde;
+            return generoCorresponde;
         });
 
         if (ordemResultados === "nota") return resultado.sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
         if (ordemResultados === "avaliacoes") return resultado.sort((a, b) => (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0));
         if (ordemResultados === "titulo") return resultado.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
         return resultado;
-    }, [musicas, generosSelecionados, artistasSelecionados, ordemResultados]);
+    }, [musicas, generosSelecionados, ordemResultados]);
     const artistasFiltrados = useMemo(() => {
-        const idsArtistas = new Set(artistasSelecionados);
-        const generos = new Set(generosSelecionados.map(normalizar));
-        const resultado = artistas.filter((artista) => {
-            if (idsArtistas.size > 0 && !idsArtistas.has(artista.id)) return false;
-            const musicasDoArtista = musicas.filter((musica) => musica.artista?.id === artista.id);
-            return generos.size === 0 || musicasDoArtista.some((musica) => generos.has(normalizar(musica.genero)));
-        });
         const generosFavoritosNormalizados = new Set(generosFavoritos.map(normalizar));
         const artistasDosGenerosFavoritos = new Set(musicas
             .filter((musica) => generosFavoritosNormalizados.has(normalizar(musica.genero)))
             .map((musica) => musica.artista?.id)
             .filter((id): id is number => id != null));
-        return resultado.sort((a, b) => {
-            return Number(artistasDosGenerosFavoritos.has(b.id)) - Number(artistasDosGenerosFavoritos.has(a.id));
-        });
-    }, [artistas, musicas, generosSelecionados, artistasSelecionados, generosFavoritos]);
-    const quantidadeFiltrosAtivos = generosSelecionados.length + artistasSelecionados.length + Number(ordemResultados !== "catalogo");
+        return [...artistas].sort((a, b) =>
+            Number(artistasDosGenerosFavoritos.has(b.id)) - Number(artistasDosGenerosFavoritos.has(a.id)) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+        );
+    }, [artistas, musicas, generosFavoritos]);
+    const quantidadeFiltrosAtivos = generosSelecionados.length + Number(ordemResultados !== "catalogo");
     const emAlta = useMemo(() => [...musicasFiltradas].sort((a, b) => (contagemPosts.get(b.id) ?? 0) - (contagemPosts.get(a.id) ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicasFiltradas, contagemPosts]);
     const bemAvaliadas = useMemo(() => [...musicasFiltradas].filter((m) => (m.avaliacoes ?? 0) > 0).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0) || (b.avaliacoes ?? 0) - (a.avaliacoes ?? 0)).slice(0, 8), [musicasFiltradas]);
     const imagensPersonalizadas = useMemo(() => {
@@ -156,38 +183,18 @@ export default function Explorar() {
     }, [musicasFiltradas, generosFavoritos, artistasFavoritos, artistas]);
     const postsRecentes = useMemo(() => posts.slice(0, 8), [posts]);
 
-    function secaoMusicas(titulo: string, lista: Musica[], tipo: "banner" | "quadrado") {
-        return <View className="mt-7">
-            <Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-3">{titulo}</Text>
-            {lista.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
-                {lista.map((m) => <MusicCard key={m.id} id={m.id} tipo={tipo} larguraFixa={tipo === "quadrado"} titulo={m.titulo} artista={m.artista?.nome ?? "Artista desconhecido"} artistaId={m.artista?.id} capa={m.capa} nota={m.nota} avaliacoes={m.avaliacoes} duracaoSegundos={m.duracaoSegundos} />)}
-            </ScrollView> : <Text className="text-[#52677F] dark:text-[#718096] text-sm mx-6">{carregando ? "Carregando músicas..." : "Nenhuma música encontrada."}</Text>}
-        </View>;
-    }
-
     function alternarGenero(genero: string) {
         setGenerosSelecionados((selecionados) => selecionados.includes(genero)
             ? selecionados.filter((item) => item !== genero)
             : [...selecionados, genero]);
     }
 
-    function alternarArtista(artistaId: number) {
-        setArtistasSelecionados((selecionados) => selecionados.includes(artistaId)
-            ? selecionados.filter((item) => item !== artistaId)
-            : [...selecionados, artistaId]);
-    }
-
     function limparFiltros() {
         setGenerosSelecionados([]);
-        setArtistasSelecionados([]);
         setOrdemResultados("catalogo");
     }
 
     function renderizarFiltros() {
-        const artistasDisponiveis = artistas.filter((artista) =>
-            artistasSelecionados.includes(artista.id) || artistasFiltrados.some((item) => item.id === artista.id),
-        );
-
         return <View className="mx-6 mt-2">
             <Pressable onPress={() => setFiltrosAbertos((aberto) => !aberto)} accessibilityRole="button" accessibilityState={{ expanded: filtrosAbertos }} className="min-h-9 self-start flex-row items-center py-1">
                 <FunnelIcon size={15} color={quantidadeFiltrosAtivos ? "#58AAF0" : "#8793A7"} />
@@ -204,15 +211,7 @@ export default function Explorar() {
                     {!generosDisponiveis.length && <Text className="text-xs text-[#718096]">Nenhum gênero cadastrado.</Text>}
                 </View>
 
-                <Text className="mb-2 mt-2 text-xs font-medium text-[#52677F] dark:text-[#8793A7]">Artistas</Text>
-                {artistasDisponiveis.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}><View className="flex-row">
-                    {artistasDisponiveis.map((artista) => {
-                        const selecionado = artistasSelecionados.includes(artista.id);
-                        return <Pressable key={artista.id} onPress={() => alternarArtista(artista.id)} accessibilityRole="button" accessibilityState={{ selected: selecionado }} className={`mb-2 mr-2 rounded-full border px-3 py-2 ${selecionado ? "border-[#58AAF0] bg-[#58AAF0]/15" : "border-[#C5D3E1] dark:border-[#354052]"}`}><Text className={`text-xs ${selecionado ? "text-[#155B91] dark:text-[#8CC8FF]" : "text-[#52677F] dark:text-[#8793A7]"}`}>{artista.nome}</Text></Pressable>;
-                    })}
-                </View></ScrollView> : <Text className="text-xs text-[#718096]">Nenhum artista corresponde ao gênero selecionado.</Text>}
-
-                <Text className="mb-2 mt-2 text-xs font-medium text-[#52677F] dark:text-[#8793A7]">Ordenar músicas</Text>
+                <Text className="mb-2 mt-3 text-xs font-medium text-[#52677F] dark:text-[#8793A7]">Ordenar músicas</Text>
                 <View className="flex-row flex-wrap">
                     {([["catalogo", "Catálogo"], ["nota", "Melhor nota"], ["avaliacoes", "Mais avaliadas"], ["titulo", "A–Z"]] as const).map(([ordem, titulo]) => {
                         const selecionada = ordemResultados === ordem;
@@ -290,8 +289,12 @@ export default function Explorar() {
                 <View className="mt-6 px-5">
                     <Text className="mb-3 font-serif text-lg text-[#142338] dark:text-white">Músicas encontradas ({musicasFiltradas.length})</Text>
                     {musicasFiltradas.length ? musicasFiltradas.map((musica) => <View key={musica.id} className="mb-3"><MusicCard id={musica.id} tipo="post" titulo={musica.titulo} artista={musica.artista?.nome ?? "Artista desconhecido"} artistaId={musica.artista?.id} capa={musica.capa} nota={musica.nota} avaliacoes={musica.avaliacoes} duracaoSegundos={musica.duracaoSegundos} /></View>) : <Text className="mb-4 text-sm text-[#52677F] dark:text-[#8793A7]">Nenhuma música corresponde aos filtros selecionados.</Text>}
-                    <Text className="mb-3 mt-4 font-serif text-lg text-[#142338] dark:text-white">Artistas ({artistasFiltrados.length})</Text>
-                    {artistasFiltrados.length ? artistasFiltrados.map((artista) => <Pressable key={artista.id} onPress={() => router.push(`/artista/${artista.id}` as never)} className="mb-2 flex-row items-center rounded-xl border border-[#D5E0EC] bg-white p-3 dark:border-[#252D3C] dark:bg-[#111420]"><FotoArtista url={artista.fotoURL} style={{ width: 48, height: 48, borderRadius: 24 }} /><Text className="ml-3 text-sm text-[#142338] dark:text-white">{artista.nome}</Text></Pressable>) : <Text className="text-sm text-[#52677F] dark:text-[#8793A7]">Nenhum artista corresponde aos filtros selecionados.</Text>}
+                    {generosSelecionados.length === 0 && (
+                        <>
+                            <Text className="mb-3 mt-4 font-serif text-lg text-[#142338] dark:text-white">Artistas ({artistasFiltrados.length})</Text>
+                            {artistasFiltrados.map((artista) => <Pressable key={artista.id} onPress={() => router.push(`/artista/${artista.id}` as never)} className="mb-2 flex-row items-center rounded-xl border border-[#D5E0EC] bg-white p-3 dark:border-[#252D3C] dark:bg-[#111420]"><FotoArtista url={artista.fotoURL} style={{ width: 48, height: 48, borderRadius: 24 }} /><Text className="ml-3 text-sm text-[#142338] dark:text-white">{artista.nome}</Text></Pressable>)}
+                        </>
+                    )}
                 </View>
             ) : <>
                 <View className="mx-4 mt-4 overflow-hidden rounded-3xl border border-[#B9A1FF]/40 bg-[#111420] py-4 shadow-lg shadow-[#8B6DFF]/20">
@@ -328,11 +331,26 @@ export default function Explorar() {
                         <AtalhoMusicalCard tipo="universo" imagem={artistasPersonalizadosEmbaralhados[0]?.fotoURL ?? imagensPersonalizadas[1]?.capa ?? imagensCatalogoEmbaralhadas[1]?.capa} />
                     </ScrollView>
                 </View>
-                {secaoMusicas("Em alta", emAlta, "banner")}
-                {secaoMusicas("Mais bem avaliadas", bemAvaliadas, "quadrado")}
+                <SecaoMusicas titulo="Em alta" lista={emAlta} tipo="banner" carregando={carregando} />
+                <SecaoMusicas titulo="Mais bem avaliadas" lista={bemAvaliadas} tipo="quadrado" carregando={carregando} />
                 {secoesRecomendadas.length ? (
-                    secoesRecomendadas.map((secao) => secaoMusicas(secao.titulo, secao.musicas, "quadrado"))
-                ) : secaoMusicas("Do catálogo Maré", recomendadas.length ? recomendadas : musicasFiltradas.slice(0, 8), "quadrado")}
+                    secoesRecomendadas.map((secao, indice) => (
+                        <SecaoMusicas
+                            key={`${secao.titulo}-${indice}`}
+                            titulo={secao.titulo}
+                            lista={secao.musicas}
+                            tipo="quadrado"
+                            carregando={carregando}
+                        />
+                    ))
+                ) : (
+                    <SecaoMusicas
+                        titulo="Do catálogo Maré"
+                        lista={recomendadas.length ? recomendadas : musicasFiltradas.slice(0, 8)}
+                        tipo="quadrado"
+                        carregando={carregando}
+                    />
+                )}
                 <View className="mt-7"><Text className="text-[#142338] dark:text-white text-lg font-serif mx-6 mb-3">Artistas</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
                     {artistasFiltrados.slice(0, 12).map((a) => <Pressable key={a.id} onPress={() => router.push(`/artista/${a.id}` as never)} className="w-[104px] items-center mr-4"><FotoArtista url={a.fotoURL} style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: "#171E2B" }} /><Text className="text-[#142338] dark:text-white text-xs text-center mt-2" numberOfLines={1}>{a.nome}</Text></Pressable>)}
                 </ScrollView></View>

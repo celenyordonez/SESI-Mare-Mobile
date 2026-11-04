@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
+    Modal,
     Pressable,
     ScrollView,
     Switch,
@@ -62,6 +62,8 @@ export default function Configuracoes() {
     const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
     const [salvandoEmail, setSalvandoEmail] = useState(false);
     const [salvandoSenha, setSalvandoSenha] = useState(false);
+    const [confirmacaoConta, setConfirmacaoConta] = useState<"sair" | "excluir" | null>(null);
+    const [processandoConta, setProcessandoConta] = useState(false);
 
     // As preferências são guardadas na conta e sincronizadas com o servidor.
     const carregarPreferencias = useCallback(async () => {
@@ -200,51 +202,31 @@ export default function Configuracoes() {
     }
 
     function confirmarSaida() {
-        Alert.alert("Sair da conta?", "Você precisará entrar novamente para usar o Maré.", [
-            { text: "Cancelar", style: "cancel" },
-            {
-                text: "Sair",
-                style: "default",
-                onPress: () => {
-                    void (async () => {
-                            try {
-                                await fazerLogout();
-                            } finally {
-                                roteador.replace("/login");
-                            }
-                    })();
-                },
-            },
-        ]);
+        setConfirmacaoConta("sair");
     }
 
     function confirmarExclusaoConta() {
-        Alert.alert(
-            "Excluir conta permanentemente?",
-            "Seu perfil e seus dados associados serão removidos. Esta ação não pode ser desfeita.",
-            [
-                { text: "Cancelar", style: "cancel" },
-                {
-                    text: "Excluir conta",
-                    style: "destructive",
-                    onPress: () => {
-                        void (async () => {
-                            try {
-                                await excluirMinhaConta();
-                                await fazerLogout();
-                                roteador.replace("/login");
-                            } catch (erroExclusao) {
-                                Toast.show({
-                                    type: "error",
-                                    text1: "Não foi possível excluir a conta",
-                                    text2: erroExclusao instanceof Error ? erroExclusao.message : "Tente novamente.",
-                                });
-                            }
-                        })();
-                    },
-                },
-            ],
-        );
+        setConfirmacaoConta("excluir");
+    }
+
+    async function executarAcaoConta() {
+        if (!confirmacaoConta || processandoConta) return;
+        const acao = confirmacaoConta;
+        setProcessandoConta(true);
+        try {
+            if (acao === "excluir") await excluirMinhaConta();
+            await fazerLogout();
+            roteador.replace("/login");
+        } catch (erroAcao) {
+            Toast.show({
+                type: "error",
+                text1: acao === "excluir" ? "Não foi possível excluir a conta" : "Não foi possível sair da conta",
+                text2: erroAcao instanceof Error ? erroAcao.message : "Tente novamente.",
+            });
+            setConfirmacaoConta(null);
+        } finally {
+            setProcessandoConta(false);
+        }
     }
 
     function linhaNotificacao(
@@ -442,6 +424,57 @@ export default function Configuracoes() {
                     </Text>
                 </Pressable>
             </ScrollView>
+
+            <Modal
+                visible={confirmacaoConta !== null}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={() => {
+                    if (!processandoConta) setConfirmacaoConta(null);
+                }}
+            >
+                <View className="flex-1 items-center justify-center bg-black/65 px-6">
+                    <Pressable
+                        className="absolute inset-0"
+                        onPress={() => !processandoConta && setConfirmacaoConta(null)}
+                        accessibilityLabel="Fechar confirmação"
+                    />
+                    <View className="w-full max-w-md rounded-3xl border border-[#354052] bg-[#111824] p-6 shadow-2xl">
+                        <View className={`mb-4 h-12 w-12 items-center justify-center rounded-2xl ${confirmacaoConta === "excluir" ? "bg-rose-500/15" : "bg-[#58AAF0]/15"}`}>
+                            {confirmacaoConta === "excluir"
+                                ? <TrashIcon size={23} color="#F08B8B" />
+                                : <SignOutIcon size={23} color="#58AAF0" />}
+                        </View>
+                        <Text className="font-serif text-xl text-white">
+                            {confirmacaoConta === "excluir" ? "Excluir conta permanentemente?" : "Sair da conta?"}
+                        </Text>
+                        <Text className="mt-2 text-sm leading-5 text-[#AAB4C5]">
+                            {confirmacaoConta === "excluir"
+                                ? "Seu perfil e os dados associados serão removidos. Essa ação não pode ser desfeita."
+                                : "Você precisará entrar novamente para usar o Maré."}
+                        </Text>
+                        <View className="mt-6 flex-row justify-end gap-3">
+                            <Pressable
+                                onPress={() => setConfirmacaoConta(null)}
+                                disabled={processandoConta}
+                                className="min-h-11 items-center justify-center rounded-xl border border-[#354052] px-4"
+                            >
+                                <Text className="text-sm font-medium text-[#D0D8E4]">Cancelar</Text>
+                            </Pressable>
+                            <Pressable
+                                onPress={() => void executarAcaoConta()}
+                                disabled={processandoConta}
+                                className={`min-h-11 min-w-24 items-center justify-center rounded-xl px-4 ${confirmacaoConta === "excluir" ? "bg-rose-500" : "bg-[#58AAF0]"}`}
+                            >
+                                {processandoConta
+                                    ? <ActivityIndicator size="small" color="#07111C" />
+                                    : <Text className="text-sm font-semibold text-[#07111C]">{confirmacaoConta === "excluir" ? "Excluir" : "Sair"}</Text>}
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             <Navbar />
         </SafeAreaView>

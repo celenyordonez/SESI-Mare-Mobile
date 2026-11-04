@@ -3,7 +3,9 @@ import { useState } from "react";
 import {
     ActivityIndicator,
     Image,
+    KeyboardAvoidingView,
     Pressable,
+    Platform,
     ScrollView,
     Text,
     TextInput,
@@ -38,7 +40,7 @@ export default function Cadastro() {
         const emailNormalizado = email.trim().toLowerCase();
 
         const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const formatoUsuario = /^[a-zA-Z0-9._]{3,20}$/;
+        const formatoUsuario = /^[a-zA-Z0-9_]{3,15}$/;
 
         if (!username || !emailNormalizado || !senha || !confirmarSenha) {
             Toast.show({
@@ -53,7 +55,7 @@ export default function Cadastro() {
             Toast.show({
                 type: "error",
                 text1: "Usuário inválido",
-                text2: "Use de 3 a 20 caracteres: letras, números, ponto ou underline.",
+                text2: "Use de 3 a 15 letras, números ou sublinhado (_), sem espaços.",
             });
             return;
         }
@@ -128,6 +130,7 @@ export default function Cadastro() {
 
     return (
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
+            <KeyboardAvoidingView className="flex-1" behavior="padding">
             <LinearGradient
                 colors={["#080A10", "#1C2E48"]}
                 style={{ flex: 1 }}
@@ -136,12 +139,14 @@ export default function Cadastro() {
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         flexGrow: 1,
+                        justifyContent: "center",
                         paddingHorizontal: 32,
                         paddingTop: 12,
                         paddingBottom: 24,
                     }}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
                 >
                     <View className="items-center mb-2">
                         <Image
@@ -167,12 +172,14 @@ export default function Cadastro() {
                         <TextInput
                             className="w-full h-12 bg-[#EAF1F8] dark:bg-[#0C121D] border border-[#C5D3E1] dark:border-[#354052] rounded-[9px] px-3 text-[#142338] dark:text-white text-[13px] mb-4"
                             value={usuario}
-                            onChangeText={setUsuario}
+                            onChangeText={(valor) => setUsuario(valor.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 15))}
                             placeholder="Usuário"
                             placeholderTextColor="#718096"
                             autoCapitalize="none"
                             autoCorrect={false}
+                            maxLength={15}
                         />
+                        <Text className="-mt-3 mb-4 text-[11px] leading-4 text-[#52677F] dark:text-[#8793A7]">3 a 15 caracteres: letras, números e _; sem espaços.</Text>
 
                         <Text className="text-[#EEEEF1] text-sm font-serif mb-1">
                             E-mail
@@ -273,6 +280,7 @@ export default function Cadastro() {
                     </View>
                 </ScrollView>
             </LinearGradient>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

@@ -9,6 +9,7 @@ import {
     compartilharMusica,
     type ConversaPrivada,
 } from "../services/mensagemPrivadaService";
+import { linkMusica } from "../services/linksCompartilhamento";
 
 const imagemPadrao = require("../../assets/images/logo.png");
 
@@ -59,7 +60,7 @@ export default function CompartilharMusicaBotao({
 
     async function compartilharForaDoApp() {
         try {
-            await Share.share({ message: `Confira “${titulo}” de ${artista} na Maré.` });
+            await Share.share({ message: `Confira “${titulo}” de ${artista} na Maré:\n${linkMusica(musicaId)}` });
             setAberto(false);
         } catch (erroCompartilhamento) {
             console.error("Erro ao abrir o compartilhamento nativo:", erroCompartilhamento);

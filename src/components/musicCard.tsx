@@ -19,6 +19,7 @@ import { alternarSalvamentoMusica, buscarIdsSalvos } from "../services/salvament
 import { feedbackAcao, feedbackSelecao } from "../services/feedbackTatil";
 import { usePaletaCapa } from "../hooks/usePaletaCapa";
 import { corComOpacidade } from "../services/paletaCapaService";
+import { linkMusica } from "../services/linksCompartilhamento";
 import CompartilharMusicaBotao from "./CompartilharMusicaBotao";
 import { ItemMenuAcao, MenuAcoes } from "./MenuAcoes";
 
@@ -110,7 +111,7 @@ export default function MusicCard({
         try {
             feedbackAcao();
             await Share.share({
-                message: `Confira "${titulo}" de ${artista} na Maré.`,
+                message: `Confira "${titulo}" de ${artista} na Maré:\n${linkMusica(id)}`,
             });
             setMenuAberto(false);
         } catch (error) {

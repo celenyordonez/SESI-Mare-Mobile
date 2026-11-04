@@ -66,6 +66,13 @@ export function enviarImagemDoPerfil(formulario: FormData) {
         body: formulario,
     });
 }
+export function removerImagemDoPerfil(tipo: "foto" | "capa") {
+    return apiRequest<{ foto: string | null; capa: string | null }>("/usuarios/me/imagem", {
+        method: "DELETE",
+        autenticado: true,
+        body: JSON.stringify({ tipo }),
+    });
+}
 export function excluirMinhaConta() {
     return apiRequest<{ message: string }>("/usuarios/me", {
         method: "DELETE",

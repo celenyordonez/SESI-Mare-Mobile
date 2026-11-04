@@ -19,6 +19,7 @@ import {
 } from "../../services/usuarioService";
 import { iniciarConversa as abrirConversaPrivada } from "../../services/mensagemPrivadaService";
 import { buscarPlaylistsPublicas, type Playlist } from "../../services/playlistService";
+import { linkPerfil } from "../../services/linksCompartilhamento";
 
 type AbaPerfilPublico = "avaliacoes" | "comentarios";
 
@@ -108,7 +109,7 @@ export default function PerfilPublico() {
     async function compartilharPerfil() {
         if (!perfil) return;
         try {
-            await Share.share({ message: `Confira o perfil de @${perfil.username} no Maré.` });
+            await Share.share({ message: `Confira o perfil de @${perfil.username} no Maré:\n${linkPerfil(perfil.username)}` });
         } catch (erroCompartilhamento) {
             console.error("Erro ao compartilhar perfil:", erroCompartilhamento);
         }

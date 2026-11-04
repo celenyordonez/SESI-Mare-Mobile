@@ -6,6 +6,7 @@ import * as Sharing from "expo-sharing";
 import { ChatCircleIcon, DotsThreeIcon, HeartIcon, PencilSimpleIcon, ShareNetworkIcon, TrashIcon, UserIcon } from "phosphor-react-native";
 import { alternarCurtidaPost, editarPost, excluirPost as excluirPostApi } from "../services/postService";
 import { feedbackAcao } from "../services/feedbackTatil";
+import { linkPost } from "../services/linksCompartilhamento";
 import MusicCard from "./musicCard";
 import EstrelaNota from "./EstrelaNota";
 import { ItemMenuAcao, MenuAcoes } from "./MenuAcoes";
@@ -132,7 +133,7 @@ export default function PostCard(props: PostCardProps) {
     }
 
     async function compartilhar() {
-        try { feedbackAcao(); await Share.share({ message: `${name ?? "Alguém"} avaliou “${musicTitle}” no Maré${postId ? `: /post/${postId}` : ""}` }); }
+        try { feedbackAcao(); await Share.share({ message: `${name ?? "Alguém"} avaliou “${musicTitle}” no Maré${postId ? `:\n${linkPost(postId)}` : ""}` }); }
         catch (error) { console.error("Erro ao compartilhar publicação:", error); }
     }
 
@@ -185,11 +186,20 @@ export default function PostCard(props: PostCardProps) {
                 {foto ? <Image source={{ uri: foto }} className="w-11 h-11 rounded-full border border-[#C5D3E1] dark:border-[#354052]" /> : <View className="w-11 h-11 rounded-full bg-[#F4F7FA] dark:bg-[#171E2B] items-center justify-center"><UserIcon size={22} color="#9AA6BA" /></View>}
             </Pressable>
             <View className="flex-1 ml-3 pt-0.5">
-                <Pressable onPress={abrirPerfil} disabled={!username}>
-                    <Text className="text-[#142338] dark:text-white text-sm font-semibold" numberOfLines={1}>{name || "Usuário"}</Text>
-                    {!!username && <Text className="text-[#52677F] dark:text-[#718096] text-xs mt-0.5">@{username}</Text>}
-                </Pressable>
-                <Pressable onPress={abrirPost} disabled={postId == null} className="self-start">
+                <View className="min-h-11 flex-row items-start">
+                    <Pressable onPress={abrirPerfil} disabled={!username} className="self-start" style={{ maxWidth: "82%" }}>
+                        <Text className="text-[#142338] dark:text-white text-sm font-semibold" numberOfLines={1}>{name || "Usuário"}</Text>
+                        {!!username && <Text className="text-[#52677F] dark:text-[#718096] text-xs mt-0.5" numberOfLines={1}>@{username}</Text>}
+                    </Pressable>
+                    <Pressable
+                        onPress={abrirPost}
+                        disabled={postId == null}
+                        accessibilityRole="link"
+                        accessibilityLabel="Abrir publicação"
+                        className="min-h-11 flex-1"
+                    />
+                </View>
+                <Pressable onPress={abrirPost} disabled={postId == null} accessibilityRole="link" accessibilityLabel="Abrir publicação" className="min-h-6 w-full justify-center">
                     <Text className="text-[#687386] text-[11px] mt-1">{dataRelativa(time)}{postFoiEditado ? " · editado" : ""}</Text>
                 </Pressable>
             </View>

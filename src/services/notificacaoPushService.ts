@@ -2,7 +2,7 @@ import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 
 import { apiRequest } from "./api";
 
@@ -11,12 +11,17 @@ const CHAVE_PUSH_DESATIVADO_MANUALMENTE = "mare:push:desativado-manualmente";
 
 export function configurarExibicaoDePush() {
     Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-            shouldPlaySound: true,
-            shouldSetBadge: true,
-            shouldShowBanner: true,
-            shouldShowList: true,
-        }),
+        handleNotification: async () => {
+            // Push fica no histórico interno da Maré; com o app aberto, evita
+            // empilhar alertas repetidos na central de notificações do celular.
+            const appEmPrimeiroPlano = AppState.currentState === "active";
+            return {
+                shouldPlaySound: !appEmPrimeiroPlano,
+                shouldSetBadge: !appEmPrimeiroPlano,
+                shouldShowBanner: !appEmPrimeiroPlano,
+                shouldShowList: !appEmPrimeiroPlano,
+            };
+        },
     });
 }
 

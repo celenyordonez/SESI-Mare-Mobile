@@ -62,25 +62,14 @@
             {
               "name": "MusicaDoDia",
               "displayName": "Música do dia",
-              "description": "Veja a música escolhida para você hoje.",
+              "description": "Capa e acesso rápido à música escolhida para você hoje.",
               "android": {
-                "minWidth": 160,
-                "minHeight": 115,
+                "minWidth": 110,
+                "minHeight": 110,
                 "targetCellWidth": 2,
                 "targetCellHeight": 2,
-                "resizeMode": "none"
-              }
-            },
-            {
-              "name": "JogosMusicais",
-              "displayName": "Jogos musicais",
-              "description": "Acesse a Roleta, o Duelo, Seu Momento e o Bingo.",
-              "android": {
-                "minWidth": 160,
-                "minHeight": 115,
-                "targetCellWidth": 2,
-                "targetCellHeight": 2,
-                "resizeMode": "none"
+                "resizeMode": "none",
+                "initialLayout": "src/widgets/MusicaDoDiaWidget.tsx"
               }
             }
           ]
