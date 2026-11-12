@@ -40,16 +40,17 @@ import { buscarPostPorId, type Post } from "../../services/postService";
 import { buscarMeuPerfil, buscarUsuarios, type UsuarioBusca } from "../../services/usuarioService";
 
 type UsuarioLogado = { id: number; foto?: string | null };
-type ComentarioComProfundidade = { comentario: Comentario; profundidade: number };
+type ComentarioComProfundidade = { comentario: Comentario; profundidade: number; pai?: Comentario };
 
-// Transforma comentários e respostas em uma lista para calcular o total exibido.
+// Mantém a ordem da conversa sem aninhar as caixas visuais de resposta.
 function achatarComentarios(
     comentarios: Comentario[],
     profundidade = 0,
+    pai?: Comentario,
 ): ComentarioComProfundidade[] {
     return comentarios.flatMap((comentario) => [
-        { comentario, profundidade },
-        ...achatarComentarios(comentario.respostas ?? [], profundidade + 1),
+        { comentario, profundidade, pai },
+        ...achatarComentarios(comentario.respostas ?? [], profundidade + 1, comentario),
     ]);
 }
 
@@ -522,11 +523,12 @@ export default function DetalhePublicacao() {
     function renderizarComentario(comentario: Comentario, profundidade: number, comentarioPai?: Comentario) {
         const usernamePai = comentarioPai?.usuario.username || comentarioPai?.usuario.nome;
         const dataFormatada = formatarDataComentario(comentario.dataCriacao);
+        const recuo = Math.min(profundidade, 3) * 12;
         return (
             <View
                 key={comentario.id}
                 className="border-b border-[#D5E0EC] dark:border-[#202633] py-4"
-                style={{ marginLeft: Math.min(profundidade, 3) * 16 }}
+                style={{ marginLeft: recuo, paddingLeft: profundidade > 0 ? 8 : 0, borderLeftWidth: profundidade > 0 ? 1 : 0, borderLeftColor: "#354052" }}
             >
                 <View className="flex-row items-start">
                     {comentario.usuario.foto ? (
@@ -546,7 +548,7 @@ export default function DetalhePublicacao() {
                         </View>
                     )}
 
-                    <View className="flex-1 ml-3">
+                    <View className="flex-1 ml-3 min-w-0">
                         <View className="flex-row items-center flex-wrap">
                             <Text className="text-[#142338] dark:text-white text-sm font-semibold">
                                 {comentario.usuario.nome}
@@ -658,9 +660,6 @@ export default function DetalhePublicacao() {
 
                 {respondendoAId === comentario.id ? renderizarCampoComentario() : null}
 
-                {(comentario.respostas ?? []).map((resposta) =>
-                    renderizarComentario(resposta, profundidade + 1, comentario),
-                )}
             </View>
         );
     }
@@ -731,8 +730,8 @@ export default function DetalhePublicacao() {
                         {respondendoAId === null ? renderizarCampoComentario() : null}
 
                         {comentarios.length > 0 ? (
-                            comentarios.map((comentario) =>
-                                renderizarComentario(comentario, 0),
+                            achatarComentarios(comentarios).map(({ comentario, profundidade, pai }) =>
+                                renderizarComentario(comentario, profundidade, pai),
                             )
                         ) : (
                             <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">
