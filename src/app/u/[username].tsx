@@ -9,6 +9,7 @@ import Navbar from "../../components/navbar";
 import Topbar from "../../components/topbar";
 import PostCard from "../../components/postCard";
 import ComentarioPerfilCard from "../../components/ComentarioPerfilCard";
+import { ApiError } from "../../services/api";
 import {
     alternarSeguirUsuario,
     buscarComentariosPublicos,
@@ -25,6 +26,10 @@ type AbaPerfilPublico = "avaliacoes" | "comentarios";
 
 export default function PerfilPublico() {
     const { username } = useLocalSearchParams<{ username: string }>();
+    return <PerfilPorUsername key={username} username={username} />;
+}
+
+function PerfilPorUsername({ username }: { username: string }) {
     const roteador = useRouter();
     const [perfil, setPerfil] = useState<PerfilPublicoDados | null>(null);
     const [comentarios, setComentarios] = useState<ComentarioPerfil[]>([]);
@@ -39,21 +44,41 @@ export default function PerfilPublico() {
 
     useEffect(() => {
         let ativo = true;
+        let redirecionando = false;
 
         async function carregarPerfil() {
             try {
-                const [dadosPerfil, meuPerfil, playlists] = await Promise.all([
+                const [dadosPerfil, meuPerfil] = await Promise.all([
                     buscarPerfilPublico(username),
-                    buscarMeuPerfil().catch(() => null),
-                    buscarPlaylistsPublicas(username),
+                    buscarMeuPerfil().catch((erroSessao: unknown) => {
+                        if (erroSessao instanceof ApiError && erroSessao.status === 401) return null;
+                        throw erroSessao;
+                    }),
                 ]);
-                const comentariosPerfil = await buscarComentariosPublicos(dadosPerfil.id);
+
+                if (!ativo) return;
+                if (meuPerfil?.id === dadosPerfil.id) {
+                    redirecionando = true;
+                    roteador.replace("/perfil");
+                    return;
+                }
+
+                const [comentariosPerfil, playlists] = await Promise.allSettled([
+                    buscarComentariosPublicos(dadosPerfil.id),
+                    buscarPlaylistsPublicas(dadosPerfil.username),
+                ]);
 
                 if (!ativo) return;
                 setPerfil(dadosPerfil);
-                setComentarios(comentariosPerfil);
-                setPlaylistsPublicas(playlists);
                 setMeuId(meuPerfil?.id ?? null);
+                if (comentariosPerfil.status === "fulfilled") setComentarios(comentariosPerfil.value);
+                if (playlists.status === "fulfilled") setPlaylistsPublicas(playlists.value);
+                if (comentariosPerfil.status === "rejected" || playlists.status === "rejected") {
+                    Toast.show({
+                        type: "error",
+                        text1: "Não foi possível carregar todo o conteúdo do perfil.",
+                    });
+                }
                 setSeguindo(dadosPerfil.seguindoPorMim);
             } catch (erroCarregamento) {
                 if (ativo) {
@@ -64,13 +89,13 @@ export default function PerfilPublico() {
                     );
                 }
             } finally {
-                if (ativo) setCarregando(false);
+                if (ativo && !redirecionando) setCarregando(false);
             }
         }
 
         void carregarPerfil();
         return () => { ativo = false; };
-    }, [username]);
+    }, [roteador, username]);
 
     async function alternarSeguir() {
         if (!perfil || salvandoSeguir) return;
@@ -116,7 +141,7 @@ export default function PerfilPublico() {
     }
 
     async function iniciarConversa() {
-        if (!perfil || abrindoConversa || meuId === perfil.id) return;
+        if (!perfil || abrindoConversa) return;
         setAbrindoConversa(true);
         try {
             const conversa = await abrirConversaPrivada(perfil.id);
@@ -175,30 +200,28 @@ export default function PerfilPublico() {
                             <Pressable onPress={() => void compartilharPerfil()} accessibilityLabel="Compartilhar perfil" className="p-2 mr-2">
                                 <ShareNetworkIcon size={20} color="#FFFFFF" />
                             </Pressable>
-                            {meuId !== perfil.id ? (
-                                <View className="flex-row items-center">
-                                    <Pressable
-                                        onPress={() => void iniciarConversa()}
-                                        disabled={abrindoConversa || !seguindo || !perfil.segueDeVolta}
-                                        accessibilityRole="button"
-                                        accessibilityLabel="Enviar mensagem privada"
-                                        accessibilityHint={seguindo && perfil.segueDeVolta ? "Abre uma conversa privada." : "Vocês precisam seguir um ao outro para conversar."}
-                                        className={`mr-2 flex-row items-center rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] px-3 py-2 ${seguindo && perfil.segueDeVolta ? "" : "opacity-50"}`}
-                                    >
-                                        <ChatCircleIcon size={16} color="#D0D8E4" />
-                                        <Text className="ml-1.5 text-xs font-semibold text-[#142338] dark:text-white">{abrindoConversa ? "Abrindo..." : seguindo && perfil.segueDeVolta ? "Mensagem" : "Sigam-se"}</Text>
-                                    </Pressable>
-                                    <Pressable
-                                        onPress={() => void alternarSeguir()}
-                                        disabled={salvandoSeguir}
-                                        className={`px-4 py-2 rounded-lg ${seguindo ? "border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420]" : "bg-[#58AAF0]"}`}
-                                    >
-                                        <Text className="text-[#142338] dark:text-white text-xs font-semibold">
-                                            {salvandoSeguir ? "Aguarde..." : seguindo ? "Seguindo" : "Seguir"}
-                                        </Text>
-                                    </Pressable>
-                                </View>
-                            ) : null}
+                            <View className="flex-row items-center">
+                                <Pressable
+                                    onPress={() => void iniciarConversa()}
+                                    disabled={abrindoConversa || !seguindo || !perfil.segueDeVolta}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Enviar mensagem privada"
+                                    accessibilityHint={seguindo && perfil.segueDeVolta ? "Abre uma conversa privada." : "Vocês precisam seguir um ao outro para conversar."}
+                                    className={`mr-2 flex-row items-center rounded-lg border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420] px-3 py-2 ${seguindo && perfil.segueDeVolta ? "" : "opacity-50"}`}
+                                >
+                                    <ChatCircleIcon size={16} color="#D0D8E4" />
+                                    <Text className="ml-1.5 text-xs font-semibold text-[#142338] dark:text-white">{abrindoConversa ? "Abrindo..." : seguindo && perfil.segueDeVolta ? "Mensagem" : "Sigam-se"}</Text>
+                                </Pressable>
+                                <Pressable
+                                    onPress={() => void alternarSeguir()}
+                                    disabled={salvandoSeguir}
+                                    className={`px-4 py-2 rounded-lg ${seguindo ? "border border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420]" : "bg-[#58AAF0]"}`}
+                                >
+                                    <Text className="text-[#142338] dark:text-white text-xs font-semibold">
+                                        {salvandoSeguir ? "Aguarde..." : seguindo ? "Seguindo" : "Seguir"}
+                                    </Text>
+                                </Pressable>
+                            </View>
                         </View>
 
                         <Text className="text-[#142338] dark:text-white text-xl font-semibold">{perfil.nome}</Text>
@@ -269,7 +292,6 @@ export default function PerfilPublico() {
                                 likes={post._count?.curtidas}
                                 comments={post._count?.comentarios}
                                 curtidoPorMim={post.curtidoPorMim}
-                                ehMeuPost={meuId === perfil.id}
                             />
                         ) : null) : (
                             <Text className="text-[#52677F] dark:text-[#718096] text-sm text-center py-8">Nenhuma avaliação publicada.</Text>

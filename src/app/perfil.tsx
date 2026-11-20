@@ -79,6 +79,7 @@ export default function Perfil() {
     const [musicasSalvas, setMusicasSalvas] = useState<{ musica: Musica }[]>([]);
     const [pesquisaSalvos, setPesquisaSalvos] = useState("");
     const [abaAtiva, setAbaAtiva] = useState<AbaPerfil>("avaliacoes");
+    const [estadoDasAbas, setEstadoDasAbas] = useState<Partial<Record<AbaPerfil, "pronta" | "erro">>>({});
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [menuAberto, setMenuAberto] = useState(false);
@@ -136,31 +137,43 @@ export default function Perfil() {
     useEffect(() => {
         let ativo = true;
 
+        async function carregarAba<T>(aba: AbaPerfil, buscar: () => Promise<T>, atualizar: (dados: T) => void) {
+            try {
+                const dados = await buscar();
+                if (!ativo) return;
+                atualizar(dados);
+                setEstadoDasAbas((atuais) => ({ ...atuais, [aba]: "pronta" }));
+            } catch (erroAba) {
+                if (!ativo) return;
+                console.error(`Erro ao carregar a aba ${aba} do perfil:`, erroAba);
+                setEstadoDasAbas((atuais) => ({ ...atuais, [aba]: "erro" }));
+            }
+        }
+
         async function carregarPerfil() {
             try {
-                const [dadosPerfil, publicacoes, comentariosPerfil, curtidasPerfil, salvas, minhasPlaylists] =
-                    await Promise.all([
-                        buscarMeuPerfil(),
-                        buscarPostsDoUsuario(),
-                        buscarComentariosDoUsuario<ComentarioPerfil>(),
-                        buscarPostsCurtidos(),
-                        buscarMusicasSalvas(),
-                        buscarMinhasPlaylists(),
-                    ]);
-
+                const dadosPerfil = await buscarMeuPerfil();
                 if (!ativo) return;
+
                 setPerfil(dadosPerfil);
                 setNomeEditado(dadosPerfil.nome ?? "");
                 setUsuarioEditado(dadosPerfil.username ?? "");
                 setBioEditada(dadosPerfil.bio ?? "");
-                setAvaliacoes(publicacoes);
-                setComentarios(comentariosPerfil);
-                setCurtidos(curtidasPerfil);
-                setMusicasSalvas(salvas);
-                setPlaylists(minhasPlaylists);
+
+                await Promise.all([
+                    carregarAba("avaliacoes", buscarPostsDoUsuario, setAvaliacoes),
+                    carregarAba("comentarios", buscarComentariosDoUsuario<ComentarioPerfil>, setComentarios),
+                    carregarAba("curtidos", buscarPostsCurtidos, setCurtidos),
+                    carregarAba("salvos", buscarMusicasSalvas, setMusicasSalvas),
+                    carregarAba("playlists", buscarMinhasPlaylists, setPlaylists),
+                ]);
             } catch (erroCarregamento) {
                 console.error("Erro ao carregar perfil:", erroCarregamento);
-                if (ativo) setErro("Não foi possível carregar seu perfil.");
+                if (ativo) {
+                    setPerfil(null);
+                    setEstadoDasAbas({});
+                    setErro("Não foi possível carregar seu perfil.");
+                }
             } finally {
                 if (ativo) setCarregando(false);
             }
@@ -171,6 +184,16 @@ export default function Perfil() {
             ativo = false;
         };
     }, [revisao]);
+
+    function recarregarPerfil() {
+        if (carregando) return;
+        setErro("");
+        setCarregando(true);
+        setRevisao((valor) => valor + 1);
+    }
+
+    const estadoAbaAtiva = estadoDasAbas[abaAtiva];
+    const mostrarAba = estadoAbaAtiva === "pronta";
 
     const musicasSalvasFiltradas = useMemo(() => {
         const consulta = normalizarPesquisa(pesquisaSalvos.trim());
@@ -408,16 +431,19 @@ export default function Perfil() {
         <SafeAreaView className="flex-1 bg-[#E8EEF5] dark:bg-[#080A10]">
             <Topbar tipo="voltar" />
 
-            {carregando ? (
+            {carregando && !perfil ? (
                 <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#5EA7ED" />
                 </View>
             ) : erro ? (
                 <View className="flex-1 items-center justify-center px-8">
                     <Text className="text-red-400 text-sm text-center">{erro}</Text>
+                    <Pressable accessibilityRole="button" onPress={recarregarPerfil} className="mt-3 p-2">
+                        <Text className="font-semibold text-[#155B91] dark:text-[#8CC8FF]">Tentar novamente</Text>
+                    </Pressable>
                 </View>
             ) : perfil ? (
-                <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando} onRefresh={() => { setErro(""); setCarregando(true); setRevisao((valor) => valor + 1); }} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
+                <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={carregando && revisao > 0} onRefresh={recarregarPerfil} tintColor="#58AAF0" colors={["#58AAF0"]} />}>
                     <View className="relative">
                         {perfil.capa ? (
                             <Image source={{ uri: perfil.capa }} className="h-[150px] w-full" resizeMode="cover" />
@@ -483,7 +509,7 @@ export default function Perfil() {
                                 <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Seguindo</Text>
                             </Pressable>
                             <View>
-                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count?.posts ?? avaliacoes.length}</Text>
+                                <Text className="text-[#142338] dark:text-white text-sm font-semibold">{perfil._count?.posts ?? (estadoDasAbas.avaliacoes === "pronta" ? avaliacoes.length : "—")}</Text>
                                 <Text className="text-[#52677F] dark:text-[#697386] text-xs mt-1">Avaliações</Text>
                             </View>
                         </View>
@@ -501,7 +527,18 @@ export default function Perfil() {
                     </ScrollView>
 
                     <View className="mt-2">
-                        {abaAtiva === "avaliacoes" ? (
+                        {estadoAbaAtiva === "erro" ? (
+                            <View className="items-center px-5 py-6">
+                                <Text accessibilityLiveRegion="polite" className="text-center text-sm text-[#52677F] dark:text-[#9AA6BA]">Não foi possível carregar esta seção.</Text>
+                                <Pressable accessibilityRole="button" onPress={recarregarPerfil} disabled={carregando} className="mt-2 p-2">
+                                    <Text className="font-semibold text-[#155B91] dark:text-[#8CC8FF]">Tentar novamente</Text>
+                                </Pressable>
+                            </View>
+                        ) : !mostrarAba ? (
+                            <ActivityIndicator accessibilityLabel="Carregando seção" color="#5EA7ED" className="py-8" />
+                        ) : null}
+
+                        {mostrarAba && abaAtiva === "avaliacoes" ? (
                             avaliacoes.length ? avaliacoes.map((post) => post.musica ? (
                                 <PostCard
                                     key={post.id}
@@ -530,7 +567,7 @@ export default function Perfil() {
                             )
                         ) : null}
 
-                        {abaAtiva === "comentarios" ? (
+                        {mostrarAba && abaAtiva === "comentarios" ? (
                             <>
                                 <View className="flex-row items-center px-5 py-3">
                                     <ChatCircleIcon size={18} color="#58AAF0" />
@@ -548,7 +585,7 @@ export default function Perfil() {
                             </>
                         ) : null}
 
-                        {abaAtiva === "curtidos" ? (
+                        {mostrarAba && abaAtiva === "curtidos" ? (
                             curtidos.length ? curtidos.map((post) => post.musica ? (
                                 <PostCard
                                     key={post.id}
@@ -575,7 +612,7 @@ export default function Perfil() {
                             )
                         ) : null}
 
-                        {abaAtiva === "salvos" ? (
+                        {mostrarAba && abaAtiva === "salvos" ? (
                             musicasSalvas.length ? (
                                 <>
                                     <View className="mx-4 mb-2 flex-row items-center rounded-xl border border-[#29384B] bg-[#EAF1F8] dark:bg-[#0D1520] px-3">
@@ -620,7 +657,7 @@ export default function Perfil() {
                             )
                         ) : null}
 
-                        {abaAtiva === "playlists" ? (
+                        {mostrarAba && abaAtiva === "playlists" ? (
                             <View className="px-4 py-4">
                                 <View className="mb-4 flex-row gap-2">
                                     <TextInput value={nomePlaylist} onChangeText={setNomePlaylist} maxLength={80} placeholder="Nome da playlist" placeholderTextColor="#8793A7" className="h-11 flex-1 rounded-xl border border-[#354052] bg-[#111420] px-3 text-sm text-white" />
