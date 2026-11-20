@@ -1,9 +1,30 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { withDangerousMod } = require("expo/config-plugins");
+const { withAppBuildGradle, withDangerousMod } = require("expo/config-plugins");
 
 /** Permite que o botão Abrir do widget leve ao destino selecionado no app. */
 module.exports = function withAndroidWidgetLaunch(config) {
+    config = withAppBuildGradle(config, (configMod) => {
+        if (configMod.modResults.language !== "groovy") {
+            throw new Error("A configuração do Android da Maré espera um build.gradle em Groovy.");
+        }
+
+        const regraNomeApk = `
+// Mantém um nome claro para o APK entregue para instalação manual.
+android.applicationVariants.configureEach { variant ->
+    variant.outputs.configureEach {
+        outputFileName = "Mare.apk"
+    }
+}
+`;
+
+        if (!configMod.modResults.contents.includes('outputFileName = "Mare.apk"')) {
+            configMod.modResults.contents += regraNomeApk;
+        }
+
+        return configMod;
+    });
+
     return withDangerousMod(config, ["android", async (configMod) => {
         const pacoteAndroid = configMod.android?.package;
         if (!pacoteAndroid) {
