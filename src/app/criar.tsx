@@ -112,7 +112,7 @@ export default function Criar() {
                                 className={"mr-3 w-[132px] rounded-xl border p-2 " + (selecionada?.id === musica.id ? "border-[#58AAF0] bg-[#17243A]" : "border-[#C5D3E1] dark:border-[#354052] bg-white dark:bg-[#111420]")}
                             >
                                 <View className="relative">
-                                    <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="aspect-square w-full rounded-lg" resizeMode="cover" />
+                                    <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo-symbol.png")} className="aspect-square w-full rounded-lg" resizeMode="cover" />
                                     {selecionada?.id === musica.id && <View className="absolute right-2 top-2 h-6 w-6 items-center justify-center rounded-full bg-[#58AAF0]"><CheckIcon size={14} color="#07111E" weight="bold" /></View>}
                                 </View>
                                 <Text className="mt-2 text-xs text-[#142338] dark:text-white" numberOfLines={1}>{musica.titulo}</Text>
@@ -140,7 +140,7 @@ export default function Criar() {
                     <View className="mt-2 rounded-xl border border-[#C5D3E1] dark:border-[#263143] bg-[#F4F7FA] dark:bg-[#0D111A] p-2">
                         {carregando ? <ActivityIndicator color="#5EA7ED" /> : filtradas.slice(0, 8).map((musica) => (
                             <Pressable key={musica.id} onPress={() => selecionarMusica(musica)} className="mb-1 flex-row items-center rounded-lg p-2">
-                                <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo.png")} className="h-11 w-11 rounded-lg" resizeMode="cover" />
+                                <Image source={musica.capa ? { uri: musica.capa } : require("../../assets/images/logo-symbol.png")} className="h-11 w-11 rounded-lg" resizeMode="cover" />
                                 <View className="ml-3 flex-1">
                                     <Text className="text-sm text-[#142338] dark:text-white" numberOfLines={1}>{musica.titulo}</Text>
                                     <Text className="mt-1 text-xs text-[#52677F] dark:text-[#8793A7]" numberOfLines={1}>{musica.artista?.nome ?? "Artista desconhecido"}</Text>
@@ -154,7 +154,7 @@ export default function Criar() {
 
                 {selecionada ? (
                     <View className="mt-4 flex-row items-center rounded-xl border border-[#58AAF0]/60 bg-[#111722] p-3">
-                        <Image source={selecionada.capa ? { uri: selecionada.capa } : require("../../assets/images/logo.png")} className="h-16 w-16 rounded-lg" resizeMode="cover" />
+                        <Image source={selecionada.capa ? { uri: selecionada.capa } : require("../../assets/images/logo-symbol.png")} className="h-16 w-16 rounded-lg" resizeMode="cover" />
                         <View className="ml-3 flex-1">
                             <Text className="text-[10px] font-semibold uppercase tracking-wider text-[#155B91] dark:text-[#58AAF0]">Música selecionada</Text>
                             <Text className="mt-1 text-sm font-semibold text-[#142338] dark:text-white" numberOfLines={1}>{selecionada.titulo}</Text>

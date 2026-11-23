@@ -32,7 +32,7 @@ import { alternarSalvamentoMusica, buscarIdsSalvos } from "../services/salvament
 import { feedbackAcao, feedbackSelecao } from "../services/feedbackTatil";
 import { corComOpacidade } from "../services/paletaCapaService";
 
-const capaPadrao = require("../../assets/images/logo.png");
+const capaPadrao = require("../../assets/images/logo-symbol.png");
 const CHAVE_TUTORIAL_DESCOBERTA = "mare:descoberta:tutorial-v1";
 const CHAVE_TUTORIAL_PERSONALIZACAO = "mare:descoberta:personalizacao-tutorial-v1";
 type MusicaDescoberta = Musica & { _count?: { posts?: number } };

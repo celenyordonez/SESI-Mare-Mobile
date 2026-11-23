@@ -5,7 +5,7 @@ import { ArrowUpRightIcon, ShareNetworkIcon } from "phosphor-react-native";
 import { usePaletaCapa } from "../hooks/usePaletaCapa";
 import { corComOpacidade } from "../services/paletaCapaService";
 
-const imagemPadrao = require("../../assets/images/logo.png");
+const imagemPadrao = require("../../assets/images/logo-symbol.png");
 
 export type MusicaDoChat = {
     id: number;

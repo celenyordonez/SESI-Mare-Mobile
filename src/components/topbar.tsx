@@ -48,7 +48,7 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
                             className="flex-1 items-center px-2"
                         >
                             <Image
-                                source={require("../../assets/images/logo.png")}
+                                source={require("../../assets/images/logo-symbol.png")}
                                 className="w-[104px] h-[46px]"
                                 resizeMode="contain"
                                 accessible={false}
@@ -88,7 +88,7 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
                             className="flex-1 items-center px-2"
                         >
                             <Image
-                                source={require("../../assets/images/logo.png")}
+                                source={require("../../assets/images/logo-symbol.png")}
                                 className="w-[104px] h-[46px]"
                                 resizeMode="contain"
                                 accessible={false}
@@ -103,7 +103,7 @@ export default function TopBar({ tipo = "normal" }: TopBarProps) {
                         className="flex-1 items-center"
                     >
                         <Image
-                            source={require("../../assets/images/logo.png")}
+                            source={require("../../assets/images/logo-symbol.png")}
                             className="w-[104px] h-[46px]"
                             resizeMode="contain"
                             accessible={false}

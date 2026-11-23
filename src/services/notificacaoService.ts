@@ -8,7 +8,15 @@ export type Notificacao = {
     musica?: { id: number; titulo: string; capa?: string | null; artista?: { nome: string } } | null;
 };
 
-export function buscarNotificacoes() { return apiRequest<Notificacao[]>("/notificacoes", { autenticado: true }); }
+export function buscarNotificacoes(naoLidas: boolean, cursor?: number) {
+    const params = new URLSearchParams({ pagina: "true", naoLidas: String(naoLidas) });
+    if (cursor !== undefined) params.set("antes", String(cursor));
+    return apiRequest<{
+        itens: Notificacao[];
+        proximoCursor: number | null;
+        quantidadeNaoLidas: number;
+    }>(`/notificacoes?${params}`, { autenticado: true });
+}
 export function buscarQuantidadeNotificacoesNaoLidas() { return apiRequest<{ quantidade: number }>("/notificacoes/nao-lidas/quantidade", { autenticado: true }); }
 export function marcarNotificacaoLida(id: number) { return apiRequest(`/notificacoes/${id}/lida`, { method: "PATCH", autenticado: true }); }
 export function marcarTodasNotificacoesLidas() { return apiRequest("/notificacoes/lidas", { method: "PATCH", autenticado: true }); }

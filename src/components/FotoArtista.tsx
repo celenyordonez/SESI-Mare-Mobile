@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Image as ExpoImage, type ImageStyle } from "expo-image";
 import type { StyleProp } from "react-native";
 
-const imagemPadrao = require("../../assets/images/logo.png");
+const imagemPadrao = require("../../assets/images/logo-symbol.png");
 
 function prepararUrl(url?: string | null) {
     const limpa = url?.trim();

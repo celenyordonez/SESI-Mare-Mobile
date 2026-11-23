@@ -39,7 +39,7 @@ import { ItemMenuAcao, MenuAcoes } from "../../components/MenuAcoes";
 import CartaoMusicaChat from "../../components/CartaoMusicaChat";
 import CartaoPlaylistChat from "../../components/CartaoPlaylistChat";
 
-const imagemPadrao = require("../../../assets/images/logo.png");
+const imagemPadrao = require("../../../assets/images/logo-symbol.png");
 
 function formatarHora(dataIso: string) {
     const data = new Date(dataIso);

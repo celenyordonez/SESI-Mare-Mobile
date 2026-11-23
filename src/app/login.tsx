@@ -145,7 +145,7 @@ export default function Login() {
                     {/* Logo */}
                     <View className="items-center justify-center mb-2">
                         <Image
-                            source={require("../../assets/images/logo.png")}
+                            source={require("../../assets/images/logoMare.png")}
                             style={{ width: 150, height: 100 }}
                             resizeMode="contain"
                         />

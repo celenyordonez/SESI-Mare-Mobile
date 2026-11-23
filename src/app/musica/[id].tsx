@@ -37,7 +37,7 @@ import { feedbackAcao } from "../../services/feedbackTatil";
 import { corComOpacidade } from "../../services/paletaCapaService";
 import type { Post } from "../../services/postService";
 
-const capaPadrao = require("../../../assets/images/logo.png");
+const capaPadrao = require("../../../assets/images/logo-symbol.png");
 
 function normalizar(texto: string) {
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");

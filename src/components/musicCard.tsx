@@ -23,7 +23,7 @@ import { linkMusica } from "../services/linksCompartilhamento";
 import CompartilharMusicaBotao from "./CompartilharMusicaBotao";
 import { ItemMenuAcao, MenuAcoes } from "./MenuAcoes";
 
-const logo = require("../../assets/images/logo.png");
+const logo = require("../../assets/images/logo-symbol.png");
 
 type MusicCardProps = {
     id?: number;

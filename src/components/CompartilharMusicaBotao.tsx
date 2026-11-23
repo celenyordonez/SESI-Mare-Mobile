@@ -11,7 +11,7 @@ import {
 } from "../services/mensagemPrivadaService";
 import { linkMusica } from "../services/linksCompartilhamento";
 
-const imagemPadrao = require("../../assets/images/logo.png");
+const imagemPadrao = require("../../assets/images/logo-symbol.png");
 
 type Props = {
     musicaId: number;

@@ -4,11 +4,10 @@
     "slug": "mare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo-adaptive.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "mare",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/logo.png",
       "bundleIdentifier": "com.mare.musical"
     },
     "android": {
@@ -23,7 +22,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/logo.png",
+      "favicon": "./assets/images/logo-symbol.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -39,7 +38,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#080A10",
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/logo-symbol.png",
           "imageWidth": 120
         }
       ],
@@ -48,7 +47,7 @@
         "expo-notifications",
         {
           "color": "#58AAF0",
-          "largeIcon": "./assets/images/logo-adaptive.png",
+          "largeIcon": "./assets/images/logo-symbol.png",
           "defaultChannel": "mare-atividade"
         }
       ],

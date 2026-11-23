@@ -8,7 +8,7 @@ import Navbar from "../../components/navbar";
 import Topbar from "../../components/topbar";
 import { buscarConversas, type ConversaPrivada } from "../../services/mensagemPrivadaService";
 
-const imagemPadrao = require("../../../assets/images/logo.png");
+const imagemPadrao = require("../../../assets/images/logo-symbol.png");
 
 function formatarData(dataIso: string) {
     const data = new Date(dataIso);

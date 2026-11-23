@@ -12,7 +12,7 @@ import { alternarSalvamentoMusica, buscarIdsSalvos } from "../services/salvament
 import { buscarFaixasDoMomento, momentosMusicais, type MomentoMusical } from "../services/momentoMusicalService";
 import { feedbackSelecao } from "../services/feedbackTatil";
 
-const capaPadrao = require("../../assets/images/logo.png");
+const capaPadrao = require("../../assets/images/logo-symbol.png");
 const tamanhoPagina = 6;
 
 export default function MusicaPorMomento() {

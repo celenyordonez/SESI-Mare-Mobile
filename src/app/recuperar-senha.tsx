@@ -50,7 +50,7 @@ export default function RecuperarSenha() {
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 24, paddingVertical: 28 }} keyboardShouldPersistTaps="handled">
             <View className="w-full max-w-[440px] self-center rounded-2xl border border-[#D5E0EC] dark:border-[#252D3C] bg-white dark:bg-[#111420] p-6">
                 <Link href="/login" asChild><Pressable className="flex-row items-center self-start py-2"><ArrowLeftIcon size={18} color="#9AA6BA" /><Text className="ml-2 text-sm text-[#52677F] dark:text-[#9AA6BA]">Voltar ao login</Text></Pressable></Link>
-                <Image source={require("../../assets/images/logo.png")} resizeMode="contain" className="w-36 h-20 self-center my-4" />
+                <Image source={require("../../assets/images/logoMare.png")} resizeMode="contain" className="w-36 h-20 self-center my-4" />
                 <View className="items-center mb-6"><View className="w-12 h-12 rounded-full bg-[#58AAF0]/10 items-center justify-center mb-3">{token ? <ShieldCheckIcon size={24} color="#58AAF0" /> : <EnvelopeSimpleIcon size={24} color="#58AAF0" />}</View>
                     <Text className="text-[#142338] dark:text-white text-xl font-semibold text-center">{token ? "Crie uma nova senha" : "Redefinir senha"}</Text>
                     <Text className="text-[#52677F] dark:text-[#9AA6BA] text-sm text-center mt-2">{token ? "Escolha uma senha segura para sua conta." : enviado ? "Enviamos o link de redefinição para o e-mail cadastrado." : "Enviaremos um link para o e-mail da sua conta."}</Text>

@@ -10,7 +10,7 @@ import { feedbackAcao, feedbackSelecao } from "../services/feedbackTatil";
 import { corComOpacidade } from "../services/paletaCapaService";
 import { usePaletaCapa } from "../hooks/usePaletaCapa";
 
-const capaPadrao = require("../../assets/images/logo.png");
+const capaPadrao = require("../../assets/images/logo-symbol.png");
 
 type Props = {
     musica: Musica;

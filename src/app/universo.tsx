@@ -36,7 +36,7 @@ import { buscarMusicasSalvas } from "../services/usuarioService";
 import type { Musica } from "../services/musicaService";
 import { corComOpacidade } from "../services/paletaCapaService";
 
-const imagemPadrao = require("../../assets/images/logo.png");
+const imagemPadrao = require("../../assets/images/logo-symbol.png");
 type MusicaSalva = { musica: Musica };
 type TelaRetrospectiva = "abertura" | "resumo" | "generos" | "artistas" | "trajetoria" | "colecao";
 

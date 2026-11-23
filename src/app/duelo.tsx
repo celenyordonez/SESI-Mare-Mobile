@@ -13,7 +13,7 @@ import { feedbackAcao, feedbackSelecao } from "../services/feedbackTatil";
 import { usePaletaCapa } from "../hooks/usePaletaCapa";
 import { corComOpacidade } from "../services/paletaCapaService";
 
-const capaPadrao = require("../../assets/images/logo.png");
+const capaPadrao = require("../../assets/images/logo-symbol.png");
 
 type Duelo = [Musica, Musica];
 const limiteDuelo = 5;

@@ -6,7 +6,7 @@ import { usePaletaCapa } from "../hooks/usePaletaCapa";
 import { corComOpacidade } from "../services/paletaCapaService";
 import type { Playlist } from "../services/playlistService";
 
-const imagemPadrao = require("../../assets/images/logo.png");
+const imagemPadrao = require("../../assets/images/logo-symbol.png");
 const LIMITE_MUSICAS_CARROSSEL = 15;
 
 type CartaoPlaylistChatProps = {

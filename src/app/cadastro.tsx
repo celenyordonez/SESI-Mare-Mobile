@@ -150,7 +150,7 @@ export default function Cadastro() {
                 >
                     <View className="items-center mb-2">
                         <Image
-                            source={require("../../assets/images/logo.png")}
+                            source={require("../../assets/images/logoMare.png")}
                             style={{ width: 130, height: 85 }}
                             resizeMode="contain"
                         />
